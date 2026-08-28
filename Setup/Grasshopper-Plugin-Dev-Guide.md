@@ -107,14 +107,16 @@ Update the checkboxes as you complete each item.
 | Check | Status when documented | Notes |
 |---|---|---|
 | Rhino 8 | Installed | `C:\Program Files\Rhino 8\System\Rhino.exe` |
-| Rhino 7 | Not installed | Project still points at Rhino 7 |
+| Rhino 7 | Not installed | Debug/launch now point at Rhino 8 (Step 3) |
 | Yak CLI | Present | `C:\Program Files\Rhino 8\System\Yak.exe` |
-| Visual Studio 2022 | Not found | Needed for F5 debug into Rhino |
-| .NET SDK | Not installed | `dotnet` is runtime-only; `dotnet build` fails |
-| .NET Framework 4.8 targeting pack | Not installed | Required because the project is `net48` |
+| Visual Studio 2022 | Installed 2026-08-27 | Community 17.14.39 at `C:\Program Files\Microsoft Visual Studio\2022\Community` |
+| .NET SDK | Installed | 9.0.317 (came with Visual Studio) |
+| .NET Framework 4.8 targeting pack | Installed | `v4.8` reference assemblies present |
 | Microsoft Office | Present | Needed for the Excel COM reference |
-| Grasshopper Libraries folder | May not exist yet | Created the first time Grasshopper runs |
-| `CromulentBisgetti.ContainerPacking.dll` | Missing from repo | Required to compile the Packing component |
+| Grasshopper Libraries folder | Exists | Confirmed after Grasshopper first launch |
+| `CromulentBisgetti.ContainerPacking.dll` | Restored via NuGet 1.0.0 | Step 5 |
+| First Debug build | Succeeded 2026-08-27 | `bin\Debug\net48\SpruceBeetle.gha` (use VS MSBuild, not `dotnet build`) |
+| Plugin loads in Grasshopper | Confirmed | Spruce Beetle tab visible (Step 8) |
 
 ---
 
@@ -122,19 +124,14 @@ Update the checkboxes as you complete each item.
 
 These are leftover from the original author’s machine. Fix them in the steps below **before** changing plugin behavior.
 
-1. **Debug path points at Rhino 7**
-   - `SpruceBeetle.csproj` → `StartProgram` = `C:\Program Files\Rhino 7\System\Rhino.exe`
-   - `Properties/launchSettings.json` → `D:\Rhino 7\System\Rhino.exe`
-   - This PC has Rhino 8 only.
+1. **Debug path pointed at Rhino 7 — fixed (Step 3)**
+   - `SpruceBeetle.csproj` and `Properties/launchSettings.json` now start `C:\Program Files\Rhino 8\System\Rhino.exe` with `/netfx`.
 
-2. **Post-build copy uses the author’s user folder**
-   - Copies to `C:\Users\Dominik\AppData\Roaming\Grasshopper\Libraries\SpruceBeetle\`
-   - That path does not exist here, so the build will fail after compile.
+2. **Post-build copy used the author’s user folder — fixed (Step 4)**
+   - Removed the `PostBuild` target that copied to `C:\Users\Dominik\...` and deleted the `.gha`. Grasshopper will load from `bin\Debug\net48` in Step 7.
 
-3. **Missing packing DLL**
-   - `Packing/BinPackingCS_GH.cs` references `CromulentBisgetti.ContainerPacking`
-   - `.csproj` HintPath: `bin\Debug\net48\CromulentBisgetti.ContainerPacking.dll`
-   - That file is not in git. It ships in the GitHub **release zip**, or as NuGet `CromulentBisgetti.ContainerPacking` ([source](https://github.com/davidmchapman/3DContainerPacking)).
+3. **Missing packing DLL — fixed (Step 5)**
+   - Replaced the `bin\Debug\net48\` HintPath with NuGet package `CromulentBisgetti.ContainerPacking` 1.0.0. `dotnet restore` succeeded.
 
 4. **Rhino 8 default runtime is .NET Core, this plugin is net48**
    - Many net48 plugins still load.
@@ -307,17 +304,19 @@ After either option, keep a copy of the DLL **next to the `.gha`** when you inst
 ## Step 6 — First build
 
 1. Close Rhino if it is open (it can lock the `.gha`).
-2. Open `SpruceBeetle.sln` in Visual Studio 2022 **or** build from a Developer PowerShell:
+2. Open `SpruceBeetle.sln` in Visual Studio 2022 and Build, **or** use Visual Studio’s MSBuild (not `dotnet build`):
 
    ```powershell
-   cd C:\Repos\Spruce-Beetle-2.0
-   dotnet restore
-   dotnet build -c Debug
+   & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" C:\Repos\Spruce-Beetle-2.0\SpruceBeetle.csproj /p:Configuration=Debug /restore
    ```
+
+   `dotnet build` fails with **MSB4803** because the Excel COM reference (`Microsoft.Office.Interop.Excel`) is not supported on the .NET Core MSBuild that `dotnet` uses. Visual Studio’s MSBuild is the .NET Framework one and can resolve COM.
 
 3. Confirm this file exists:
 
    `bin\Debug\net48\SpruceBeetle.gha`
+
+   First successful Debug build (2026-08-27) also copied `CromulentBisgetti.ContainerPacking.dll` and `Newtonsoft.Json.dll` next to the `.gha`. Two existing warnings in `DeconstructOffcut_GH.cs` (`CS0472`) are leftover and do not fail the build.
 
 Likely first-build failures and what they mean:
 
@@ -327,10 +326,11 @@ Likely first-build failures and what they mean:
 | Targeting pack net48 not found | 4.8 targeting pack missing | VS Installer → 4.8 targeting pack |
 | Cannot find CromulentBisgetti… | Step 5 not done | Add the DLL or NuGet package |
 | Copy failed … `\Users\Dominik\...` | Step 4 not done | Fix/remove PostBuild |
+| MSB4803 ResolveComReference | Used `dotnet build` | Use VS MSBuild / Build in Visual Studio |
 | Excel / COM / Interop error | Excel COM reference | Confirm Office is installed; only the Excel component needs it |
 | File locked / cannot copy `.gha` | Rhino is still open | Close Rhino completely |
 
-**Done when:** `dotnet build -c Debug` succeeds and `SpruceBeetle.gha` is in `bin\Debug\net48\`.
+**Done when:** a Debug build succeeds and `SpruceBeetle.gha` is in `bin\Debug\net48\`. **Completed.**
 
 ---
 
@@ -352,7 +352,7 @@ Windows sometimes blocks downloaded `.gha` / `.dll` files. If Grasshopper refuse
 1. Right-click the file → Properties.
 2. If you see **Unblock**, check it → Apply.
 
-**Done when:** Developer Settings lists the `bin\Debug\net48` folder and Memory load is off.
+**Done when:** Developer Settings lists the `bin\Debug\net48` folder and Memory load is off. **Completed (user confirmed).**
 
 ---
 
@@ -371,9 +371,9 @@ Windows sometimes blocks downloaded `.gha` / `.dll` files. If Grasshopper refuse
 
 6. Optional smoke test: open files under `Documentation/Examples`.
 
-**Done when:** the Spruce Beetle tab is visible and Construct Offcut can be placed on the canvas.
+**Done when:** the Spruce Beetle tab is visible and Construct Offcut can be placed on the canvas. **Completed (user confirmed).**
 
-**Do not edit plugin logic until this step is done.**
+Plugin logic can be edited from here.
 
 ---
 

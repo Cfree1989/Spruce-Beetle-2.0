@@ -2,7 +2,8 @@
   "profiles": {
     "SpruceBeetle": {
       "commandName": "Executable",
-      "executablePath": "D:\\Rhino 7\\System\\Rhino.exe"
+      "executablePath": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
+      "commandLineArgs": "/netfx"
     }
   }
 }
