@@ -2,6 +2,10 @@
 
 Work through this **in order**. Do not start changing component logic until Step 8 succeeds (the plugin tab appears in Grasshopper).
 
+**Home PC (2026-08-27):** Steps 1–8 are done. The plugin tab loads. Skip file-edit steps (3–5) on a new machine; they are already in git.
+
+**Work PC:** see [Second computer](#second-computer--work-pc) — repeat only the per-machine steps.
+
 This is a C# Grasshopper plugin (`.gha`) for Rhino. You do **not** create a new project from a template. This repo already *is* that project. The job is to get a build-and-load loop working on this machine, then edit components.
 
 Official McNeel references:
@@ -76,11 +80,11 @@ Checked 2026-08-27. **`git` is not pushing to the original author’s GitHub.**
 What still *looks* connected, and is not a git remote:
 
 1. **README / Yak metadata still link to his GitHub.** Badges, release links, and `Compiled/SpruceBeetle/manifest.yml` (`url: https://github.com/dominikreisach/Spruce-Beetle`) are leftover text from the original project. They do not give him write access to your repo.
-2. **The Git Graph is his old timeline.** Copying or cloning a repo copies **every past commit**. You have not committed yet; that is why every row still says Dominik Reisach. The cloud icon on `main` is tracking **your** `origin/main` (`Cfree1989/Spruce-Beetle-2.0`), not his.
+2. **The Git Graph is mostly his old timeline.** Copying a repo copies **every past commit**. Newer commits on `main` are yours (Rhino 8 paths, packing NuGet, this guide). The cloud icon on `main` tracks **your** `origin/main` (`Cfree1989/Spruce-Beetle-2.0`), not his.
 3. **The merge commit that names his GitHub URL is from 2023.** `Merge branch 'main' of https://github.com/dominikreisach/Spruce-Beetle` is a snapshot of *him* merging on his machine years ago. It is frozen history. It is not a current remote.
 4. **MIT license still requires keeping his copyright** in source files (`Copyright (c) 2022 Dominik Reisach`). That is attribution, not a GitHub connection. Do not strip it.
 
-Your first new commit will appear **above** his history with your name. That is the normal way to take over a copied MIT project. Do not rewrite or delete his commits unless you explicitly decide you want a blank-history repo (that is a separate, destructive step).
+Newer commits appear **above** his history with your name. That is the normal way to take over a copied MIT project. Do not rewrite or delete his commits unless you explicitly decide you want a blank-history repo (that is a separate, destructive step).
 
 To confirm anytime:
 
@@ -100,9 +104,9 @@ Optional later cleanup (not required for setup): rewrite README / `manifest.yml`
 
 ---
 
-## Machine snapshot (checked 2026-08-27)
+## Machine snapshot — home PC (checked 2026-08-27)
 
-Update the checkboxes as you complete each item.
+This table is **this computer**, not the work PC. Update it if this machine changes.
 
 | Check | Status when documented | Notes |
 |---|---|---|
@@ -120,9 +124,48 @@ Update the checkboxes as you complete each item.
 
 ---
 
+## Second computer / work PC
+
+The project fixes **travel with git**. Visual Studio, Rhino, and Grasshopper developer settings **do not**. Do not copy `bin\` from the home PC; rebuild on the work PC.
+
+Clone **your** repo, not the original author’s:
+
+`https://github.com/Cfree1989/Spruce-Beetle-2.0`
+
+### Repeat (per machine)
+
+1. **Step 1** — Visual Studio 2022 Community, .NET desktop workload, .NET Framework 4.8 targeting pack (needs admin).
+2. **Step 2** — Rhino 8 licensed and installed; open Grasshopper once so Libraries exists.
+3. Clone the repo (path can differ, e.g. not `C:\Repos\Spruce-Beetle-2.0`).
+4. **Step 6** — Build with **Visual Studio MSBuild**, not `dotnet build` (Excel COM / MSB4803).
+5. **Step 7** — `_GrasshopperDeveloperSettings` → add **this PC’s** `bin\Debug\net48` folder (whatever the clone path is) → uncheck Memory load.
+6. **Step 8** — Fully quit Rhino, reopen, confirm the Spruce Beetle tab.
+
+### Skip (already in the repo)
+
+- Step 3 (Rhino 8 `/netfx` debug paths)
+- Step 4 (Dominik post-build removed)
+- Step 5 (packing package is a NuGet reference)
+
+If Rhino 8 is not at `C:\Program Files\Rhino 8\System\Rhino.exe`, update `SpruceBeetle.csproj` and `Properties/launchSettings.json` on that machine only.
+
+### Likely blockers at work
+
+| Blocker | What it means |
+|---|---|
+| No admin rights | Cannot install Visual Studio / 4.8 targeting pack |
+| No Rhino 8 license | Cannot load or debug the `.gha` |
+| GitHub blocked | Copy the repo on USB (include `.git`), or use whatever git host work allows |
+| No Microsoft Office | Build may fail on the Excel COM reference; CSV/JSON components can still be used if we drop or isolate Excel later |
+| NuGet blocked | Restore will fail until packages can download |
+
+USB fallback: copy the whole repo folder (including `.git`). Still install VS + Rhino on that PC, then start at Step 1.
+
+---
+
 ## What is currently broken in this repo
 
-These are leftover from the original author’s machine. Fix them in the steps below **before** changing plugin behavior.
+File-edit items below are **already fixed in git**. Revisit them only if a new machine still has an old clone.
 
 1. **Debug path pointed at Rhino 7 — fixed (Step 3)**
    - `SpruceBeetle.csproj` and `Properties/launchSettings.json` now start `C:\Program Files\Rhino 8\System\Rhino.exe` with `/netfx`.
@@ -290,7 +333,7 @@ The Packing component will not compile without `CromulentBisgetti.ContainerPacki
 Add a package reference instead of a HintPath:
 
 ```xml
-<PackageReference Include="CromulentBisgetti.ContainerPacking" Version="1.0.2" />
+<PackageReference Include="CromulentBisgetti.ContainerPacking" Version="1.0.0" />
 ```
 
 Then remove the `HintPath` `<Reference>` for that DLL.
