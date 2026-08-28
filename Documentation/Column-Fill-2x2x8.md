@@ -47,7 +47,7 @@ Full path:
 
 `C:\Repos\Spruce-Beetle-2.0\Documentation\TestData\stock_column_in.csv`
 
-Do **not** use `stock_small.csv`, `stock_packing.csv`, or `stock_column_ft.csv`. Those are metres or feet and will not match an inches file.
+The other files in `Documentation/TestData/` are also in **inches**. For this column, still use `stock_column_in.csv`.
 
 ---
 

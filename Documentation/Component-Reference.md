@@ -9,7 +9,7 @@ Spruce Beetle is a Grasshopper toolkit for designing with timber (or other) **of
 
 Grasshopper category: **Spruce Beetle**. Subcategories: Create, Alignment, Packing, Fabricate.
 
-Dimensions are whatever units your Rhino document uses. Examples in this repo (for example `offcuts.csv`) are in metres: `index;x;y;z`.
+Dimensions are whatever units your Rhino document uses. Test stock in `Documentation/TestData/` is in **inches**. The original Offcut Tales file `Documentation/Reproduce/offcuts.csv` is in metres. Format is always `index;x;y;z`.
 
 ---
 
