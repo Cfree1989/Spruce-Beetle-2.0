@@ -1,6 +1,6 @@
 is_global = true
 build_property.RootNamespace = SpruceBeetle
-build_property.ProjectDir = c:\Repos\Spruce-Beetle-2.0\
+build_property.ProjectDir = C:\Repos\Spruce-Beetle-2.0\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.CsWinRTUseWindowsUIXamlProjections = false

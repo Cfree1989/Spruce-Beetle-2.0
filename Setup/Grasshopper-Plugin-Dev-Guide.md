@@ -4,7 +4,7 @@ Work through this **in order**. Do not start changing component logic until Step
 
 **Home PC (2026-08-27):** Steps 1–8 are done. The plugin tab loads. Skip file-edit steps (3–5) on a new machine; they are already in git.
 
-**Work PC:** see [Second computer](#second-computer--work-pc) — repeat only the per-machine steps.
+**Work PC (DESN-ART121-CF, 2026-09-02):** Steps 1–7 are done. Local Debug build succeeded. Confirm Step 8 (Spruce Beetle tab) after a full Rhino restart.
 
 This is a C# Grasshopper plugin (`.gha`) for Rhino. You do **not** create a new project from a template. This repo already *is* that project. The job is to get a build-and-load loop working on this machine, then edit components.
 
@@ -124,6 +124,30 @@ This table is **this computer**, not the work PC. Update it if this machine chan
 
 ---
 
+## Machine snapshot — work PC (DESN-ART121-CF, checked 2026-09-02)
+
+This table is **the work computer**, not the home PC. Path is the same clone: `C:\Repos\Spruce-Beetle-2.0`.
+
+| Check | Status when documented | Notes |
+|---|---|---|
+| Host / user | `DESN-ART121-CF` / `cfree3` | Microsoft 365 Apps for enterprise present |
+| Rhino 8 | Installed | 8.34.26223.11001 at `C:\Program Files\Rhino 8\System\Rhino.exe` |
+| Rhino 7 | Not installed | Debug/launch already point at Rhino 8 |
+| Yak CLI | Present | `C:\Program Files\Rhino 8\System\Yak.exe` |
+| Visual Studio 2022 | Installed 2026-09-02 | Community 17.14.39 at `C:\Program Files\Microsoft Visual Studio\2022\Community` |
+| VS 2019 Build Tools | Already present | Leftover; do not use for this plugin |
+| .NET SDK | Installed | 10.0.201 (machine already had it) |
+| .NET Framework 4.8 targeting pack | Installed | `v4.8` reference assemblies present |
+| Microsoft Office | Present | Excel 16 / M365 — COM reference resolved on first build |
+| Grasshopper Libraries folder | Exists, empty | No release `.gha` duplicate |
+| Developer load folder | Set | `grasshopper_kernel.xml` `Assemblies:Folders` = `C:\Repos\Spruce-Beetle-2.0\bin\Debug\net48`; `Assemblies:COFF` false (memory load off) |
+| Original Yak package 1.0.1 | Removed | Was in `packages\8.0\SpruceBeetle\`; `yak list` now only shows `raven`. Do not reinstall while developing. |
+| `CromulentBisgetti.ContainerPacking.dll` | Restored via NuGet 1.0.0 | Copied next to `.gha` on build |
+| First Debug build | Succeeded 2026-09-02 | VS MSBuild 17.14 → `bin\Debug\net48\SpruceBeetle.gha` (same two `CS0472` warnings) |
+| Plugin loads in Grasshopper | Pending Step 8 | Only remaining `.gha` on the GH search path is this repo’s Debug build. Fully quit Rhino, reopen, confirm the Spruce Beetle tab. |
+
+---
+
 ## Second computer / work PC
 
 The project fixes **travel with git**. Visual Studio, Rhino, and Grasshopper developer settings **do not**. Do not copy `bin\` from the home PC; rebuild on the work PC.
@@ -132,7 +156,9 @@ Clone **your** repo, not the original author’s:
 
 `https://github.com/Cfree1989/Spruce-Beetle-2.0`
 
-### Repeat (per machine)
+**DESN-ART121-CF (2026-09-02):** Steps 1, 2, 6, and 7 are done on this machine. Only Step 8 remains (confirm the tab after a full Rhino restart).
+
+### Repeat (per additional machine)
 
 1. **Step 1** — Visual Studio 2022 Community, .NET desktop workload, .NET Framework 4.8 targeting pack (needs admin).
 2. **Step 2** — Rhino 8 licensed and installed; open Grasshopper once so Libraries exists.
