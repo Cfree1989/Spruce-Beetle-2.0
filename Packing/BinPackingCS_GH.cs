@@ -84,8 +84,11 @@ namespace SpruceBeetle.Packing
             if(!DA.GetDataList(0, offcutData)) return;
             if (!DA.GetData(1, ref boundingBox)) return;
 
-            // create bounding box at origin
-            Box originBox = new Box(Plane.WorldXY, new Interval(0, boundingBox.X.T1), new Interval(0, boundingBox.Y.T1), new Interval(0, boundingBox.Z.T1));
+            // Container at World XY from the origin, using axis *lengths* (T1 is wrong when a domain starts below 0).
+            Box originBox = new Box(Plane.WorldXY,
+                new Interval(0, boundingBox.X.Length),
+                new Interval(0, boundingBox.Y.Length),
+                new Interval(0, boundingBox.Z.Length));
 
             /*  Because kinked surfaces can cause problems down stream, Rhino always splits kinked surfaces when adding Breps to the document.
                 Sometimes, we have to do it.    */
@@ -152,21 +155,22 @@ namespace SpruceBeetle.Packing
 
             List<Brep> packedOffcuts = new List<Brep>();
 
+            // EB-AFIT is a pallet packer: Length→X, Height→Y, Width→Z.
+            // Rhino/architecture uses Z-up, so swap library Y (height) with Z (width).
             for ( int i = 0; i < packedItems.Count; i++)
             {
                 double ocX = (double)packedItems[i].PackDimX;
-                double ocY = (double)packedItems[i].PackDimY;
-                double ocZ = (double)packedItems[i].PackDimZ;
+                double ocY = (double)packedItems[i].PackDimZ;
+                double ocZ = (double)packedItems[i].PackDimY;
 
                 double cX = (double)packedItems[i].CoordX;
-                double cY = (double)packedItems[i].CoordY;
-                double cZ = (double)packedItems[i].CoordZ;
+                double cY = (double)packedItems[i].CoordZ;
+                double cZ = (double)packedItems[i].CoordY;
 
                 Point3d basePt = new Point3d(cX, cY, cZ);
-                Vector3d baseVec = new Vector3d(0, 0, 1);
                 Vector3d normalVec = new Vector3d(0, 0, ocZ);
 
-                Plane basePlane = new Plane(basePt, baseVec);
+                Plane basePlane = new Plane(basePt, Vector3d.ZAxis);
 
                 Rectangle3d baseRect = new Rectangle3d(basePlane, ocX, ocY);
 

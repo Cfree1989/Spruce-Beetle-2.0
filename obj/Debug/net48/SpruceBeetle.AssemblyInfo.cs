@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("A toolkit for working with timber offcuts and reclaimed timber")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1+96c2665b6da011f026d74c1f1fa5352aa306816e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1+452ac49355a194aaa0164f1a2334ab0272af9c38")]
 [assembly: System.Reflection.AssemblyProductAttribute("SpruceBeetle")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SpruceBeetle")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]

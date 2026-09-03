@@ -10,16 +10,18 @@
         "projectUniqueName": "C:\\Repos\\Spruce-Beetle-2.0\\SpruceBeetle.csproj",
         "projectName": "SpruceBeetle",
         "projectPath": "C:\\Repos\\Spruce-Beetle-2.0\\SpruceBeetle.csproj",
-        "packagesPath": "C:\\Users\\cfree3\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\Ctfr\\AppData\\Local\\Temp\\cursor-sandbox-cache\\d4009c32acc12699df4b1ac237d725bb\\nuget",
         "outputPath": "C:\\Repos\\Spruce-Beetle-2.0\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\cfree3\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Ctfr\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net48"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
