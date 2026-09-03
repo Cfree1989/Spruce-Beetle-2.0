@@ -63,8 +63,9 @@ namespace SpruceBeetle.Packing
         // parameter outputs
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddBrepParameter("Packed Offcuts", "POc", "List of packed Offcuts", GH_ParamAccess.list);
+            pManager.AddBrepParameter("Packed Offcuts", "POc", "List of packed Offcuts as solids", GH_ParamAccess.list);
             pManager.AddBrepParameter("Container", "C", "The container where the Offcuts are packed into", GH_ParamAccess.item);
+            pManager.AddGenericParameter("Offcuts", "Oc", "Packed pieces as Offcuts (index, rotated size, geometry, Z-end planes). Feed Packed Stacks, then Tenon Joints.", GH_ParamAccess.list);
 
             pManager.HideParameter(1);
 
@@ -94,19 +95,26 @@ namespace SpruceBeetle.Packing
                 Sometimes, we have to do it.    */
             originBox.ToBrep().Faces.SplitKinkyFaces(0.0001);
 
-            // call PackOffcuts method
-            List<Brep> packedOffcuts = PackOffcuts(boundingBox, offcutData);
+            List<Offcut> packedOffcuts = PackOffcuts(boundingBox, offcutData);
 
-            // access output parameters
-            DA.SetDataList(0, packedOffcuts);
+            var packedBreps = new List<Brep>(packedOffcuts.Count);
+            var packedGH = new List<Offcut_GH>(packedOffcuts.Count);
+            for (int i = 0; i < packedOffcuts.Count; i++)
+            {
+                packedBreps.Add(packedOffcuts[i].OffcutGeometry);
+                packedGH.Add(new Offcut_GH(packedOffcuts[i]));
+            }
+
+            DA.SetDataList(0, packedBreps);
             DA.SetData(1, originBox);
+            DA.SetDataList(2, packedGH);
         }
 
 
         //------------------------------------------------------------
         // PackOffcuts
         //------------------------------------------------------------
-        protected List<Brep> PackOffcuts(Box boundingBox, List<Offcut> offcutData)
+        protected List<Offcut> PackOffcuts(Box boundingBox, List<Offcut> offcutData)
         {
             // box dimensions
             double xB = boundingBox.X.Length;
@@ -153,7 +161,7 @@ namespace SpruceBeetle.Packing
             var pkdItems = results[0].AlgorithmPackingResults;
             var packedItems = pkdItems[0].PackedItems;
 
-            List<Brep> packedOffcuts = new List<Brep>();
+            var packedOffcuts = new List<Offcut>();
 
             // EB-AFIT is a pallet packer: Length→X, Height→Y, Width→Z.
             // Rhino/architecture uses Z-up, so swap library Y (height) with Z (width).
@@ -182,12 +190,35 @@ namespace SpruceBeetle.Packing
                 closedOffcut.Faces.SplitKinkyFaces(0.0001);
 
                 if (BrepSolidOrientation.Inward == closedOffcut.SolidOrientation)
-                {
                     closedOffcut.Flip();
-                    packedOffcuts.Add(closedOffcut);
-                }
-                else
-                    packedOffcuts.Add(closedOffcut);
+
+                int sourceId = packedItems[i].ID;
+                Offcut source = (sourceId >= 0 && sourceId < offcutData.Count)
+                    ? offcutData[sourceId]
+                    : new Offcut(sourceId, ocX, ocY, ocZ);
+
+                Point3d bottom = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ);
+                Point3d top = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ + ocZ);
+                Point3d mid = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ + ocZ * 0.5);
+
+                Plane firstPlane = new Plane(bottom, Vector3d.ZAxis);
+                Plane secondPlane = new Plane(top, Vector3d.ZAxis);
+                Plane averagePlane = new Plane(mid, Vector3d.ZAxis);
+
+                packedOffcuts.Add(Offcut.CreateOffcut(
+                    closedOffcut,
+                    source.Index,
+                    ocX,
+                    ocY,
+                    ocZ,
+                    source.Vol > 0 ? source.Vol : ocX * ocY * ocZ,
+                    ocX * ocY * ocZ,
+                    firstPlane,
+                    secondPlane,
+                    averagePlane,
+                    averagePlane,
+                    basePlane,
+                    0));
             }
 
             return packedOffcuts;
