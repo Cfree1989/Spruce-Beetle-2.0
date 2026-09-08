@@ -1,0 +1,34 @@
+---
+description: Log every plugin change in the thesis change log for master's research notes
+alwaysApply: true
+---
+
+# Thesis change log
+
+This repo is **thesis work** on the Spruce Beetle Grasshopper plugin (fork of Dominik Reisach’s toolkit).
+
+## Mandatory logging
+
+After **any** change that lands in the repo (component logic, Base types, docs, setup, tests, Grasshopper examples), **append an entry** to `Documentation/Thesis-Change-Log.md` in the **same turn** as the change. Do not wait for a later “write notes” request.
+
+- Log failed experiments and reverted approaches — those are thesis evidence.
+- Skip only: edits that exist solely to add the log entry itself, and generated `bin/` / `obj/` output.
+- Keep entries factual and specific (files, before/after behavior, why). Do not invent thesis claims the user did not state.
+- If a change affects user-facing component behavior, note that `Documentation/Component-Reference.md` may need an update; the change log is mandatory either way.
+- Newest entry at the top. Use the template in the log file.
+
+## Entry quality
+
+```markdown
+<!-- ❌ Thin -->
+### 2026-09-08 — Fixed packing
+Changed packing. Works now.
+
+<!-- ✅ Good -->
+### 2026-09-08 — feature: Prefer longer stock in EB-AFIT packing
+**Motivation:** Column-fill workflow needs fewer leftover short pieces.
+**Files:** `Packing/BinPackingCS_GH.cs`
+**Before → after:** Packer filled with mixed short leftovers → prefers max-length candidates first when volume ties.
+**Result:** Column filled with 4 fewer pieces in test CSV; short stock left unused.
+**Follow-ups:** Re-test with `stock_column_in.csv`; update Component-Reference if input semantics change.
+```
