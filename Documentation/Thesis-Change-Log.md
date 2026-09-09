@@ -44,6 +44,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-09 — docs: Add JSON twins of TestData stock CSVs
+
+- **Motivation:** JSON to Offcut (`To Offcut`) needs a serialized Offcut array; packing tests should work without CSV to Offcut.
+- **Files:** `Documentation/TestData/stock_*.json` (seven files, 100 Offcuts each), matching the CSVs expanded the same day.
+- **Before → after:** Stock existed as `index;x;y;z` CSV only → each CSV now has a JSON array of `{ Index, X, Y, Z, Vol }` (inches). No geometry or planes (same as Construct / CSV to Offcut before alignment).
+- **Result / observation:** Grasshopper path: Panel with full path → **JSON to Offcut**. `Documentation/Reproduce/offcuts.csv` was not converted.
+- **Follow-ups:** Point `Initial_Tests.gh` at `stock_column_in.json` if testing that import path.
+
 ### 2026-09-09 — docs: Expand all TestData stock CSVs to 100 offcuts
 
 - **Motivation:** Larger packing tests (column fill and contact joints) need more stock than the original 8–60 row files.
