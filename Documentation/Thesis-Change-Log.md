@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches), then group Z-stacks so Tenon Joints can run on packed (not curve-aligned) pieces.
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options: **Packed Stacks → Tenon Joints** (every Z-bed, centered), or **Packed Contacts → Select Contacts → Contact Joints** (Z + XY faces, tool-sized pockets offset toward seams).
 
 Related guides already in the repo:
 
@@ -43,6 +43,14 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-08 — feature: Packed face contacts and tool-sized Contact Joints
+
+- **Motivation:** Packed column needs joints that hold the structure together without a tenon on every face center. Joint shape should follow CNC bit size; placement should sit on sides/seams (see `joint placement.png`), with Packed Stacks kept as a separate Grasshopper option.
+- **Files:** `Packing/PackedNeighbors.cs`, `Packing/PackedContact_GH.cs`, `Packing/PackedContacts_GH.cs`, `Packing/SelectContacts_GH.cs`, `Packing/ContactJoints_GH.cs`
+- **Before → after:** Only Packed Stacks (Z-columns) feeding Tenon Joints (centered, independent JX/JY/JZ) → new parallel path: **Packed Contacts** (`PackContacts`) lists Z and XY face contacts (planes, overlap rectangles, axis); **Select Contacts** (`PickJoints`) filters All / Z / XY / Seams / Connected; **Contact Joints** (`PackJoints`) cuts matching pockets from tool diameter `D` (fillet `D/2`, width `W×D`, depth `min(D, ~1/3 thinner member)`, inset `D` toward a triple-seam edge). PackBin, Packed Stacks, and Tenon Joints GUIDs unchanged.
+- **Result / observation:** Wired on `Initial_Tests.gh` beside the stack path. On `stock_column_in.csv` pack (~33 pieces): 88 contacts (28 Z, 60 XY). **Seams currently keeps all 88** (seam test too loose). Contact Joints: 23 pockets cut, 65 skipped (overlap too small for `D=0.25"` and/or boolean difference failed). Boolean failures are logged as skipped planes; pieces keep the last successful solid.
+- **Follow-ups:** Tighten Seams so it matches the red-tick sketch; reduce boolean failures; try Connected vs Z-only; update `Documentation/Component-Reference.md` for the three new Packing components. Optional later: Tenon placement enum (Center / Edge) without replacing this path.
 
 ### 2026-09-08 — docs: Backfill thesis log from 2026 git history
 
