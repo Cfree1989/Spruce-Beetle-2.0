@@ -44,6 +44,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-09 — docs: Expand all TestData stock CSVs to 100 offcuts
+
+- **Motivation:** Larger packing tests (column fill and contact joints) need more stock than the original 8–60 row files.
+- **Files:** `Documentation/TestData/stock_small.csv`, `stock_uniform.csv`, `stock_varied_length.csv`, `stock_mixed_section.csv`, `stock_packing.csv`, `stock_column_in.csv`, `stock_column_ft.csv`
+- **Before → after:** Each file had 8 / 12 / 20 / 12 / 24 / 60 / 60 rows → each now has 100 `index;x;y;z` rows. Extra rows cycle the original sizes; indices are 1–100. Format and units unchanged (inches). `Documentation/Reproduce/offcuts.csv` (Offcut Tales, metres) was not edited.
+- **Result / observation:** `stock_column_in.csv` / `stock_column_ft.csv` still use the same lumber mix (3″–24″ sections, 12″–96″ lengths) that fits a 24×24×96 column. Uniform / varied-length / mixed-section / packing files keep their original cross-sections and length sets, repeated.
+- **Follow-ups:** Re-run pack + Packed Contacts / Packed Stacks; leftover unused stock is expected if 100 pieces exceed column volume.
+
 ### 2026-09-08 — feature: Packed face contacts and tool-sized Contact Joints
 
 - **Motivation:** Packed column needs joints that hold the structure together without a tenon on every face center. Joint shape should follow CNC bit size; placement should sit on sides/seams (see `joint placement.png`), with Packed Stacks kept as a separate Grasshopper option.
