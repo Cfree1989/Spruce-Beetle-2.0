@@ -44,6 +44,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-10 — docs: More varied sizes in column test stock
+
+- **Motivation:** Column packing tests looked repetitive because the 100-row CSVs just cycled a handful of 3/6/12/24" blocks.
+- **Files:** `Documentation/TestData/stock_column_in.csv`, `stock_column_ft.csv`, `stock_column_in.json`, `stock_column_ft.json`, `Documentation/Column-Fill-2x2x8.md`
+- **Before → after:** Mostly duplicate 6×6, 12×6, 12×12 at 12/24/48/96" → 100 leftover-like pieces (97 unique triples). Sections 2–24", lengths 8–96", including three full-height sticks (4×4×96, 6×8×96, 3×5×96). All still fit a 24×24×96 box with rotation. JSON twins regenerated. Other TestData files unchanged.
+- **Result / observation:** Mix is leftover-looking (odd pairs like 5×7, 9×12, 16×16) rather than a stud grid. `stock_column_ft.csv` stays a copy in inches (filename is not a unit converter).
+- **Follow-ups:** Re-pack `stock_column_in.csv` / `.json` in Grasshopper; expect a more irregular fill and different contact counts.
+
 ### 2026-09-09 — docs: Add JSON twins of TestData stock CSVs
 
 - **Motivation:** JSON to Offcut (`To Offcut`) needs a serialized Offcut array; packing tests should work without CSV to Offcut.

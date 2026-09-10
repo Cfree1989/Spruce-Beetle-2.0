@@ -41,7 +41,7 @@ No header. Semicolon delimiter. Example:
 1;6;6;24
 ```
 
-That is a **6" × 6" × 24"** block. The file mixes 3", 6", 12", and 24" sections and lengths of 12", 24", 48", and 96".
+That is a **6" × 6" × 24"** block. The file mixes leftover-like sections from 2"–24" and lengths from 8"–96" (including a few full-height 96" sticks).
 
 Full path:
 
@@ -166,8 +166,8 @@ XY Plane → Box (0–24, 0–24, 0–96) ── B┘
 | Goal | What to change |
 | --- | --- |
 | More solid column | Add more rows to the CSV, or smaller x/y (still ≤ 24) |
-| Fewer leftover gaps | Mix of 6" and 12" sections (already in `stock_column_in.csv`) |
-| Fewer parts / bigger blocks | Delete small rows; keep 12×12×24 and 12×12×48 |
+| Fewer leftover gaps | Add more small leftover rows (2–5" sections) |
+| Fewer parts / bigger blocks | Delete small rows; keep larger cubes and 16–24" slabs |
 | See unused stock | List Length on Offcuts vs Packed Offcuts |
 | Different column size | Change the Box domains; keep CSV units in inches |
 
