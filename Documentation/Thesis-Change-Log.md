@@ -10,10 +10,11 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options: **Packed Stacks → Tenon Joints** (every Z-bed, centered), or **Packed Contacts → Select Contacts → Contact Joints** (Z + XY faces, tool-sized pockets offset toward seams).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options (keep both): **Packed Stacks → Tenon Joints** (Z-columns, centered), or **Packed Contacts → Select Contacts → Contact Tenon** (today still named Contact Joints; Z + XY, placement Center / Edge / Seam). Spec: [Packing-Joints.md](Packing-Joints.md). Code rename and extra knobs are not shipped yet.
 
 Related guides already in the repo:
 
+- [Packing-Joints.md](Packing-Joints.md)
 - [Component-Reference.md](Component-Reference.md)
 - [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md)
 - [Grasshopper-Plugin-Dev-Guide.md](../Setup/Grasshopper-Plugin-Dev-Guide.md)
@@ -43,6 +44,14 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-10 — docs: Packing joints spec (Contact Tenon, two paths)
+
+- **Motivation:** Packed Stacks, Packed Contacts, Select Contacts, and Contact Joints were added without a written contract. Need intended function vs as-built before renaming Contact Joints, adding depth/inset, or changing placement.
+- **Files:** `Documentation/Packing-Joints.md`, `Documentation/Thesis-Change-Log.md`
+- **Before → after:** No packing-joint spec → working spec: two parallel paths (Stacks → Alignment Tenon kept; Contacts → Contact Tenon); per-component intended / as-built / issues; Contact Joints proposed rename to **Contact Tenon** (`PackTenon`, GUID unchanged); proposed knobs `Dep`, `I`, `Place` (Center / Edge / Seam, default Seam per `joint placement.png`). No plugin code changed.
+- **Result / observation:** Seams *filter* (Select Contacts, too loose: 88/88) is a separate bug from Seam *placement* (Contact Tenon). Component-Reference and Column-Fill were left stale on purpose until the Contact Tenon edit ships. Contact Spline named as later only.
+- **Follow-ups:** Review the spec; then code pass: rename + `Dep`/`I`/`Place`; then tighten Seams to T-junctions; then sync Component-Reference.
 
 ### 2026-09-10 — docs: More varied sizes in column test stock
 
