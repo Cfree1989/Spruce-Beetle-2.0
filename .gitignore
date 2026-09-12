@@ -1,5 +1,23 @@
+# Visual Studio / .NET
+.vs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.sln.docstates
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+*.nupkg
+project.lock.json
+project.fragment.lock.json
+**/packages/*
+!**/packages/build/
+
 # Mac system files
-*.DS_Store
+.DS_Store
 
 # Rhino Package Manager files
 *.yak

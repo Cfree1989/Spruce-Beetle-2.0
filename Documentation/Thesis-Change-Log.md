@@ -14,6 +14,7 @@ Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ 
 
 Related guides already in the repo:
 
+- [README.md](README.md) — what each doc is for
 - [Packing-Joints.md](Packing-Joints.md)
 - [Component-Reference.md](Component-Reference.md)
 - [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md)
@@ -44,6 +45,22 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-12 — setup: Restore Custom Joints; do not delete components
+
+- **Motivation:** Cleanup had removed `Alignment/CustomJoints.cs` as dead code (entire class commented out). User rule: do not delete any components.
+- **Files:** `Alignment/CustomJoints.cs` restored from git; `Setup/Repo-Cleanup-Todo.md`; this log.
+- **Before → after:** Custom Joints file deleted on disk → same commented-out source as before cleanup. Still not registered in Grasshopper (class remains commented).
+- **Result / observation:** Hygiene can drop unused icons and junk files. Component `.cs` files stay, even if commented out.
+- **Follow-ups:** Leave Custom Joints archived in-place unless it is uncommented on purpose.
+
+### 2026-09-12 — setup: Repo hygiene, docs index, and fork identity
+
+- **Motivation:** Build artifacts and leftover files were in git; README still described Dominik’s upstream repo. Needed a cleaner working copy without changing packing or joint C#.
+- **Files:** `.gitignore`; untracked `bin/` `obj/` `.DS_Store`; `SpruceBeetle.csproj`; `SpruceBeetleInfo.cs`; `SpruceBeetle.sln`; `Properties/Resources.resx`; `Properties/Resources.Designer.cs`; unused `Resources/24x24_{BinPacking,BinPackingPy,ContainerPacking,DirectAlignment}.png` removed; deleted `Documentation/Examples/Insert file path here`; `Documentation/joint-placement.png` (moved from root); `Documentation/README.md`; `Documentation/Component-Reference.md`; `Documentation/Packing-Joints.md`; `Setup/Repo-Cleanup-Todo.md`; `README.md`; `LICENSE`; `Compiled/SpruceBeetle/manifest.yml`; `Compiled/SpruceBeetle/misc/README.md`; `Compiled/SpruceBeetle/misc/LICENSE`. `Alignment/CustomJoints.cs` was deleted then restored (see entry above).
+- **Before → after:** Tracked Debug `.gha` / `obj/` and a ~4 MB misnamed JSON → ignored build output (local `bin\Debug\net48\SpruceBeetle.gha` kept on disk). csproj `0.1` vs Yak `1.0.1` → both **1.0.1** (`version: $version`). README/Yak pointed at DominikReisach/Spruce-Beetle → this fork, with original MIT credit and plugin `AuthorName` still Dominik Reisach. No Grasshopper component behavior change.
+- **Result / observation:** Source folders left as Grasshopper tabs. Component-Reference packing tables still stale on purpose (see Packing-Joints). Compiled `.gha` remains a snapshot, not source of truth.
+- **Follow-ups:** Sync Component-Reference after Contact Tenon ships; optional Excel COM / Git LFS still listed in `Setup/Repo-Cleanup-Todo.md`.
 
 ### 2026-09-10 — docs: Packing joints spec (Contact Tenon, two paths)
 

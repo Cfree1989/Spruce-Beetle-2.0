@@ -83,16 +83,6 @@ namespace SpruceBeetle.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap _24x24_BinPackingPy {
-            get {
-                object obj = ResourceManager.GetObject("_24x24_BinPackingPy", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap _24x24_ConstructOffcut {
             get {
                 object obj = ResourceManager.GetObject("_24x24_ConstructOffcut", resourceCulture);
@@ -136,16 +126,6 @@ namespace SpruceBeetle.Properties {
         internal static System.Drawing.Bitmap _24x24_Deconstruct_Offcut {
             get {
                 object obj = ResourceManager.GetObject("_24x24_Deconstruct_Offcut", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap _24x24_DirectAlignment {
-            get {
-                object obj = ResourceManager.GetObject("_24x24_DirectAlignment", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -45,6 +45,9 @@ namespace SpruceBeetle
         // guid of gh library
         public override Guid Id => new Guid("ED2527D8-505A-4566-A0FD-49166600227C");
 
+        // assembly version from csproj (Yak $version reads this)
+        public override string Version => GetType().Assembly.GetName().Version.ToString();
+
         // author name
         public override string AuthorName => "Dominik Reisach";
 

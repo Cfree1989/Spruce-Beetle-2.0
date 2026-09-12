@@ -6,7 +6,7 @@ This is **not** the user-facing [Component-Reference.md](Component-Reference.md)
 
 No C# changes in this pass. Rename, extra knobs, and placement modes below are **proposed**.
 
-Related: [joint placement.png](../joint%20placement.png) at the repo root (Seam placement target), [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) (pack a 24×24×96 box; still says packing does not make joints).
+Related: [joint-placement.png](joint-placement.png) (Seam placement target), [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) (pack a 24×24×96 box; still says packing does not make joints).
 
 ---
 
@@ -122,7 +122,7 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 | All | Every contact | Same |
 | Z | Z beds only | Same |
 | XY | X or Y stitches only | Same |
-| Seams | Contacts that meet a **T-junction / third piece**, matching the red ticks on [joint placement.png](../joint%20placement.png) | `SharesSeam`: keep a contact if its overlap box is near any other contact of a **different** axis. Too loose — column test kept **88 of 88**. |
+| Seams | Contacts that meet a **T-junction / third piece**, matching the red ticks on [joint-placement.png](joint-placement.png) | `SharesSeam`: keep a contact if its overlap box is near any other contact of a **different** axis. Too loose — column test kept **88 of 88**. |
 | Connected | Small set that still ties the pack together (prefer seams, then Z, then XY by area) | `SelectConnected` union-find; stops when joinable pieces are one component |
 
 **As-built:** [Packing/SelectContacts_GH.cs](../Packing/SelectContacts_GH.cs). GUID `1D9A6E40-C3B2-4F58-A817-6E0C4D92F1AB`. Icon is Unification (cosmetic).
@@ -191,7 +191,7 @@ Defaults should match today’s look so old canvases do not jump.
 
 - **Center** — origin at the overlap rectangle center (Alignment Tenon analogue). `I` unused.
 - **Edge** — inset `I` toward the **shortest** overlap edge (no third-piece test).
-- **Seam** (default) — inset `I` toward a **T-junction / third-piece corner**, as marked in [joint placement.png](../joint%20placement.png). If no third piece, fall back to Edge.
+- **Seam** (default) — inset `I` toward a **T-junction / third-piece corner**, as marked in [joint-placement.png](joint-placement.png). If no third piece, fall back to Edge.
 
 Later (not required for the first Contact Tenon edit): pocket **length** along the seam (non-square slot), explicit fillet `R` instead of `D/2`.
 

@@ -124,9 +124,6 @@
   <data name="_24x24_BinPackingCS" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\24x24_BinPackingCS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="_24x24_BinPackingPy" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\24x24_BinPackingPy.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="_24x24_ConstructOffcut" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\24x24_ConstructOffcut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -141,9 +138,6 @@
   </data>
   <data name="_24x24_Deconstruct_Offcut" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\24x24_Deconstruct Offcut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="_24x24_DirectAlignment" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\24x24_DirectAlignment.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="_24x24_ExcelOffcut" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\24x24_ExcelOffcut.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

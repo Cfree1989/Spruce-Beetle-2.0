@@ -2,7 +2,7 @@
 	
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
-    <Version>0.1</Version>
+    <Version>1.0.1</Version>
     <Title>SpruceBeetle</Title>
     <Description>A toolkit for working with timber offcuts and reclaimed timber</Description>
     <TargetExt>.gha</TargetExt>
@@ -18,25 +18,16 @@
   <ItemGroup>
     <None Remove="Resources\24x24_BasicAlignment.png" />
     <None Remove="Resources\24x24_BinPackingCS.png" />
-    <None Remove="Resources\24x24_BinPackingPy.png" />
-    <None Remove="Resources\24x24_BinPacking_EBAFIT.png" />
     <None Remove="Resources\24x24_ConstructOffcut.png" />
-    <None Remove="Resources\24x24_CreateJoints.png" />
     <None Remove="Resources\24x24_CSVCoord.png" />
     <None Remove="Resources\24x24_CSVFiles.png" />
     <None Remove="Resources\24x24_CSVOffcut.png" />
-    <None Remove="Resources\24x24_CustomJoints.png" />
     <None Remove="Resources\24x24_Deconstruct Offcut.png" />
-    <None Remove="Resources\24x24_DeconstructOffcut.png" />
-    <None Remove="Resources\24x24_DirectAlignment.png" />
     <None Remove="Resources\24x24_ExcelOffcut.png" />
-    <None Remove="Resources\24x24_ExcelToOffcut.png" />
-    <None Remove="Resources\24x24_FindConnections.png" />
     <None Remove="Resources\24x24_FindIntersections.png" />
     <None Remove="Resources\24x24_GetBrep.png" />
     <None Remove="Resources\24x24_IntersectionJoints.png" />
     <None Remove="Resources\24x24_JSONOffcut.png" />
-    <None Remove="Resources\24x24_LapJoints.png" />
     <None Remove="Resources\24x24_MoveToOrigin.png" />
     <None Remove="Resources\24x24_Offcut.png" />
     <None Remove="Resources\24x24_OffcutJSON.png" />
@@ -46,12 +37,7 @@
     <None Remove="Resources\24x24_TenonJoints.png" />
     <None Remove="Resources\24x24_TestAlignment.png" />
     <None Remove="Resources\24x24_Unification.png" />
-    <None Remove="Resources\24x24_UpcycleTimber.png" />
     <None Remove="Resources\24x24_UpdateList.png" />
-    <None Remove="Resources\Alignment.png" />
-    <None Remove="Resources\AlignmentOptimized.png" />
-    <None Remove="Resources\CromulentBisgetti.ContainerPacking.dll" />
-    <None Remove="Resources\UpcycleTimber.png" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -70,9 +56,6 @@
     <EmbeddedResource Include="Resources\24x24_BasicAlignment.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\24x24_BinPackingPy.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
     <EmbeddedResource Include="Resources\24x24_ConstructOffcut.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -89,9 +72,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\24x24_Deconstruct Offcut.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Resources\24x24_DirectAlignment.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\24x24_ExcelOffcut.png">

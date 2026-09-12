@@ -1,5 +1,7 @@
 # Spruce Beetle — Component Reference
 
+> **Packing path:** this catalog still describes packing as Brep-only. For Packed Stacks, Packed Contacts, Select Contacts, and Contact Joints (proposed Contact Tenon), use [Packing-Joints.md](Packing-Joints.md). Sync this file after those edits ship.
+
 Spruce Beetle is a Grasshopper toolkit for designing with timber (or other) **offcuts**: rectangular leftover pieces described by an index and three dimensions. Typical workflow:
 
 1. **Create** offcut records from numbers, CSV, Excel, or JSON.
