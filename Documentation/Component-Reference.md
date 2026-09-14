@@ -209,6 +209,34 @@ Warns if `Oc` is empty, or if a used Index is missing from `OcD`.
 
 ---
 
+### Label Offcut Numbers (`LabelN`)
+
+**What it does:** Cuts the stock number (CSV column 1 / number written on the scrap) into the **largest vertical face** of each packed or aligned Offcut. This is an engrave (Boolean difference), not a Rhino `_Dot` and not a raised Boss.
+
+Does **not** sort. **Used Offcuts** is still the sorted pick list.
+
+Face choice: skip top/bottom (`|normal · World Z| > 0.5`); pick the largest remaining face. The number is upright (World Z projected onto the face) and sized to fit (~80% of the face). Depth is clamped so it cannot punch through. If the boolean fails, that piece keeps its last good solid and the face plane goes to `Sk`.
+
+Re-wire old canvases: the former `D` (dots) pin is gone; use `Oc` / `C`.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | — | Packed `Oc` or aligned `AOc`. |
+| Size | S | Number | Item | `1` | Letter height in model units. Clamped to fit the face. |
+| Depth | Dep | Number | Item | `0.125` | Cut depth. Clamped to about 40% of thickness along the face normal. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | Same order; geometry has the number cut in. |
+| Cutters | C | Brep | List | Letter solids used to cut (preview). |
+| Skipped | Sk | Plane | List | Faces that could not be cut. Hidden in the viewport by default. |
+
+---
+
 ### List Update (`Update`)
 
 **What it does:** Removes used Offcuts from a stock list by matching **Index**. Feed the original stock list and the pieces you already placed; you get leftovers.

@@ -7,7 +7,8 @@ This guide assumes Rhino **model units = Inches**.
 ```text
 CSV of parts  →  CSV to Offcut  →  Offcut list ─┬─► Bin Packing EB-AFIT  →  packed solids + Oc
 24 × 24 × 96 Box  ──────────────────────────────┘         │
-                                                          └─► Used Offcuts  →  numbered scraps used / leftover
+                                                          ├─► Used Offcuts  →  numbered scraps used / leftover
+                                                          └─► Label Offcut Numbers  →  number cut into largest vertical face
 ```
 
 ---
@@ -151,6 +152,7 @@ CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packe
         │        XY Plane → Box  ── B┘
         │                             └──► Container (preview the 24×24×96)
         │                             └──► Oc ──► Used Offcuts (U = pick these, Un = leftovers)
+        │                             └──► Oc ──► Label Offcut Numbers (cut-in number on largest vertical face)
         └──────────────────────────────────────────── OcD ─┘
 ```
 
@@ -162,7 +164,7 @@ CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packe
 - It will **not** fill an arbitrary Brep (tapered column, fluted section). Only a **rectangular** Box.
 - It will **not** guarantee a 100% fill. EB-AFIT is a fast packer, not a perfect one. Add more stock or smaller pieces if you see voids.
 
-Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1). Use **Used Offcuts** for the pick list. `POc` is solids only.
+Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1). Use **Used Offcuts** for the pick list. Use **Label Offcut Numbers** to cut that number into the largest vertical face of each piece. `POc` is solids only (no Index).
 
 ---
 

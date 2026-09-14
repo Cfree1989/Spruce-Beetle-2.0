@@ -46,6 +46,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-14 — feature: Label Offcut Numbers engraves Index on the largest vertical face
+
+- **Motivation:** Shop/model labels should be 3D letters cut into an outside face (like `_TextObject` curves + gumball Cut), not center dots. One largest vertical face per piece.
+- **Files:** `Create/LabelOffcutNumbers_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; this log.
+- **Before → after:** `LabelN` placed Rhino `_Dot`s at AveragePlane → cuts Index into the largest vertical Brep face (`Curve.CreateTextOutlines` + inward BooleanDifference). GUID unchanged. Inputs `S` (letter height, default 1, clamped to face) and `Dep` (default 0.125, max ~40% of thickness). Outputs `Oc` (cut Offcuts), `C` (letter solids), `Sk` (failed faces). Old `D` dot pin is gone (re-wire).
+- **Result / observation:** N/A until a column pack is re-tested in Grasshopper. Boolean fail keeps the uncut solid.
+- **Follow-ups:** Close Rhino and rebuild. Check a packed `Oc` list: numbers upright on the big side, holes in 8/0/6/9, no punch-through on thin scraps.
+
+### 2026-09-14 — feature: Label Offcut Numbers places Rhino dots on packed pieces
+
+- **Motivation:** After packing, need to see which numbered scrap sits where in the column (Used Offcuts is only a sorted pick list).
+- **Files:** `Create/LabelOffcutNumbers_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; this log.
+- **Before → after:** No in-model labels → Create component **Label Offcut Numbers** (`LabelN`): packed/aligned `Oc` → text dots at AveragePlane (Brep bbox center fallback), text = Index, optional height `S` default 2. Not sorted. Bake `D` to keep dots in the `.3dm`.
+- **Result / observation:** Grasshopper 7.15 has no `AddTextDotParameter`; dots go out as generic goo plus component preview/bake. Dots sit at piece centers and can hide inside a dense pack; ghost geometry or hide `POc` to read them. Offset/explode left for later.
+- **Follow-ups:** Rebuild after closing Rhino; confirm dots match CSV numbers on a column pack.
+
 ### 2026-09-14 — feature: Sort Used Offcuts lists numerically
 
 - **Motivation:** Shop pick list should match numbered scraps in a pile and a CSV, not packing/build order.
