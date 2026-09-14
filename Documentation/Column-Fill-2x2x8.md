@@ -5,8 +5,9 @@ Use Spruce Beetle **Bin Packing EB-AFIT** to pack leftover rectangular parts int
 This guide assumes Rhino **model units = Inches**.
 
 ```text
-CSV of parts  →  CSV to Offcut  →  Offcut list
-24 × 24 × 96 Box  ──────────────→  Bin Packing EB-AFIT  →  packed solids
+CSV of parts  →  CSV to Offcut  →  Offcut list ─┬─► Bin Packing EB-AFIT  →  packed solids + Oc
+24 × 24 × 96 Box  ──────────────────────────────┘         │
+                                                          └─► Used Offcuts  →  numbered scraps used / leftover
 ```
 
 ---
@@ -35,7 +36,7 @@ Format (required by **CSV to Offcut**):
 index;x;y;z
 ```
 
-No header. Semicolon delimiter. Example:
+No header. Semicolon delimiter. `index` is the number written on the physical scrap. Example:
 
 ```text
 1;6;6;24
@@ -114,11 +115,12 @@ It must be a Grasshopper **Box**. A Brep is not enough: **Bounding Box** first, 
    | --- | --- | --- |
    | Packed Offcuts | `POc` | Solids inside the 24×24×96 volume (at the origin) |
    | Container | `C` | The empty 24×24×96 box at the origin (preview often hidden; right-click output → Preview) |
+   | Offcuts | `Oc` | Packed pieces with Index (the CSV / written stock number), rotated size, geometry, and Z-end planes |
 
 4. Zoom the Rhino viewport to **0,0,0**. You should see a 2'×2'×8' volume filled with smaller boxes.
 5. **Bake** Packed Offcuts when you want them in the document.
 
-Pieces may be **rotated**. Anything that does not fit is **left out** (no leftover list). Compare list lengths: Offcut count vs Packed Offcuts count.
+Pieces may be **rotated**. Anything that does not fit is **left out** of `Oc` (packing has no unused Offcut list). To see which numbered scraps were used, wire packed `Oc` and the original CSV stock into **Used Offcuts** (`UsedOc`).
 
 If the fill looks tiny: the Box is still 2×2×8 (inches) instead of 24×24×96.
 
@@ -145,9 +147,11 @@ Bake the oriented geometry. That is your column fill in place.
         │
         ▼
 CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packed Offcuts ──► Orient (optional) ──► Bake
-                                      ▲
-XY Plane → Box (0–24, 0–24, 0–96) ── B┘
-                                      └──► Container (preview the 24×24×96)
+        │                             ▲
+        │        XY Plane → Box  ── B┘
+        │                             └──► Container (preview the 24×24×96)
+        │                             └──► Oc ──► Used Offcuts (U = pick these, Un = leftovers)
+        └──────────────────────────────────────────── OcD ─┘
 ```
 
 ---
@@ -157,7 +161,8 @@ XY Plane → Box (0–24, 0–24, 0–96) ── B┘
 - It will **not** follow a curve or make timber joints. That is **Curve Alignment** / **Tenon Joints**.
 - It will **not** fill an arbitrary Brep (tapered column, fluted section). Only a **rectangular** Box.
 - It will **not** guarantee a 100% fill. EB-AFIT is a fast packer, not a perfect one. Add more stock or smaller pieces if you see voids.
-- It will **not** keep Offcut IDs on the output — you get **Breps** only.
+
+Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1). Use **Used Offcuts** for the pick list. `POc` is solids only.
 
 ---
 
@@ -168,7 +173,7 @@ XY Plane → Box (0–24, 0–24, 0–96) ── B┘
 | More solid column | Add more rows to the CSV, or smaller x/y (still ≤ 24) |
 | Fewer leftover gaps | Add more small leftover rows (2–5" sections) |
 | Fewer parts / bigger blocks | Delete small rows; keep larger cubes and 16–24" slabs |
-| See unused stock | List Length on Offcuts vs Packed Offcuts |
+| See unused stock | Used Offcuts: packed `Oc` + CSV `OcD` → `Un` leftover numbers |
 | Different column size | Change the Box domains; keep CSV units in inches |
 
 Edit `stock_column_in.csv` with any editor. Keep `index;x;y;z` and `;`. Every x and y should be **≤ 24**, every z **≤ 96**, or that piece cannot go in (unless rotation swaps axes — a 6×6×96 stick can stand as a full-height corner).

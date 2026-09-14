@@ -46,6 +46,30 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-14 — feature: Sort Used Offcuts lists numerically
+
+- **Motivation:** Shop pick list should match numbered scraps in a pile and a CSV, not packing/build order.
+- **Files:** `Create/UsedIndices_GH.cs`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** `U` followed packed/aligned placement order (e.g. 88, 42, 82…) → `U` and `Un` sorted by Index (1, 2, 3…).
+- **Result / observation:** Placement order is still on packing `Oc` if a walk-the-column list is needed later.
+- **Follow-ups:** Close Rhino and rebuild so the sorted list loads.
+
+### 2026-09-14 — feature: Rename Used Indices to Used Offcuts
+
+- **Motivation:** Shop language is which offcuts were used, not “indices.”
+- **Files:** `Create/UsedIndices_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Display name / nickname **Used Indices** (`UsedI`) → **Used Offcuts** (`UsedOc`). GUID unchanged; still outputs used/unused stock numbers, not Offcut objects.
+- **Result / observation:** N/A — rename only.
+- **Follow-ups:** Rebuild and restart Grasshopper so the canvas shows the new name.
+
+### 2026-09-14 — feature: Used Indices lists written scrap numbers after packing or alignment
+
+- **Motivation:** Shop workflow: number scraps as they are measured (CSV column 1), then after Bin Packing or Curve Alignment know which labeled pieces went into the column / curve.
+- **Files:** `Create/UsedIndices_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Used scrap IDs were only on Deconstruct Offcut pin `i` (buried among planes); packing docs said IDs were dropped. New Create component **Used Indices** (`UsedI`): packed/aligned `Oc` → used numbers in placement order; optional full stock `OcD` → leftover numbers in CSV order. Packing/alignment logic unchanged (Index was already preserved).
+- **Result / observation:** Index is the number written on the wood. Alignment already had leftover Offcut objects (`UOc`); packing still has no unused Offcut list — unused **numbers** come from `OcD` minus packed `Oc`.
+- **Follow-ups:** Place `UsedI` on a column-fill canvas and confirm Panel `U`/`Un` match CSV labels (including skipped numbers such as missing 11). Optional later: 3D tags on packed solids.
+
 ### 2026-09-12 — setup: Restore Custom Joints; do not delete components
 
 - **Motivation:** Cleanup had removed `Alignment/CustomJoints.cs` as dead code (entire class commented out). User rule: do not delete any components.

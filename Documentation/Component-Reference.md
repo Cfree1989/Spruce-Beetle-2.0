@@ -21,7 +21,7 @@ Most components pass a custom **Offcut** object (nickname `Oc` / `OcD` / `AOc`).
 
 | Field | Meaning |
 | --- | --- |
-| **Index** | ID of this piece in the stock list. Used to remove used pieces later. |
+| **Index** | Number written on the physical piece. Same as CSV / Excel column 1. Packing and alignment keep it; **Used Offcuts** lists which scraps were placed. |
 | **X, Y, Z** | Stock dimensions. **Z is the length along the alignment curve**; X and Y are the cross-section. |
 | **Volume (`vol`)** | Stock volume (`X × Y × Z` when first constructed). |
 | **Fabricated volume (`fvol`)** | Volume after cuts (alignment bevels, unification, joints). |
@@ -80,7 +80,7 @@ Lists must be the same length or the component errors.
 
 **What it does:** Reads a CSV and turns each row into an Offcut.
 
-**Expected row format** (after splitting on the delimiter): `index`, `x`, `y`, `z`. Example from `Documentation/Reproduce/offcuts.csv`:
+**Expected row format** (after splitting on the delimiter): `index`, `x`, `y`, `z`. The first column is the number you write on the scrap. Example from `Documentation/Reproduce/offcuts.csv`:
 
 ```text
 1;0.246;0.083;0.286
@@ -182,6 +182,30 @@ All lists must have the same count.
 | Name | Nick | Type | Access | Description |
 | --- | --- | --- | --- | --- |
 | Breps | B | Brep | List | `OffcutGeometry` of each piece. |
+
+---
+
+### Used Offcuts (`UsedOc`)
+
+**What it does:** Lists the stock numbers (CSV column 1 / numbers written on the wood) of packed or aligned Offcuts. Optionally compare against the full stock list for leftovers.
+
+Write `1`, `2`, `3`, … on each scrap as you measure it, and use the same number as the first CSV column. After **Bin Packing** (`Oc`) or **Curve Alignment** (`AOc`), this component is the shop pick list. Deconstruct Offcut also exposes Index as pin `i`; this component is only the numbers.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | Packed `Oc` or aligned `AOc` (required). |
+| Offcut Data | OcD | Offcut | List | Full CSV stock (optional). Needed for unused numbers. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Used | U | Number | List | Used Index values, sorted numerically (pick from the pile / CSV). |
+| Unused | Un | Number | List | Index values still in `OcD` that were not used, sorted numerically. Empty if `OcD` is unwired. |
+
+Warns if `Oc` is empty, or if a used Index is missing from `OcD`.
 
 ---
 

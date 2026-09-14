@@ -44,9 +44,9 @@ Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Off
 
 **Intended job:** Give packing a jointable Offcut list, not only preview solids.
 
-**As-built:** Third output `Oc` (GUID `99C99B34-2B2F-418D-AB51-F3A139064C10` unchanged). Planes are World Z-up at the piece bottom/top centers. Container pose is ignored (origin-aligned box). Pieces that do not fit are omitted (no unused list).
+**As-built:** Third output `Oc` (GUID `99C99B34-2B2F-418D-AB51-F3A139064C10` unchanged). Planes are World Z-up at the piece bottom/top centers. Container pose is ignored (origin-aligned box). Pieces that do not fit are omitted (no unused Offcut list). Index (CSV / written stock number) is kept on each packed Offcut; **Used Offcuts** (`UsedOc`) lists used and leftover numbers.
 
-**Issues:** Component-Reference still says geometry only. Column-Fill tutorial does not mention `Oc` or joints.
+**Issues:** Component-Reference packing tables still say geometry only (sync after Contact Tenon). Column-Fill now documents `Oc` Index and Used Offcuts; joints are still in this spec.
 
 ---
 
