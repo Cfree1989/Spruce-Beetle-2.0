@@ -215,7 +215,9 @@ Warns if `Oc` is empty, or if a used Index is missing from `OcD`.
 
 Does **not** sort. **Used Offcuts** is still the sorted pick list.
 
-Face choice: skip top/bottom (`|normal · World Z| > 0.5`); pick the largest remaining face. The number is upright (World Z projected onto the face) and sized to fit (~80% of the face). Depth is clamped so it cannot punch through. If the boolean fails, that piece keeps its last good solid and the face plane goes to `Sk`.
+Face choice: skip top/bottom (`|normal · World Z| > 0.5`); pick the largest remaining face. The number is upright (World Z projected onto the face) and sized to fit (~80% of the face). Depth is clamped so it cannot punch through. Every digit is cut (two-digit Index values are disjoint letter solids). If the boolean fails, that piece keeps its last good solid and the face plane goes to `Sk`.
+
+Does **not** sit in the contact-joint chain by itself: packing `Oc` → LabelN is enough to preview numbers. Wire LabelN `Oc` into **Get Brep** (or into Packed Contacts) if those solids should carry the cuts.
 
 Re-wire old canvases: the former `D` (dots) pin is gone; use `Oc` / `C`.
 

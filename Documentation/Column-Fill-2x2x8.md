@@ -153,6 +153,7 @@ CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packe
         │                             └──► Container (preview the 24×24×96)
         │                             └──► Oc ──► Used Offcuts (U = pick these, Un = leftovers)
         │                             └──► Oc ──► Label Offcut Numbers (cut-in number on largest vertical face)
+        │                                         └── Oc ──► Get Brep / Bake if you want numbered solids
         └──────────────────────────────────────────── OcD ─┘
 ```
 

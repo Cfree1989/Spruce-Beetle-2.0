@@ -134,7 +134,7 @@ namespace SpruceBeetle.Create
                     continue;
                 }
 
-                if (!TryMakeLetterCutter(FormatIndex(source.Index), facePlane, faceWidth, faceHeight, size, cutDepth, out Brep cutter))
+                if (!TryMakeLetterCutter(FormatIndex(source.Index), facePlane, faceWidth, faceHeight, size, cutDepth, out List<Brep> glyphCutters))
                 {
                     skipped.Add(facePlane);
                     output.Add(new Offcut_GH(copy));
@@ -142,7 +142,7 @@ namespace SpruceBeetle.Create
                     continue;
                 }
 
-                if (!TryCut(solid, cutter, out Brep cutSolid))
+                if (!TryCut(solid, glyphCutters, out Brep cutSolid))
                 {
                     skipped.Add(facePlane);
                     copy.OffcutGeometry = solid;
@@ -160,7 +160,7 @@ namespace SpruceBeetle.Create
                 {
                 }
 
-                cutters.Add(cutter);
+                cutters.AddRange(glyphCutters);
                 output.Add(new Offcut_GH(copy));
                 cutCount++;
             }
@@ -294,9 +294,9 @@ namespace SpruceBeetle.Create
         }
 
 
-        static bool TryMakeLetterCutter(string text, Plane facePlane, double faceWidth, double faceHeight, double size, double depth, out Brep cutter)
+        static bool TryMakeLetterCutter(string text, Plane facePlane, double faceWidth, double faceHeight, double size, double depth, out List<Brep> cutterParts)
         {
-            cutter = null;
+            cutterParts = null;
             double maxHeight = 0.8 * Math.Min(faceWidth, faceHeight);
             double height = Math.Min(size, maxHeight);
             if (height < Tol * 10)
@@ -373,27 +373,9 @@ namespace SpruceBeetle.Create
             if (parts.Count == 0)
                 return false;
 
-            if (parts.Count == 1)
-            {
-                cutter = parts[0];
-                return true;
-            }
-
-            Brep[] joined = Brep.JoinBreps(parts, Tol);
-            if (joined != null && joined.Length == 1 && joined[0] != null)
-            {
-                cutter = joined[0];
-                return true;
-            }
-
-            Brep[] united = Brep.CreateBooleanUnion(parts, Tol);
-            if (united != null && united.Length > 0 && united[0] != null)
-            {
-                cutter = united[0];
-                return true;
-            }
-
-            cutter = parts[0];
+            // Multi-digit numbers (11, 48, …) are disjoint glyphs. Join/Union of
+            // non-touching solids fails or keeps only the first digit — keep every part.
+            cutterParts = parts;
             return true;
         }
 
@@ -436,23 +418,56 @@ namespace SpruceBeetle.Create
         }
 
 
-        static bool TryCut(Brep solid, Brep cutter, out Brep result)
+        static bool TryCut(Brep solid, List<Brep> cutterParts, out Brep result)
         {
             result = solid;
-            if (solid == null || cutter == null)
+            if (solid == null || cutterParts == null || cutterParts.Count == 0)
                 return false;
 
-            Brep[] cut = Brep.CreateBooleanDifference(new[] { solid }, new[] { cutter }, Tol);
-            if (cut == null || cut.Length == 0 || cut[0] == null)
+            var tools = new List<Brep>();
+            for (int i = 0; i < cutterParts.Count; i++)
+            {
+                if (cutterParts[i] != null)
+                    tools.Add(cutterParts[i]);
+            }
+
+            if (tools.Count == 0)
                 return false;
 
-            Brep body = cut[0];
+            Brep[] cut = Brep.CreateBooleanDifference(new[] { solid }, tools.ToArray(), Tol);
+            if (cut != null && cut.Length > 0 && cut[0] != null)
+            {
+                result = FinishCut(cut[0]);
+                return true;
+            }
+
+            // Subtract one glyph at a time if the batch boolean fails.
+            Brep current = solid;
+            int cuts = 0;
+            for (int i = 0; i < tools.Count; i++)
+            {
+                Brep[] one = Brep.CreateBooleanDifference(new[] { current }, new[] { tools[i] }, Tol);
+                if (one == null || one.Length == 0 || one[0] == null)
+                    continue;
+
+                current = FinishCut(one[0]);
+                cuts++;
+            }
+
+            if (cuts == 0)
+                return false;
+
+            result = current;
+            return cuts == tools.Count;
+        }
+
+
+        static Brep FinishCut(Brep body)
+        {
             body.Faces.SplitKinkyFaces(Tol);
             if (BrepSolidOrientation.Inward == body.SolidOrientation)
                 body.Flip();
-
-            result = body;
-            return true;
+            return body;
         }
 
 

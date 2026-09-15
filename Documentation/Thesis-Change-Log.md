@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-14 — fix: Label Offcut Numbers cuts every digit of a two-digit Index
+
+- **Motivation:** Column labels must match the unique scrap / CSV number. Repeated 1s and 4s on different pieces made the pack unreadable.
+- **Files:** `Create/LabelOffcutNumbers_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; this log.
+- **Before → after:** `CreateTextOutlines` makes one solid per glyph. Join/Union of disjoint digits failed, so the cutter fell back to `parts[0]` (the first digit only). 11 and 19 both showed as 1; 40–49 as 4. Now every glyph is subtracted (batch boolean, then per-digit fallback). Partial cuts are rejected so a lone first digit is not kept.
+- **Result / observation:** Used Offcuts was already unique (5, 9, 11, 19…). The viewport numbers were truncated Index values, not duplicate stock. LabelN input from packing `Oc` is correct; its `Oc` was unwired from Get Brep / Contact Joints (preview-only).
+- **Follow-ups:** Close Rhino and rebuild. Confirm packed pieces show full numbers (11, 19, 33, 48…), not single digits. Rhino MCP was not connected this session.
+
 ### 2026-09-14 — feature: Label Offcut Numbers engraves Index on the largest vertical face
 
 - **Motivation:** Shop/model labels should be 3D letters cut into an outside face (like `_TextObject` curves + gumball Cut), not center dots. One largest vertical face per piece.
