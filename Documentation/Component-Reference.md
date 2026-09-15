@@ -211,11 +211,18 @@ Warns if `Oc` is empty, or if a used Index is missing from `OcD`.
 
 ### Label Offcut Numbers (`LabelN`)
 
-**What it does:** Cuts the stock number (CSV column 1 / number written on the scrap) into the **largest vertical face** of each packed or aligned Offcut. This is an engrave (Boolean difference), not a Rhino `_Dot` and not a raised Boss.
+**What it does:** Cuts the stock number (CSV column 1 / number written on the scrap) into an **exposed face** of each packed or aligned Offcut. This is an engrave (Boolean difference), not a Rhino `_Dot` and not a raised Boss.
 
 Does **not** sort. **Used Offcuts** is still the sorted pick list.
 
-Face choice: skip top/bottom (`|normal · World Z| > 0.5`); pick the largest remaining face. The number is upright (World Z projected onto the face) and sized to fit (~80% of the face). Depth is clamped so it cannot punch through. Every digit is cut (two-digit Index values are disjoint letter solids). If the boolean fails, that piece keeps its last good solid and the face plane goes to `Sk`.
+Face choice (so numbers are not hidden inside the stack):
+
+1. Largest **exposed vertical** face (not touching another Offcut; gap ≤ `0.01`, same as Packed Contacts). If that face is only partly covered, the number sits on the uncovered patch.
+2. Else an **exposed top**.
+3. Else any vertical face (a piece buried in the middle of the column).
+4. Else any remaining face.
+
+The number is upright (World Z on vertical faces; World Y on tops) and sized to fit (~80% of the chosen patch). Depth is clamped so it cannot punch through. Every digit is cut (two-digit Index values are disjoint letter solids). If a face fails, the next candidate is tried; if all fail, that piece keeps its uncut solid and the last face plane goes to `Sk`.
 
 Does **not** sit in the contact-joint chain by itself: packing `Oc` → LabelN is enough to preview numbers. Wire LabelN `Oc` into **Get Brep** (or into Packed Contacts) if those solids should carry the cuts.
 

@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-14 — fix: Label Offcut Numbers prefers exposed (non-contact) faces
+
+- **Motivation:** Packed-column numbers were only readable on +X/+Y. Equal-area opposite faces always tied to the larger X then Y, so the −X/−Y half of the stack was engraved on inner contact faces.
+- **Files:** `Create/LabelOffcutNumbers_GH.cs`; `Packing/PackedNeighbors.cs`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; this log.
+- **Before → after:** Largest vertical face, +X/+Y tie-break → prefer an uncovered vertical patch (AABB neighbor overlap, gap `0.01"`), else an exposed top, else any vertical face if the piece is fully buried. Partial covers place the number on the largest empty rectangle of that face. Failed faces fall through to the next candidate.
+- **Result / observation:** Explains the “labels only on positive X,Y” screenshot: not missing Index values, hidden interior cuts. GUID unchanged.
+- **Follow-ups:** Close Rhino and rebuild. Orbit the column: −X/−Y outer faces should show numbers; the component remark reports exposed vs buried counts. Interior pieces may still be labeled on a contact face.
+
 ### 2026-09-14 — fix: Label Offcut Numbers cuts every digit of a two-digit Index
 
 - **Motivation:** Column labels must match the unique scrap / CSV number. Repeated 1s and 4s on different pieces made the pack unreadable.

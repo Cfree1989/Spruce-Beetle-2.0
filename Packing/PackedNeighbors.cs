@@ -140,6 +140,73 @@ namespace SpruceBeetle.Packing
         }
 
 
+        /// <summary>
+        /// Overlap boxes of neighbors sitting on the face of <paramref name="boxes"/>[<paramref name="index"/>]
+        /// whose outward normal is <paramref name="outward"/>. Checks X, Y, and Z independently
+        /// (unlike <see cref="AllContacts"/>, which reports only one axis per pair).
+        /// </summary>
+        public static List<BoundingBox> NeighborOverlapsOnFace(BoundingBox[] boxes, int index, Vector3d outward, double tolerance)
+        {
+            var overlaps = new List<BoundingBox>();
+            if (boxes == null || index < 0 || index >= boxes.Length)
+                return overlaps;
+
+            BoundingBox self = boxes[index];
+            if (!self.IsValid)
+                return overlaps;
+
+            Vector3d n = outward;
+            if (!n.Unitize())
+                return overlaps;
+
+            double ax = Math.Abs(n.X);
+            double ay = Math.Abs(n.Y);
+            double az = Math.Abs(n.Z);
+
+            for (int j = 0; j < boxes.Length; j++)
+            {
+                if (j == index)
+                    continue;
+
+                BoundingBox other = boxes[j];
+                if (!other.IsValid)
+                    continue;
+
+                BoundingBox overlap;
+                bool onThisSide;
+                if (ax >= ay && ax >= az)
+                {
+                    if (!TryXContact(self, other, tolerance, out overlap, out _))
+                        continue;
+                    onThisSide = n.X > 0
+                        ? Near(overlap.Min.X, self.Max.X, tolerance)
+                        : Near(overlap.Min.X, self.Min.X, tolerance);
+                }
+                else if (ay >= az)
+                {
+                    if (!TryYContact(self, other, tolerance, out overlap, out _))
+                        continue;
+                    onThisSide = n.Y > 0
+                        ? Near(overlap.Min.Y, self.Max.Y, tolerance)
+                        : Near(overlap.Min.Y, self.Min.Y, tolerance);
+                }
+                else
+                {
+                    if (!TryZContact(self, other, tolerance, out overlap, out _))
+                        continue;
+                    onThisSide = n.Z > 0
+                        ? Near(overlap.Min.Z, self.Max.Z, tolerance)
+                        : Near(overlap.Min.Z, self.Min.Z, tolerance);
+                }
+
+                if (onThisSide)
+                    overlaps.Add(overlap);
+            }
+
+            return overlaps;
+        }
+
+
         public static bool OffsetTowardSeam(PackedContact contact, BoundingBox[] boxes, double toolDiameter, double width, out Plane placed, out bool canCut)
         {
             placed = contact.Plane;

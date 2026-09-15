@@ -27,6 +27,7 @@ using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
+using SpruceBeetle.Packing;
 
 
 namespace SpruceBeetle.Create
@@ -34,9 +35,10 @@ namespace SpruceBeetle.Create
     public class LabelOffcutNumbers_GH : GH_Component
     {
         const double Tol = 0.0001;
+        const double ContactTol = 0.01;
 
         public LabelOffcutNumbers_GH()
-          : base("Label Offcut Numbers", "LabelN", "Cut the stock number into the largest vertical face of each Offcut", "Spruce Beetle", "     Create")
+          : base("Label Offcut Numbers", "LabelN", "Cut the stock number into an exposed (non-contact) face of each Offcut", "Spruce Beetle", "     Create")
         {
         }
 
@@ -57,9 +59,9 @@ namespace SpruceBeetle.Create
 
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts with the stock number cut into the largest vertical face", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts with the stock number cut into an exposed face", GH_ParamAccess.list);
             pManager.AddBrepParameter("Cutters", "C", "Letter solids used to cut. Preview these to see the numbers.", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Skipped", "Sk", "Faces that were skipped (no vertical face, text failed, or boolean failed)", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Faces that were skipped (no usable face, text failed, or boolean failed)", GH_ParamAccess.list);
 
             pManager.HideParameter(2);
 
@@ -96,7 +98,14 @@ namespace SpruceBeetle.Create
                 return;
             }
 
+            var boxes = new BoundingBox[offcuts.Count];
+            for (int i = 0; i < offcuts.Count; i++)
+                boxes[i] = PackedNeighbors.WorldBox(offcuts[i]);
+
+            double minExposed = Math.Max(0.2, size * 0.2);
             int cutCount = 0;
+            int exposedCount = 0;
+            int buriedCount = 0;
             int failCount = 0;
 
             for (int i = 0; i < offcuts.Count; i++)
@@ -117,7 +126,8 @@ namespace SpruceBeetle.Create
                     continue;
                 }
 
-                if (!TryGetLargestVerticalFace(solid, out Plane facePlane, out double faceWidth, out double faceHeight, out double thickness))
+                List<LabelCandidate> candidates = CollectLabelCandidates(solid, boxes, i, minExposed);
+                if (candidates.Count == 0)
                 {
                     skipped.Add(source.AveragePlane.IsValid ? source.AveragePlane : Plane.WorldXY);
                     output.Add(new Offcut_GH(copy));
@@ -125,48 +135,62 @@ namespace SpruceBeetle.Create
                     continue;
                 }
 
-                double cutDepth = Math.Min(depth, thickness * 0.4);
-                if (cutDepth < Tol)
+                bool done = false;
+                Plane failPlane = candidates[0].Plane;
+                for (int c = 0; c < candidates.Count; c++)
                 {
-                    skipped.Add(facePlane);
+                    LabelCandidate cand = candidates[c];
+                    double cutDepth = Math.Min(depth, cand.Thickness * 0.4);
+                    if (cutDepth < Tol)
+                    {
+                        failPlane = cand.Plane;
+                        continue;
+                    }
+
+                    if (!TryMakeLetterCutter(FormatIndex(source.Index), cand.Plane, cand.Width, cand.Height, size, cutDepth, out List<Brep> glyphCutters))
+                    {
+                        failPlane = cand.Plane;
+                        continue;
+                    }
+
+                    if (!TryCut(solid, glyphCutters, out Brep cutSolid))
+                    {
+                        failPlane = cand.Plane;
+                        continue;
+                    }
+
+                    copy.OffcutGeometry = cutSolid;
+                    try
+                    {
+                        copy.FabVol = cutSolid.GetVolume(Tol, Tol);
+                    }
+                    catch
+                    {
+                    }
+
+                    cutters.AddRange(glyphCutters);
                     output.Add(new Offcut_GH(copy));
-                    failCount++;
-                    continue;
+                    cutCount++;
+                    if (cand.Rank <= 1)
+                        exposedCount++;
+                    else
+                        buriedCount++;
+                    done = true;
+                    break;
                 }
 
-                if (!TryMakeLetterCutter(FormatIndex(source.Index), facePlane, faceWidth, faceHeight, size, cutDepth, out List<Brep> glyphCutters))
+                if (!done)
                 {
-                    skipped.Add(facePlane);
-                    output.Add(new Offcut_GH(copy));
-                    failCount++;
-                    continue;
-                }
-
-                if (!TryCut(solid, glyphCutters, out Brep cutSolid))
-                {
-                    skipped.Add(facePlane);
+                    skipped.Add(failPlane);
                     copy.OffcutGeometry = solid;
                     output.Add(new Offcut_GH(copy));
                     failCount++;
-                    continue;
                 }
-
-                copy.OffcutGeometry = cutSolid;
-                try
-                {
-                    copy.FabVol = cutSolid.GetVolume(Tol, Tol);
-                }
-                catch
-                {
-                }
-
-                cutters.AddRange(glyphCutters);
-                output.Add(new Offcut_GH(copy));
-                cutCount++;
             }
 
             AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
-                cutCount + " number(s) cut, " + skipped.Count + " skipped, " + failCount + " fail(s).");
+                cutCount + " number(s) cut (" + exposedCount + " exposed, " + buriedCount + " buried), "
+                + skipped.Count + " skipped, " + failCount + " fail(s).");
 
             DA.SetDataList(0, output);
             DA.SetDataList(1, cutters);
@@ -174,17 +198,37 @@ namespace SpruceBeetle.Create
         }
 
 
-        static bool TryGetLargestVerticalFace(Brep brep, out Plane plane, out double faceWidth, out double faceHeight, out double thickness)
+        struct LabelCandidate
         {
-            plane = Plane.Unset;
-            faceWidth = 0;
-            faceHeight = 0;
-            thickness = 0;
+            public Plane Plane;
+            public double Width;
+            public double Height;
+            public double Thickness;
+            public int Rank;
+            public double ExposedArea;
+            public double FaceArea;
+            public Point3d Center;
+        }
 
-            int best = -1;
-            double bestArea = -1;
-            Point3d bestCenter = Point3d.Origin;
-            Vector3d bestNormal = Vector3d.XAxis;
+
+        struct UVRect
+        {
+            public double U0;
+            public double U1;
+            public double V0;
+            public double V1;
+
+            public double Width => U1 - U0;
+            public double Height => V1 - V0;
+            public double Area => Math.Max(0.0, Width) * Math.Max(0.0, Height);
+        }
+
+
+        static List<LabelCandidate> CollectLabelCandidates(Brep brep, BoundingBox[] boxes, int index, double minExposed)
+        {
+            var list = new List<LabelCandidate>();
+            if (brep == null)
+                return list;
 
             for (int i = 0; i < brep.Faces.Count; i++)
             {
@@ -199,51 +243,308 @@ namespace SpruceBeetle.Create
                 if (!n.Unitize())
                     continue;
 
-                if (Math.Abs(n * Vector3d.ZAxis) > 0.5)
+                Point3d center = amp.Centroid;
+                if (!TryMakeFacePlane(n, center, out Plane plane))
                     continue;
 
-                Point3d center = amp.Centroid;
-                bool better = amp.Area > bestArea + 1e-9;
-                if (!better && Math.Abs(amp.Area - bestArea) <= 1e-9)
+                Brep faceBrep = face.DuplicateFace(false);
+                if (faceBrep == null)
+                    continue;
+
+                GetPlaneBounds(faceBrep, plane, out double faceWidth, out double faceHeight);
+                double thickness = ThicknessAlong(brep, plane.ZAxis);
+                if (faceWidth <= Tol || faceHeight <= Tol || thickness <= Tol)
+                    continue;
+
+                UVRect faceRect = FaceUVBounds(faceBrep, plane);
+                List<BoundingBox> overlaps = PackedNeighbors.NeighborOverlapsOnFace(boxes, index, n, ContactTol);
+                var covered = new List<UVRect>(overlaps.Count);
+                for (int o = 0; o < overlaps.Count; o++)
                 {
-                    if (center.X > bestCenter.X + 1e-9)
-                        better = true;
-                    else if (Math.Abs(center.X - bestCenter.X) <= 1e-9 && center.Y > bestCenter.Y + 1e-9)
-                        better = true;
+                    if (TryToUV(overlaps[o], plane, faceRect, out UVRect patch))
+                        covered.Add(patch);
                 }
 
-                if (!better)
+                bool usableExposed = TryLargestUncovered(faceRect, covered, out UVRect empty)
+                    && empty.Width + 1e-9 >= minExposed
+                    && empty.Height + 1e-9 >= minExposed;
+
+                bool vertical = Math.Abs(n * Vector3d.ZAxis) <= 0.5;
+                bool top = n * Vector3d.ZAxis > 0.5;
+                int rank;
+                if (usableExposed && vertical)
+                    rank = 0;
+                else if (usableExposed && top)
+                    rank = 1;
+                else if (vertical)
+                    rank = 2;
+                else
+                    rank = 3;
+
+                Point3d origin = center;
+                double width = faceWidth;
+                double height = faceHeight;
+                if (usableExposed)
+                {
+                    origin = plane.PointAt(0.5 * (empty.U0 + empty.U1), 0.5 * (empty.V0 + empty.V1));
+                    width = empty.Width;
+                    height = empty.Height;
+                }
+
+                if (!TryMakeFacePlane(n, origin, out Plane placed))
                     continue;
 
-                best = i;
-                bestArea = amp.Area;
-                bestCenter = center;
-                bestNormal = n;
+                list.Add(new LabelCandidate
+                {
+                    Plane = placed,
+                    Width = width,
+                    Height = height,
+                    Thickness = thickness,
+                    Rank = rank,
+                    ExposedArea = usableExposed ? empty.Area : 0.0,
+                    FaceArea = amp.Area,
+                    Center = origin
+                });
             }
 
-            if (best < 0)
+            list.Sort(CompareCandidates);
+            return list;
+        }
+
+
+        static int CompareCandidates(LabelCandidate a, LabelCandidate b)
+        {
+            int byRank = a.Rank.CompareTo(b.Rank);
+            if (byRank != 0)
+                return byRank;
+
+            if (a.Rank <= 1)
+            {
+                int byExposed = b.ExposedArea.CompareTo(a.ExposedArea);
+                if (byExposed != 0)
+                    return byExposed;
+            }
+
+            int byFace = b.FaceArea.CompareTo(a.FaceArea);
+            if (byFace != 0)
+                return byFace;
+
+            if (a.Center.X > b.Center.X + 1e-9)
+                return -1;
+            if (a.Center.X < b.Center.X - 1e-9)
+                return 1;
+            if (a.Center.Y > b.Center.Y + 1e-9)
+                return -1;
+            if (a.Center.Y < b.Center.Y - 1e-9)
+                return 1;
+            return 0;
+        }
+
+
+        static bool TryMakeFacePlane(Vector3d normal, Point3d origin, out Plane plane)
+        {
+            plane = Plane.Unset;
+            Vector3d zAxis = normal;
+            if (!zAxis.Unitize())
                 return false;
 
-            Vector3d zAxis = bestNormal;
             Vector3d yAxis = Vector3d.ZAxis - zAxis * (Vector3d.ZAxis * zAxis);
             if (!yAxis.Unitize())
-                return false;
+            {
+                yAxis = Vector3d.YAxis - zAxis * (Vector3d.YAxis * zAxis);
+                if (!yAxis.Unitize())
+                {
+                    yAxis = Vector3d.XAxis - zAxis * (Vector3d.XAxis * zAxis);
+                    if (!yAxis.Unitize())
+                        return false;
+                }
+            }
 
             Vector3d xAxis = Vector3d.CrossProduct(yAxis, zAxis);
             if (!xAxis.Unitize())
                 return false;
             yAxis = Vector3d.CrossProduct(zAxis, xAxis);
-            yAxis.Unitize();
-
-            plane = new Plane(bestCenter, xAxis, yAxis);
-
-            Brep faceBrep = brep.Faces[best].DuplicateFace(false);
-            if (faceBrep == null)
+            if (!yAxis.Unitize())
                 return false;
 
-            GetPlaneBounds(faceBrep, plane, out faceWidth, out faceHeight);
-            thickness = ThicknessAlong(brep, zAxis);
-            return faceWidth > Tol && faceHeight > Tol && thickness > Tol;
+            plane = new Plane(origin, xAxis, yAxis);
+            return true;
+        }
+
+
+        static UVRect FaceUVBounds(Brep faceBrep, Plane plane)
+        {
+            GetPlaneBounds(faceBrep, plane, out double width, out double height);
+            double hu = 0.5 * width;
+            double hv = 0.5 * height;
+
+            double minU = double.MaxValue;
+            double maxU = double.MinValue;
+            double minV = double.MaxValue;
+            double maxV = double.MinValue;
+            BoundingBox box = faceBrep.GetBoundingBox(true);
+            if (box.IsValid)
+            {
+                Point3d[] corners = box.GetCorners();
+                for (int i = 0; i < corners.Length; i++)
+                {
+                    plane.ClosestParameter(corners[i], out double u, out double v);
+                    if (u < minU) minU = u;
+                    if (u > maxU) maxU = u;
+                    if (v < minV) minV = v;
+                    if (v > maxV) maxV = v;
+                }
+            }
+
+            if (minU > maxU)
+            {
+                minU = -hu;
+                maxU = hu;
+                minV = -hv;
+                maxV = hv;
+            }
+
+            return new UVRect { U0 = minU, U1 = maxU, V0 = minV, V1 = maxV };
+        }
+
+
+        static bool TryToUV(BoundingBox world, Plane plane, UVRect face, out UVRect patch)
+        {
+            patch = new UVRect();
+            if (!world.IsValid)
+                return false;
+
+            double minU = double.MaxValue;
+            double maxU = double.MinValue;
+            double minV = double.MaxValue;
+            double maxV = double.MinValue;
+            Point3d[] corners = world.GetCorners();
+            for (int i = 0; i < corners.Length; i++)
+            {
+                plane.ClosestParameter(corners[i], out double u, out double v);
+                if (u < minU) minU = u;
+                if (u > maxU) maxU = u;
+                if (v < minV) minV = v;
+                if (v > maxV) maxV = v;
+            }
+
+            minU = Math.Max(minU, face.U0);
+            maxU = Math.Min(maxU, face.U1);
+            minV = Math.Max(minV, face.V0);
+            maxV = Math.Min(maxV, face.V1);
+            if (maxU - minU <= Tol || maxV - minV <= Tol)
+                return false;
+
+            patch = new UVRect { U0 = minU, U1 = maxU, V0 = minV, V1 = maxV };
+            return true;
+        }
+
+
+        static bool TryLargestUncovered(UVRect face, List<UVRect> covered, out UVRect empty)
+        {
+            empty = face;
+            if (covered == null || covered.Count == 0)
+                return true;
+
+            var us = new List<double>();
+            var vs = new List<double>();
+            AddUnique(us, face.U0);
+            AddUnique(us, face.U1);
+            AddUnique(vs, face.V0);
+            AddUnique(vs, face.V1);
+            for (int i = 0; i < covered.Count; i++)
+            {
+                UVRect c = covered[i];
+                AddUnique(us, Math.Max(face.U0, Math.Min(face.U1, c.U0)));
+                AddUnique(us, Math.Max(face.U0, Math.Min(face.U1, c.U1)));
+                AddUnique(vs, Math.Max(face.V0, Math.Min(face.V1, c.V0)));
+                AddUnique(vs, Math.Max(face.V0, Math.Min(face.V1, c.V1)));
+            }
+
+            us.Sort();
+            vs.Sort();
+            int nu = us.Count - 1;
+            int nv = vs.Count - 1;
+            if (nu <= 0 || nv <= 0)
+                return false;
+
+            var blocked = new bool[nu, nv];
+            for (int i = 0; i < nu; i++)
+            {
+                for (int j = 0; j < nv; j++)
+                {
+                    double cu = 0.5 * (us[i] + us[i + 1]);
+                    double cv = 0.5 * (vs[j] + vs[j + 1]);
+                    for (int k = 0; k < covered.Count; k++)
+                    {
+                        UVRect c = covered[k];
+                        if (cu >= c.U0 - 1e-12 && cu <= c.U1 + 1e-12 && cv >= c.V0 - 1e-12 && cv <= c.V1 + 1e-12)
+                        {
+                            blocked[i, j] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            double bestArea = -1;
+            bool any = false;
+            UVRect best = face;
+            for (int i0 = 0; i0 < nu; i0++)
+            {
+                var freeCol = new bool[nv];
+                for (int j = 0; j < nv; j++)
+                    freeCol[j] = true;
+
+                for (int i1 = i0; i1 < nu; i1++)
+                {
+                    for (int j = 0; j < nv; j++)
+                        freeCol[j] = freeCol[j] && !blocked[i1, j];
+
+                    int run = 0;
+                    for (int j = 0; j <= nv; j++)
+                    {
+                        bool free = j < nv && freeCol[j];
+                        if (free)
+                        {
+                            run++;
+                            continue;
+                        }
+
+                        if (run > 0)
+                        {
+                            int j0 = j - run;
+                            double area = (us[i1 + 1] - us[i0]) * (vs[j] - vs[j0]);
+                            if (area > bestArea)
+                            {
+                                bestArea = area;
+                                best = new UVRect { U0 = us[i0], U1 = us[i1 + 1], V0 = vs[j0], V1 = vs[j] };
+                                any = true;
+                            }
+                        }
+
+                        run = 0;
+                    }
+                }
+            }
+
+            if (!any || best.Area <= Tol)
+                return false;
+
+            empty = best;
+            return true;
+        }
+
+
+        static void AddUnique(List<double> values, double value)
+        {
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (Math.Abs(values[i] - value) <= 1e-9)
+                    return;
+            }
+
+            values.Add(value);
         }
 
 
