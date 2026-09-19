@@ -91,7 +91,7 @@ namespace SpruceBeetle.Packing
 
         public override GH_Exposure Exposure => GH_Exposure.primary;
 
-        protected override System.Drawing.Bitmap Icon => Properties.Resources._24x24_IntersectionJoints;
+        protected override System.Drawing.Bitmap Icon => Properties.Resources._24x24_FindIntersections;
 
         public override Guid ComponentGuid => new Guid("B4C8E2A1-7F3D-4B19-9E6C-2A5D8F1B0473");
     }

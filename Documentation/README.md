@@ -6,8 +6,8 @@ Index for this thesis fork of Spruce Beetle. Original plugin examples and the Of
 
 | Doc | Role |
 | --- | --- |
-| [Component-Reference.md](Component-Reference.md) | User-facing component catalog. Packing tables are stale; see Packing-Joints until Contact Tenon ships. |
-| [Packing-Joints.md](Packing-Joints.md) | Thesis spec for the packed-column joint path (Stacks vs Contacts). |
+| [Component-Reference.md](Component-Reference.md) | User-facing component catalog. |
+| [Packing-Joints.md](Packing-Joints.md) | Thesis spec for the packed-column joint path (Packed Contacts → Contact Tenon). |
 | [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) | How to pack leftover stock into a 24″ × 24″ × 96″ column (Rhino inches). |
 | [Thesis-Change-Log.md](Thesis-Change-Log.md) | Lab notebook for this fork. Not a user changelog. |
 | [joint-placement.png](joint-placement.png) | Seam / T-junction placement diagram used by the packing-joints spec. |

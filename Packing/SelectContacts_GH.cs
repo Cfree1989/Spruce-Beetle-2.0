@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
@@ -13,10 +14,11 @@ namespace SpruceBeetle.Packing
         IGH_Param parameter = null;
 
         public SelectContacts_GH()
-          : base("Select Contacts", "PickJoints",
+          : base("Select Contacts", "PickContacts",
               "Keep a subset of packed face contacts (all, Z beds, or XY stitches)",
               "Spruce Beetle", "   Packing")
         {
+            ApplyDisplayNames();
         }
 
 
@@ -38,6 +40,28 @@ namespace SpruceBeetle.Packing
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            ApplyDisplayNames();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            ApplyDisplayNames();
+            base.AddedToDocument(document);
+        }
+
+
+        void ApplyDisplayNames()
+        {
+            Name = "Select Contacts";
+            NickName = "PickContacts";
         }
 
 

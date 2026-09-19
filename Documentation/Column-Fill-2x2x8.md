@@ -102,7 +102,7 @@ It must be a Grasshopper **Box**. A Brep is not enough: **Bounding Box** first, 
 ## 4. Pack the column
 
 1. **Spruce Beetle** → **Packing** → **Bin Packing EB-AFIT**  
-   Nickname: **PackBinC#**.
+   Nickname: **PackBin** (old canvases may still say `PackBinC#`).
 2. Connect:
 
    | From | To |
@@ -161,7 +161,8 @@ CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packe
 
 ## 7. What this will not do
 
-- It will **not** follow a curve or make timber joints. That is **Curve Alignment** / **Tenon Joints**.
+- It will **not** follow a curve. That is **Curve Alignment** / Alignment **Tenon Joints**.
+- Packed-column joints are a separate path: packing `Oc` → **Packed Contacts** → **Select Contacts** → **Contact Tenon**.
 - It will **not** fill an arbitrary Brep (tapered column, fluted section). Only a **rectangular** Box.
 - It will **not** guarantee a 100% fill. EB-AFIT is a fast packer, not a perfect one. Add more stock or smaller pieces if you see voids.
 

@@ -1,38 +1,34 @@
 # Packing joints — component spec
 
-Thesis working spec for the **packed-column joint path**. It records intended function vs what is in the plugin today, plus known issues, **before** more Grasshopper edits.
+Thesis working spec for the **packed-column joint path**. User-facing tables live in [Component-Reference.md](Component-Reference.md). How to pack a 24×24×96 box: [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md).
 
-This is **not** the user-facing [Component-Reference.md](Component-Reference.md). That file is already stale (packing still described as Brep-only; no Packed Stacks / Contacts). Sync it after we ship the Contact Tenon edits.
+Placement is **decided**: tenons sit at the **center of the shared overlap rectangle**, with the tenon X axis along the longer in-plane side (2026-09-19 center; 2026-09-19 oriented frame). T-junction / seam placement was removed as too complicated.
 
-Rename and extra knobs below are **proposed**. Placement is **decided**: pockets sit at the **center of the shared overlap rectangle** (2026-09-19). T-junction / seam placement was removed as too complicated.
-
-Related: [joint-placement.png](joint-placement.png) (earlier Seam placement sketch, no longer the target), [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) (pack a 24×24×96 box; still says packing does not make joints).
+Related: [joint-placement.png](joint-placement.png) (earlier Seam placement sketch, no longer the target).
 
 ---
 
 ## Why this exists
 
-Four packing-joint pieces landed without a written contract: **Packed Stacks**, **Packed Contacts**, **Select Contacts**, and **Contact Joints**. Alignment already has **Tenon Joints** and **Spline Joints**. This spec says what each packing component is for, what it actually does, and what to change next.
+The packing tab enumerates face contacts and cuts matching tenons. Alignment already has **Tenon Joints** and **Spline Joints** for curve chains. This spec says what each packing joint component is for.
+
+**Packed Stacks** (`PackStacks`, GUID `8F3A6C21-4B9E-4D17-9A55-E2C8B1F04673`) was deleted 2026-09-19. It existed only to graft Z-groups into Alignment Tenon. Union-find groups are not linear chains, and Tenon cuts on each piece's own end-plane center, so mating pockets did not coincide and joints appeared where there was no contact. Contact Tenon absorbs Tenon's knobs on a contact graph. Existing canvases that still contain Packed Stacks will show a missing-component placeholder.
 
 ---
 
-## Two parallel paths (keep both)
+## Joint path
 
-Shared source: **Bin Packing EB-AFIT** (`PackBinC#`) output `Oc` — packed Offcuts with rotated size, closed Brep, and Z-end planes (`FirstPlane` / `SecondPlane` at the bottom and top of each piece).
+Shared source: **Bin Packing EB-AFIT** (`PackBin`) output `Oc` — packed Offcuts with rotated size, closed Brep, and Z-end planes (`FirstPlane` / `SecondPlane` at the bottom and top of each piece).
 
 ```text
 Bin Packing EB-AFIT  →  Oc
-        ├─ Packed Stacks  →  graft  →  Tenon Joints
-        │     Z-columns only, joints centered on each Z-bed
-        │
         └─ Packed Contacts → Select Contacts → Contact Tenon
               Z beds + XY stitches; which contacts; then cut
 ```
 
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
-| Packed Stacks | Consecutive pieces in a Z-stack | Face center (Alignment Tenon) | Alignment **Tenon Joints** (`JX`/`JY`/`JZ`/`R`) |
-| Contacts | Selected face pairs, including side faces | Center of the shared overlap rectangle | **Contact Tenon** (today Contact Joints) |
+| Contacts | Selected face pairs (Z beds and XY stitches) | Center of the shared overlap rectangle; X along the long side | **Contact Tenon** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
 
 **Spline Joints** stays on the curve-alignment tab. A later **Contact Spline** is a name only — not specified here.
 
@@ -44,39 +40,13 @@ Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Off
 
 **Intended job:** Give packing a jointable Offcut list, not only preview solids.
 
-**As-built:** Third output `Oc` (GUID `99C99B34-2B2F-418D-AB51-F3A139064C10` unchanged). Planes are World Z-up at the piece bottom/top centers. Container pose is ignored (origin-aligned box). Pieces that do not fit are omitted (no unused Offcut list). Index (CSV / written stock number) is kept on each packed Offcut; **Used Offcuts** (`UsedOc`) lists used and leftover numbers.
-
-**Issues:** Component-Reference packing tables still say geometry only (sync after Contact Tenon). Column-Fill now documents `Oc` Index and Used Offcuts; joints are still in this spec.
-
----
-
-## Packed Stacks (`PackStacks`)
-
-**Intended job:** Group packed pieces that touch face-to-face along **Z**, ordered bottom to top, so Alignment Tenon can run on each stack. Keep this as a parallel option for centered Z tenons. Isolated pieces (no Z neighbor) do not get a stack branch.
-
-**Inputs / outputs (intended = as-built)**
-
-| | Nick | Type | Notes |
-| --- | --- | --- | --- |
-| In | `Oc` | Offcut list | Packed Offcuts |
-| In | `T` | Number | Gap treated as Z contact (default `0.01`) |
-| Out | `S` | Offcut tree | One branch per stack of 2+ pieces; graft into Tenon |
-| Out | `I` | Offcut list | Isolated pieces |
-| Out | `P` | Planes | Z interface planes (overlap centers) |
-
-**As-built:** [Packing/PackedStacks_GH.cs](../Packing/PackedStacks_GH.cs). GUID `8F3A6C21-4B9E-4D17-9A55-E2C8B1F04673`. Uses `PackedNeighbors.ZStacks`. Icon is Find Intersections (cosmetic debt; not a rename).
-
-**Issues / adjustments**
-
-- Keep. Do not retire when Contact Tenon exists.
-- Tenon on packed planes is Z-up, not curve-aligned; confirm in GH that end cuts land on the beds.
-- XY side faces are **out of scope** for this path (that is Packed Contacts).
+**As-built:** Third output `Oc` (GUID `99C99B34-2B2F-418D-AB51-F3A139064C10` unchanged). Nickname **PackBin** (was `PackBinC#`; `ApplyDisplayNames` retitles old canvases). Planes are World Z-up at the piece bottom/top centers. Container pose is ignored (origin-aligned box). Pieces that do not fit are omitted (no unused Offcut list). Index (CSV / written stock number) is kept on each packed Offcut; **Used Offcuts** (`UsedOc`) lists used and leftover numbers.
 
 ---
 
 ## Packed Contacts (`PackContacts`)
 
-**Intended job:** List every **face-to-face** contact between packed Offcuts (Z beds and XY stitches). Does not cut wood. Does not choose which contacts get joints. Contact plane is the **center** of the overlap rectangle; Contact Tenon cuts at that same point.
+**Intended job:** List every **face-to-face** contact between packed Offcuts (Z beds and XY stitches). Does not cut wood. Does not choose which contacts get joints. Contact plane is the **center** of the overlap rectangle; Contact Tenon orients that frame so X follows the longer in-plane side.
 
 **Inputs / outputs (intended = as-built)**
 
@@ -91,7 +61,7 @@ Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Off
 
 A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, and that center plane ([Packing/PackedNeighbors.cs](../Packing/PackedNeighbors.cs)).
 
-**As-built:** [Packing/PackedContacts_GH.cs](../Packing/PackedContacts_GH.cs). Nickname `PackContacts`. GUID `B4C8E2A1-7F3D-4B19-9E6C-2A5D8F1B0473`. Pairwise: Z first, else X, else Y (one axis per pair). Column test (older `stock_column_in.csv` pack, ~33 pieces): 88 contacts (28 Z, 60 XY).
+**As-built:** [Packing/PackedContacts_GH.cs](../Packing/PackedContacts_GH.cs). Nickname `PackContacts`. GUID `B4C8E2A1-7F3D-4B19-9E6C-2A5D8F1B0473`. Icon is Find Intersections. Pairwise: Z first, else X, else Y (one axis per pair). Column test (older `stock_column_in.csv` pack, ~33 pieces): 88 contacts (28 Z, 60 XY).
 
 **Issues / adjustments**
 
@@ -100,7 +70,7 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 
 ---
 
-## Select Contacts (`PickJoints`)
+## Select Contacts (`PickContacts`)
 
 **Intended job:** Choose **which** contacts become joints. Filter only; no geometry.
 
@@ -121,9 +91,9 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 | Z | Z beds only |
 | XY | X or Y stitches only |
 
-**Seams** and **Connected** were removed 2026-09-19 with T-junction logic. Seams kept 88 of 88 on the column test (too loose). Connected only ranked those bogus seams first, then stopped at a spanning set — not used once placement is overlap-center. Leftover `Seams` / `Connected` strings (old value lists) fall through to All with a warning. The auto value list is rewritten to All / Z / XY on solve. Pins `N` (piece count) and `T` (seam gap) are gone; existing canvases may need `M` re-wired if Grasshopper shifted inputs.
+**Seams** and **Connected** were removed 2026-09-19 with T-junction logic. Leftover `Seams` / `Connected` strings (old value lists) fall through to All with a warning. The auto value list is rewritten to All / Z / XY on solve.
 
-**As-built:** [Packing/SelectContacts_GH.cs](../Packing/SelectContacts_GH.cs). GUID `1D9A6E40-C3B2-4F58-A817-6E0C4D92F1AB`. Icon is Unification (cosmetic).
+**As-built:** [Packing/SelectContacts_GH.cs](../Packing/SelectContacts_GH.cs). Nickname **PickContacts** (was `PickJoints`; `ApplyDisplayNames` retitles old canvases). GUID `1D9A6E40-C3B2-4F58-A817-6E0C4D92F1AB`. Icon is Unification (cosmetic debt; no better existing bitmap).
 
 **Issues / adjustments**
 
@@ -131,59 +101,37 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 
 ---
 
-## Contact Tenon (today: Contact Joints)
+## Contact Tenon (`ContactTenon`)
 
 **Intended job:** Cut a **matching tenon pocket** on both pieces at each selected contact. Packing cutter, not a feeder into Alignment Tenon. Same idea as Alignment Tenon: boolean-difference the same solid from both members; output `J` is the tenon body (loose tenon / key), not a male stub left on one stick.
 
 A later **Contact Spline** would be a different cutter (dovetail / through key). Do not overload this component.
 
-**Rename (when we edit code)**
-
-| | Today | Spec |
-| --- | --- | --- |
-| Display name | Contact Joints | **Contact Tenon** |
-| Nickname | `PackJoints` | **PackTenon** |
-| GUID | `7C2F5B18-E9A4-4D06-B3C1-8F47A0E256D9` | **unchanged** |
-| Icon | Spline Joints bitmap | Tenon bitmap or a new icon |
-
-**As-built:** [Packing/ContactJoints_GH.cs](../Packing/ContactJoints_GH.cs)
+**As-built:** [Packing/ContactTenon_GH.cs](../Packing/ContactTenon_GH.cs) (was Contact Joints / `PackJoints`). Display **Contact Tenon**, nick **ContactTenon**, GUID `7C2F5B18-E9A4-4D06-B3C1-8F47A0E256D9` unchanged. Icon is Tenon Joints. `ApplyDisplayNames` retitles old canvases. Pin layout changed (`D`/`W` replaced); re-wire `JX`/`JY`/`Dep`/`R`/`JT`/`TC`.
 
 | | Nick | Rule |
 | --- | --- | --- |
 | In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
 | In `C` | Selected contacts | |
-| In `D` | Tool diameter | Default `0.25`. Drives width, depth cap, and fillet |
-| In `W` | Width factor | Pocket width = `W × D` (default `1`) |
+| In `JX` | Long-side size | Default `1`. Along the overlap's longer in-plane direction |
+| In `JY` | Short-side size | Default `1`. Across the overlap |
+| In `Dep` | Total depth | Default `0.5`. Centered on the contact plane; clamped to `thinner member / 3` |
+| In `R` | Fillet radius | Default `0.125`. Clamped below `min(JX, JY) / 2` |
+| In `JT` | Joint type | Auto value list: tenon / cross tenon / custom tenon |
+| In `TC` | Tenon count | Default `1`. Spread along the long side |
+| In `CS` | Custom curve | Optional closed planar curve |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
-| Out `J` | Pocket solids | One cutter per successful contact |
-| Out `Sk` | Skipped planes | Overlap narrower than the pocket, depth 0, or boolean fail |
+| Out `J` | Tenon solids | One solid per tenon (TC per successful contact) |
+| Out `JV` | Joint volumes | Volume of each `J` solid |
+| Out `Sk` | Skipped planes | Overlap too small, depth 0, missing custom curve, or boolean fail |
 
-Geometry rules today:
+Geometry rules:
 
-- Square pocket `width × width`, fillet `D/2`
-- Depth = `min(D, thinner member / 3)` along the contact axis
-- Placement = `CenterOnOverlap`: pocket origin at the **center of the shared overlap rectangle** (the intersection of the two touching faces — the smallest surface both pieces have in common). Skip only if the overlap is narrower than the pocket in either in-plane direction. No inset, no third-piece test.
-- Before 2026-09-19 placement was `OffsetTowardSeam` (inset `D` toward a detected T-junction edge, else the shortest edge). Column test with that rule: 23 pockets cut, 65 skipped. Removed as too complicated; re-run the column test with Center placement and record the new counts here.
+- Placement = `OrientOnOverlap`: origin at the **center of the shared overlap rectangle**; plane X along the longer in-plane side, Y along the shorter. Skip if `JX × TC` exceeds the long side or `JY` exceeds the short side. No inset, no third-piece test.
+- Depth = `min(Dep, thinner member / 3)` along the contact axis (total, centered, so each member takes half).
+- Types mirror Alignment Tenon (rect / cross / custom) but live in this file so Reisach's `TenonJoints_GH.cs` stays untouched.
 
-**Issues / adjustments**
-
-- Depth is not independently adjustable (always `min(D, thinner/3)`). That is the next code pass (below), not this doc.
-- Remaining skips: overlap narrower than `W × D`, or `CreateBooleanDifference` fails.
-- Output description still says “keys / splines”; after rename, call `J` the tenon solids.
-
-### Proposed inputs (not built)
-
-Defaults should match today’s look so old canvases do not jump.
-
-| Name | Nick | Default | Role |
-| --- | --- | --- | --- |
-| Tool Diameter | `D` | `0.25` | Mill constraint, skip test, default fillet `D/2` |
-| Width Factor | `W` | `1` | Pocket width = `W × D` |
-| Depth | `Dep` | `D` | Requested cut depth; still clamp to `thinner / 3` |
-
-**Placement** is fixed at the overlap center (Alignment Tenon analogue on the shared face). `Inset` / `Place` (Center / Edge / Seam) were proposed earlier and dropped with the T-junction logic; do not reintroduce without a new reason.
-
-Later (not required for the first Contact Tenon edit): pocket **length** along the overlap (non-square slot), explicit fillet `R` instead of `D/2`.
+Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. Center placement and full-parity knobs are **not yet re-counted** on the column CSV.
 
 ---
 
@@ -195,31 +143,19 @@ Do not duplicate these on the packing tab.
 
 **Spline Joints** (`Spline`): same chain; dovetail slots through Y; not for packed XY faces.
 
-Packed Stacks is the only packing → Alignment Tenon hookup.
+There is no packing → Alignment Tenon hookup.
 
 ---
 
 ## Out of scope (this spec)
 
-- GUID change or in-plugin rename (proposed only)
 - Contact Spline design
-- Rewriting Column-Fill-2x2x8.md or Component-Reference.md
+- New packing-tab icons (Select Contacts still borrows Unification)
 
 ---
 
-## Open questions (resolve when we implement Contact Tenon)
+## Next
 
-1. **`Dep` as a length vs a factor** — spec uses a length defaulting to `D`, clamped to thinner/3. A factor (`0.33` of thinner) would scale with stock; pick one in the first code PR.
-2. **Skip vs fail** — keep skipped planes, or also output failed cutters / a text report?
-3. **Male tenon vs matching pocket** — Alignment Tenon already cuts both sides and outputs `J` as the body. Contact Tenon stays matching unless we explicitly want a stub left on one piece.
-
----
-
-## Next code pass (after this spec is accepted)
-
-1. ~~Center placement~~ — done 2026-09-19 (`CenterOnOverlap`; T-junction code removed).
-2. ~~Drop Seams / Connected~~ — done 2026-09-19. Select Contacts is All / Z / XY only.
-3. Re-run the column test; record cut / skipped counts under Contact Tenon above.
-4. Rename Contact Joints → Contact Tenon (`PackTenon`), GUID unchanged, fix icon/description.
-5. Add `Dep`.
-6. Then: Component-Reference packing section + Column-Fill joint wiring.
+1. Close Rhino and reload the `.gha`.
+2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon above.
+3. Re-wire old Contact Joints boxes (`D`/`W` pins are gone).

@@ -31,6 +31,7 @@
 
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 using CromulentBisgetti.ContainerPacking.Algorithms;
@@ -43,9 +44,10 @@ namespace SpruceBeetle.Packing
     public class BinPackingCS_GH : GH_Component
     {
         public BinPackingCS_GH()
-          : base("Bin Packing EB-AFIT", "PackBinC#", "The EB-AFIT algorithm supports full item rotation and has excellent runtime performance and container utilization",
+          : base("Bin Packing EB-AFIT", "PackBin", "The EB-AFIT algorithm supports full item rotation and has excellent runtime performance and container utilization",
               "Spruce Beetle", "   Packing")
         {
+            ApplyDisplayNames();
         }
 
 
@@ -65,7 +67,7 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddBrepParameter("Packed Offcuts", "POc", "List of packed Offcuts as solids", GH_ParamAccess.list);
             pManager.AddBrepParameter("Container", "C", "The container where the Offcuts are packed into", GH_ParamAccess.item);
-            pManager.AddGenericParameter("Offcuts", "Oc", "Packed pieces as Offcuts (index, rotated size, geometry, Z-end planes). Feed Packed Stacks, then Tenon Joints.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Offcuts", "Oc", "Packed pieces as Offcuts (index, rotated size, geometry, Z-end planes). Feed Packed Contacts, then Select Contacts and Contact Tenon.", GH_ParamAccess.list);
 
             pManager.HideParameter(1);
 
@@ -222,6 +224,28 @@ namespace SpruceBeetle.Packing
             }
 
             return packedOffcuts;
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            ApplyDisplayNames();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            ApplyDisplayNames();
+            base.AddedToDocument(document);
+        }
+
+
+        void ApplyDisplayNames()
+        {
+            Name = "Bin Packing EB-AFIT";
+            NickName = "PackBin";
         }
 
 

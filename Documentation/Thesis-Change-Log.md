@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options (keep both): **Packed Stacks → Tenon Joints** (Z-columns, centered), or **Packed Contacts → Select Contacts → Contact Tenon** (today still named Contact Joints; Z + XY, pocket centered on each shared overlap rectangle). Spec: [Packing-Joints.md](Packing-Joints.md). Code rename and extra knobs are not shipped yet.
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (matching pockets at the center of each shared overlap rectangle; X along the long side). Alignment Tenon stays on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,31 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-19 — docs: packing nicknames, icons, and catalog sync
+
+- **Motivation:** Packing tab names and the user catalog still described the adapter path (Packed Stacks, Contact Joints / `PackJoints`, `PackBinC#`) after Contact Tenon shipped.
+- **Files:** `Packing/BinPackingCS_GH.cs`; `Packing/SelectContacts_GH.cs`; `Packing/PackedContacts_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; `Documentation/Column-Fill-2x2x8.md`; `Documentation/README.md`; this log.
+- **Before → after:** Nickname `PackBinC#` → **PackBin**; `PickJoints` → **PickContacts** (`ApplyDisplayNames` retitles existing boxes). Packed Contacts icon Intersection Joints → Find Intersections. Contact Tenon icon Tenon Joints. Component-Reference packing section now lists `Oc`, Packed Contacts, Select Contacts, and Contact Tenon. Column-Fill points joints at that path. Select Contacts still uses the Unification icon (cosmetic debt).
+- **Result / observation:** GUIDs unchanged. Label Offcut Numbers and Used Offcuts stay on Create.
+- **Follow-ups:** Close Rhino so existing boxes pick up the new nicknames.
+
+### 2026-09-19 — feature: Contact Tenon full parity with Alignment Tenon knobs
+
+- **Motivation:** Packed-column joints need matching pockets on both members at real face contacts, with the same size / type / count controls as Alignment Tenon, without feeding a contact graph into a chain cutter.
+- **Files:** `Packing/ContactTenon_GH.cs` (was `Packing/ContactJoints_GH.cs`); `Packing/PackedNeighbors.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Contact Joints (`PackJoints`) cut one square `W×D` pocket per contact using `CenterOnOverlap`. **Contact Tenon** (`ContactTenon`, GUID `7C2F5B18-…` unchanged) takes `JX`/`JY`/`Dep`/`R`/`JT`/`TC`/`CS`, types tenon / cross / custom (auto value list), and cuts the same solid from both members. `OrientOnOverlap` places the frame at the overlap-rectangle center with X along the longer in-plane side. Skip if `JX×TC` exceeds the long side or `JY` exceeds the short side. Depth is `min(Dep, thinner/3)`, centered. `J` is the tenon body; `JV` is per-solid volume. `D`/`W` pins are gone — re-wire old canvases. `ApplyDisplayNames` retitles Contact Joints boxes.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472` in DeconstructOffcut). `.gha` wrote to `bin/Debug/net48/`. Not yet re-tested in Grasshopper; column cut/skipped counts still unknown for the new knobs (defaults `JX=JY=1`, `Dep=0.5`).
+- **Follow-ups:** Close Rhino, reload. Re-run `stock_column_in.csv` pack → Packed Contacts → Select Contacts → Contact Tenon and record cut/skipped counts in Packing-Joints.md.
+
+### 2026-09-19 — experiment: delete Packed Stacks (adapter into Alignment Tenon failed)
+
+- **Motivation:** Packed Stacks existed only to graft Z-groups into Alignment Tenon. Contact Tenon now cuts Z beds and XY stitches from Packed Contacts, so the adapter has no remaining joint use case. Keeping it would keep a known-wrong path on the ribbon.
+- **Files:** deleted `Packing/PackedStacks_GH.cs`; `Packing/PackedNeighbors.cs` (`ZStacks` / `ZContact` removed); `Packing/BinPackingCS_GH.cs` (`Oc` description); `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Spec said keep Packed Stacks as a parallel Z-only path. Deleted. Union-find stacks were not linear chains (a bridging piece grouped side-by-side neighbors), and Tenon centered each cut on that piece's own `FirstPlane`/`SecondPlane` (packing sets those at the piece bbox center, not the shared overlap). Result on packed offcuts: mating pockets offset, overlapping tenons, and joints where nothing touched. Canvases that still contain Packed Stacks (GUID `8F3A6C21-…`) show a missing-component placeholder.
+- **Result / observation:** The 2026-09-02 / 2026-09-08 “keep both paths” decision is reversed. Alignment Tenon is unchanged and remains the curve-chain cutter.
+- **Follow-ups:** Remove leftover Packed Stacks boxes from `Initial_Tests.gh` when that file is next opened.
+
 
 ### 2026-09-19 — fix: drop Select Contacts Seams and Connected
 

@@ -1,13 +1,13 @@
 # Spruce Beetle — Component Reference
 
-> **Packing path:** this catalog still describes packing as Brep-only. For Packed Stacks, Packed Contacts, Select Contacts, and Contact Joints (proposed Contact Tenon), use [Packing-Joints.md](Packing-Joints.md). Sync this file after those edits ship.
-
 Spruce Beetle is a Grasshopper toolkit for designing with timber (or other) **offcuts**: rectangular leftover pieces described by an index and three dimensions. Typical workflow:
 
 1. **Create** offcut records from numbers, CSV, Excel, or JSON.
 2. **Align** them along a curve (straight or free-form).
 3. Optionally **unify** the stack, then cut **joints**.
-4. **Pack** leftovers into a container, or **orient** pieces for fabrication and export data.
+4. **Pack** leftovers into a container, cut **contact tenons**, or **orient** pieces for fabrication and export data.
+
+Packed-column joint design notes (why contacts, not Alignment Tenon): [Packing-Joints.md](Packing-Joints.md).
 
 Grasshopper category: **Spruce Beetle**. Subcategories: Create, Alignment, Packing, Fabricate.
 
@@ -466,11 +466,13 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-### Bin Packing EB-AFIT (`PackBinC#`)
+Pack rectangular leftovers into a box, list face contacts, then cut matching tenons. Alignment **Tenon Joints** is for curve chains only — do not wire packed contacts into it.
 
-**What it does:** Packs Offcut **stock boxes** (X, Y, Z) into a 3D container using the EB-AFIT algorithm (full rotation of items). Builds closed Breps at packed locations in a box aligned to World XY from the origin, using the input box’s size.
+### Bin Packing EB-AFIT (`PackBin`)
 
-Does not preserve Offcut objects — output is geometry only.
+**What it does:** Packs Offcut **stock boxes** (X, Y, Z) into a 3D container using the EB-AFIT algorithm (full rotation of items). Builds closed Breps at packed locations in a box aligned to World XY from the origin, using the input box’s size. Also outputs packed **Offcut** objects (`Oc`) with Index, rotated size, geometry, and Z-end planes.
+
+Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged). Reopen after rebuilding and the title becomes **PackBin**.
 
 **Inputs**
 
@@ -485,6 +487,86 @@ Does not preserve Offcut objects — output is geometry only.
 | --- | --- | --- | --- | --- |
 | Packed Offcuts | POc | Brep | List | Solids that fit. Items that did not fit are omitted. |
 | Container | C | Brep | Item | Origin-aligned box of the same size (viewport-hidden). |
+| Offcuts | Oc | Offcut | List | Packed pieces (Index, rotated size, geometry, Z-end planes). Feed Packed Contacts. |
+
+---
+
+### Packed Contacts (`PackContacts`)
+
+**What it does:** Lists every **face-to-face** contact between packed Offcuts (Z beds and XY stitches). Does not cut wood. One contact per pair (Z wins if a pair also shares an XY face).
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Packed Offcuts | Oc | Offcut | List | — | Same list Contact Tenon will cut. |
+| Tolerance | T | Number | Item | `0.01` | Maximum gap treated as a face contact. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Contacts | C | PackedContact | List | Pair indices, axis, overlap rectangle, center plane. |
+| Planes | P | Plane | List | Contact planes at overlap centers. |
+| Rectangles | R | Curve | List | Overlap rectangles. |
+| Axis | A | Text | List | `Z`, `X`, or `Y`. |
+
+---
+
+### Select Contacts (`PickContacts`)
+
+**What it does:** Filters packed face contacts. No geometry.
+
+Old canvases may still show nickname `PickJoints`; same component (GUID unchanged). Leftover `Seams` / `Connected` mode strings warn and behave as All.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Contacts | C | PackedContact | List | From Packed Contacts. |
+| Mode | M | Text | Item | Auto value list: `All`, `Z` (beds only), `XY` (side stitches). |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Contacts | C | PackedContact | List | Kept subset. |
+| Planes | P | Plane | List | Planes of kept contacts. |
+
+---
+
+### Contact Tenon (`ContactTenon`)
+
+**What it does:** Cuts a **matching tenon** from both members at each selected contact. The same solid is boolean-differenced from both Offcuts; `J` is the tenon body (loose tenon / key), not a male stub left on one stick. Placement is the **center of the shared overlap rectangle**, with X along the longer in-plane side.
+
+Old canvases may still show **Contact Joints** (`PackJoints`); same GUID. Re-wire: pins `D` and `W` are gone.
+
+Do **not** feed this from Alignment Tenon, or feed packed contacts into Alignment Tenon.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | — | Packed Offcuts (same list / order as Packed Contacts). |
+| Contacts | C | PackedContact | List | — | From Select Contacts. |
+| Joint X | JX | Number | Item | `1` | Tenon size along the overlap long side. |
+| Joint Y | JY | Number | Item | `1` | Tenon size along the overlap short side. |
+| Depth | Dep | Number | Item | `0.5` | Total depth, centered on the contact. Clamped to thinner member / 3. |
+| Tool Radius | R | Number | Item | `0.125` | Corner fillet. Clamped below `min(JX, JY) / 2`. |
+| Joint Type | JT | Text | Item | — | Auto value list: `tenon`, `cross tenon`, `custom tenon`. |
+| Tenon Count | TC | Integer | Item | `1` | Number of tenons along the long side. |
+| Custom Shape | CS | Curve | Item | — | Closed planar curve (custom tenon only). Optional. |
+
+Skipped when `JX × TC` exceeds the long side, `JY` exceeds the short side, depth is 0, custom curve is missing, or the boolean fails. Failed cuts keep the last successful solid.
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | Pieces after tenon cuts. |
+| Joints | J | Brep | List | Tenon solids (one per tenon). |
+| Joint Volume | JV | Number | List | Volume of each `J` solid. |
+| Skipped | Sk | Plane | List | Contact planes that were not cut. |
 
 ---
 

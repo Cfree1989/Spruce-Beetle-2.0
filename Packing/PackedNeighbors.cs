@@ -94,19 +94,6 @@ namespace SpruceBeetle.Packing
         }
 
 
-        public static bool ZContact(BoundingBox a, BoundingBox b, double tolerance, out Plane contact)
-        {
-            contact = Plane.Unset;
-
-            if (!TryZContact(a, b, tolerance, out BoundingBox overlap, out Plane plane))
-                return false;
-
-            contact = plane;
-            _ = overlap;
-            return true;
-        }
-
-
         public static List<PackedContact> AllContacts(List<Offcut> packed, double tolerance)
         {
             var contacts = new List<PackedContact>();
@@ -208,98 +195,34 @@ namespace SpruceBeetle.Packing
 
 
         /// <summary>
-        /// Place a square pocket of the given width at the center of the shared overlap rectangle.
-        /// canCut is false when the overlap is narrower than the pocket in either in-plane direction.
+        /// Tenon frame at the overlap-rectangle center, X along the longer in-plane side.
+        /// canCut is false when JX × count exceeds the long side or JY exceeds the short side.
         /// </summary>
-        public static bool CenterOnOverlap(PackedContact contact, double width, out Plane placed, out bool canCut)
+        public static bool OrientOnOverlap(PackedContact contact, double jointX, double jointY, int tenonCount, out Plane placed, out double longSide, out double shortSide, out bool canCut)
         {
             placed = Plane.Unset;
+            longSide = 0;
+            shortSide = 0;
             canCut = false;
 
             if (contact == null || !contact.Overlap.IsValid)
                 return false;
 
-            placed = contact.Plane;
-
             if (!OverlapExtents(contact, out double u0, out double u1, out double v0, out double v1, out double w))
                 return false;
 
-            double pocket = Math.Max(width, 1e-6);
-            placed = PlaneAt(contact.Axis, (u0 + u1) * 0.5, (v0 + v1) * 0.5, w);
-            canCut = (u1 - u0) >= pocket && (v1 - v0) >= pocket;
+            double uLen = u1 - u0;
+            double vLen = v1 - v0;
+            double uc = (u0 + u1) * 0.5;
+            double vc = (v0 + v1) * 0.5;
+            bool uIsLong = uLen >= vLen;
+            longSide = uIsLong ? uLen : vLen;
+            shortSide = uIsLong ? vLen : uLen;
+            placed = OrientedPlane(contact.Axis, uIsLong, uc, vc, w);
+
+            int count = Math.Max(tenonCount, 1);
+            canCut = jointX * count <= longSide + 1e-9 && jointY <= shortSide + 1e-9;
             return true;
-        }
-
-
-        public static List<List<int>> ZStacks(List<Offcut> packed, double tolerance, out List<Plane> contacts)
-        {
-            contacts = new List<Plane>();
-            int count = packed.Count;
-            var boxes = new BoundingBox[count];
-            var parent = new int[count];
-
-            for (int i = 0; i < count; i++)
-            {
-                boxes[i] = WorldBox(packed[i]);
-                parent[i] = i;
-            }
-
-            int Find(int x)
-            {
-                if (parent[x] == x)
-                    return x;
-                parent[x] = Find(parent[x]);
-                return parent[x];
-            }
-
-            void Union(int a, int b)
-            {
-                int pa = Find(a);
-                int pb = Find(b);
-                if (pa != pb)
-                    parent[pa] = pb;
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                for (int j = i + 1; j < count; j++)
-                {
-                    if (!ZContact(boxes[i], boxes[j], tolerance, out Plane plane))
-                        continue;
-
-                    Union(i, j);
-                    contacts.Add(plane);
-                }
-            }
-
-            var groups = new Dictionary<int, List<int>>();
-            for (int i = 0; i < count; i++)
-            {
-                int root = Find(i);
-                if (!groups.TryGetValue(root, out List<int> members))
-                {
-                    members = new List<int>();
-                    groups[root] = members;
-                }
-                members.Add(i);
-            }
-
-            var stacks = new List<List<int>>();
-            foreach (List<int> members in groups.Values)
-            {
-                members.Sort((a, b) => boxes[a].Min.Z.CompareTo(boxes[b].Min.Z));
-                stacks.Add(members);
-            }
-
-            stacks.Sort((a, b) =>
-            {
-                int byZ = boxes[a[0]].Min.Z.CompareTo(boxes[b[0]].Min.Z);
-                if (byZ != 0)
-                    return byZ;
-                return boxes[a[0]].Min.X.CompareTo(boxes[b[0]].Min.X);
-            });
-
-            return stacks;
         }
 
 
@@ -468,16 +391,22 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static Plane PlaneAt(ContactAxis axis, double u, double v, double w)
+        private static Plane OrientedPlane(ContactAxis axis, bool uIsLong, double u, double v, double w)
         {
             switch (axis)
             {
                 case ContactAxis.X:
-                    return new Plane(new Point3d(w, u, v), Vector3d.XAxis);
+                    return uIsLong
+                        ? new Plane(new Point3d(w, u, v), Vector3d.YAxis, Vector3d.ZAxis)
+                        : new Plane(new Point3d(w, u, v), Vector3d.ZAxis, -Vector3d.YAxis);
                 case ContactAxis.Y:
-                    return new Plane(new Point3d(u, w, v), Vector3d.YAxis);
+                    return uIsLong
+                        ? new Plane(new Point3d(u, w, v), Vector3d.XAxis, -Vector3d.ZAxis)
+                        : new Plane(new Point3d(u, w, v), Vector3d.ZAxis, Vector3d.XAxis);
                 default:
-                    return new Plane(new Point3d(u, v, w), Vector3d.ZAxis);
+                    return uIsLong
+                        ? new Plane(new Point3d(u, v, w), Vector3d.XAxis, Vector3d.YAxis)
+                        : new Plane(new Point3d(u, v, w), Vector3d.YAxis, -Vector3d.XAxis);
             }
         }
 
