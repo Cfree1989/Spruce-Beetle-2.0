@@ -25,24 +25,26 @@
 
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper.Kernel;
 
 
 namespace SpruceBeetle.Create
 {
-    public class UsedIndices_GH : GH_Component
+    public class UsedOffcuts_GH : GH_Component
     {
-        public UsedIndices_GH()
-          : base("Used Offcuts", "UsedOc", "List the stock numbers of used Offcuts, and leftovers if full stock is given", "Spruce Beetle", "     Create")
+        public UsedOffcuts_GH()
+          : base("Used Offcuts", "UsedOc", "List which numbered scraps were used, and leftovers if full stock is given", "Spruce Beetle", "     Create")
         {
+            ApplyDisplayNames();
         }
 
 
         // parameter inputs
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Offcuts", "Oc", "Packed or aligned Offcuts (used pieces)", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Offcut Data", "OcD", "Full CSV stock list (optional; for unused numbers)", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Offcuts", "Oc", "Packed or aligned Offcuts (used scraps)", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Offcut Data", "OcD", "Full CSV stock list (optional; for unused scrap numbers)", GH_ParamAccess.list);
 
             pManager[1].Optional = true;
 
@@ -54,11 +56,33 @@ namespace SpruceBeetle.Create
         // parameter outputs
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddNumberParameter("Used", "U", "Stock numbers of used Offcuts, sorted numerically", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Unused", "Un", "Stock numbers still in OcD that were not used, sorted numerically. Empty if OcD is unwired.", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Used", "U", "Scrap numbers that were used, sorted", GH_ParamAccess.list);
+            pManager.AddNumberParameter("Unused", "Un", "Scrap numbers still in OcD that were not used, sorted. Empty if OcD is unwired.", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            ApplyDisplayNames();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            ApplyDisplayNames();
+            base.AddedToDocument(document);
+        }
+
+
+        void ApplyDisplayNames()
+        {
+            Name = "Used Offcuts";
+            NickName = "UsedOc";
         }
 
 
@@ -71,7 +95,7 @@ namespace SpruceBeetle.Create
             if (!DA.GetDataList(0, usedOffcuts)) return;
             bool hasStock = DA.GetDataList(1, stock);
 
-            List<double> usedIndices = new List<double>();
+            List<double> usedNumbers = new List<double>();
             HashSet<double> usedSet = new HashSet<double>();
 
             if (usedOffcuts == null || usedOffcuts.Count == 0)
@@ -86,12 +110,12 @@ namespace SpruceBeetle.Create
                         continue;
 
                     double index = usedOffcuts[i].Index;
-                    usedIndices.Add(index);
+                    usedNumbers.Add(index);
                     usedSet.Add(index);
                 }
             }
 
-            List<double> unusedIndices = new List<double>();
+            List<double> unusedNumbers = new List<double>();
 
             if (hasStock && stock != null && stock.Count > 0)
             {
@@ -106,13 +130,13 @@ namespace SpruceBeetle.Create
                     stockSet.Add(index);
 
                     if (!usedSet.Contains(index))
-                        unusedIndices.Add(index);
+                        unusedNumbers.Add(index);
                 }
 
                 List<double> missing = new List<double>();
-                for (int i = 0; i < usedIndices.Count; i++)
+                for (int i = 0; i < usedNumbers.Count; i++)
                 {
-                    double index = usedIndices[i];
+                    double index = usedNumbers[i];
                     if (!stockSet.Contains(index) && !missing.Contains(index))
                         missing.Add(index);
                 }
@@ -121,15 +145,15 @@ namespace SpruceBeetle.Create
                 {
                     missing.Sort();
                     string labels = string.Join(", ", missing.ConvertAll(v => v.ToString()));
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Used Index not in stock: " + labels);
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Used scrap number not in stock: " + labels);
                 }
             }
 
-            usedIndices.Sort();
-            unusedIndices.Sort();
+            usedNumbers.Sort();
+            unusedNumbers.Sort();
 
-            DA.SetDataList(0, usedIndices);
-            DA.SetDataList(1, unusedIndices);
+            DA.SetDataList(0, usedNumbers);
+            DA.SetDataList(1, unusedNumbers);
         }
 
 

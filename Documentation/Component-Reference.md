@@ -187,9 +187,11 @@ All lists must have the same count.
 
 ### Used Offcuts (`UsedOc`)
 
-**What it does:** Lists the stock numbers (CSV column 1 / numbers written on the wood) of packed or aligned Offcuts. Optionally compare against the full stock list for leftovers.
+**What it does:** Lists the **scrap numbers** (CSV column 1 / numbers written on the wood) of packed or aligned Offcuts. Optionally compare against the full stock list for leftovers. This is the shop pick list, not a list of Offcut objects.
 
-Write `1`, `2`, `3`, … on each scrap as you measure it, and use the same number as the first CSV column. After **Bin Packing** (`Oc`) or **Curve Alignment** (`AOc`), this component is the shop pick list. Deconstruct Offcut also exposes Index as pin `i`; this component is only the numbers.
+Write `1`, `2`, `3`, … on each scrap as you measure it, and use the same number as the first CSV column. After **Bin Packing** (`Oc`) or **Curve Alignment** (`AOc`), wire packed/aligned `Oc` here. Deconstruct Offcut also exposes that number as pin `i`.
+
+Old canvases may still show **Used Indices** (`UsedI`); same component (GUID unchanged). Reopen the file after rebuilding the plugin and the title becomes **Used Offcuts**.
 
 **Inputs**
 
@@ -202,10 +204,10 @@ Write `1`, `2`, `3`, … on each scrap as you measure it, and use the same numbe
 
 | Name | Nick | Type | Access | Description |
 | --- | --- | --- | --- | --- |
-| Used | U | Number | List | Used Index values, sorted numerically (pick from the pile / CSV). |
-| Unused | Un | Number | List | Index values still in `OcD` that were not used, sorted numerically. Empty if `OcD` is unwired. |
+| Used | U | Number | List | Scrap numbers that were used, sorted numerically (pick from the pile / CSV). |
+| Unused | Un | Number | List | Scrap numbers still in `OcD` that were not used, sorted numerically. Empty if `OcD` is unwired. |
 
-Warns if `Oc` is empty, or if a used Index is missing from `OcD`.
+Warns if `Oc` is empty, or if a used scrap number is missing from `OcD`.
 
 ---
 

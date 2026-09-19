@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Rhino.Geometry;
 
@@ -207,49 +207,27 @@ namespace SpruceBeetle.Packing
         }
 
 
-        public static bool OffsetTowardSeam(PackedContact contact, BoundingBox[] boxes, double toolDiameter, double width, out Plane placed, out bool canCut)
+        /// <summary>
+        /// Place a square pocket of the given width at the center of the shared overlap rectangle.
+        /// canCut is false when the overlap is narrower than the pocket in either in-plane direction.
+        /// </summary>
+        public static bool CenterOnOverlap(PackedContact contact, double width, out Plane placed, out bool canCut)
         {
-            placed = contact.Plane;
+            placed = Plane.Unset;
             canCut = false;
 
-            if (contact == null || !contact.Overlap.IsValid || toolDiameter <= 0)
+            if (contact == null || !contact.Overlap.IsValid)
                 return false;
+
+            placed = contact.Plane;
 
             if (!OverlapExtents(contact, out double u0, out double u1, out double v0, out double v1, out double w))
                 return false;
 
             double pocket = Math.Max(width, 1e-6);
-            double inset = toolDiameter;
-            var candidates = new List<(int edge, bool seam, double halfSpan)>();
-
-            bool[] seam = EdgeSeams(contact, boxes, u0, u1, v0, v1, w, 0.01);
-
-            for (int e = 0; e < 4; e++)
-            {
-                double span = (e < 2) ? (u1 - u0) : (v1 - v0);
-                candidates.Add((e, seam[e], span * 0.5));
-            }
-
-            candidates.Sort((a, b) =>
-            {
-                int bySeam = b.seam.CompareTo(a.seam);
-                if (bySeam != 0)
-                    return bySeam;
-                return a.halfSpan.CompareTo(b.halfSpan);
-            });
-
-            foreach (var c in candidates)
-            {
-                if (!TryPlaceOnEdge(u0, u1, v0, v1, c.edge, inset, pocket, out double u, out double v))
-                    continue;
-
-                placed = PlaneAt(contact.Axis, u, v, w);
-                canCut = true;
-                return true;
-            }
-
-            placed = contact.Plane;
-            return false;
+            placed = PlaneAt(contact.Axis, (u0 + u1) * 0.5, (v0 + v1) * 0.5, w);
+            canCut = (u1 - u0) >= pocket && (v1 - v0) >= pocket;
+            return true;
         }
 
 
@@ -621,130 +599,6 @@ namespace SpruceBeetle.Packing
                 default:
                     return new Plane(new Point3d(u, v, w), Vector3d.ZAxis);
             }
-        }
-
-
-        private static bool TryPlaceOnEdge(double u0, double u1, double v0, double v1, int edge, double inset, double pocket, out double u, out double v)
-        {
-            u = (u0 + u1) * 0.5;
-            v = (v0 + v1) * 0.5;
-            double half = pocket * 0.5;
-
-            switch (edge)
-            {
-                case 0:
-                    if (u1 - u0 < inset + half)
-                        return false;
-                    if (v1 - v0 < pocket)
-                        return false;
-                    u = u0 + inset;
-                    if (u - half < u0 || u + half > u1)
-                        return false;
-                    return true;
-                case 1:
-                    if (u1 - u0 < inset + half)
-                        return false;
-                    if (v1 - v0 < pocket)
-                        return false;
-                    u = u1 - inset;
-                    if (u - half < u0 || u + half > u1)
-                        return false;
-                    return true;
-                case 2:
-                    if (v1 - v0 < inset + half)
-                        return false;
-                    if (u1 - u0 < pocket)
-                        return false;
-                    v = v0 + inset;
-                    if (v - half < v0 || v + half > v1)
-                        return false;
-                    return true;
-                default:
-                    if (v1 - v0 < inset + half)
-                        return false;
-                    if (u1 - u0 < pocket)
-                        return false;
-                    v = v1 - inset;
-                    if (v - half < v0 || v + half > v1)
-                        return false;
-                    return true;
-            }
-        }
-
-
-        private static bool[] EdgeSeams(PackedContact contact, BoundingBox[] boxes, double u0, double u1, double v0, double v1, double w, double tolerance)
-        {
-            var seam = new bool[4];
-            if (boxes == null)
-                return seam;
-
-            for (int i = 0; i < boxes.Length; i++)
-            {
-                if (i == contact.IndexA || i == contact.IndexB)
-                    continue;
-
-                BoundingBox c = boxes[i];
-                if (!c.IsValid)
-                    continue;
-
-                switch (contact.Axis)
-                {
-                    case ContactAxis.Z:
-                        if (TouchesX(c, u0, v0, v1, w, tolerance) && Overlap(c.Min.Y, c.Max.Y, v0, v1, 0))
-                            seam[0] = true;
-                        if (TouchesX(c, u1, v0, v1, w, tolerance) && Overlap(c.Min.Y, c.Max.Y, v0, v1, 0))
-                            seam[1] = true;
-                        if (TouchesY(c, v0, u0, u1, w, tolerance) && Overlap(c.Min.X, c.Max.X, u0, u1, 0))
-                            seam[2] = true;
-                        if (TouchesY(c, v1, u0, u1, w, tolerance) && Overlap(c.Min.X, c.Max.X, u0, u1, 0))
-                            seam[3] = true;
-                        break;
-                    case ContactAxis.X:
-                        if (Near(c.Min.X, w, tolerance) || Near(c.Max.X, w, tolerance))
-                        {
-                            if (Overlap(c.Min.Z, c.Max.Z, v0, v1, 0) && (Near(c.Min.Y, u0, tolerance) || Near(c.Max.Y, u0, tolerance)))
-                                seam[0] = true;
-                            if (Overlap(c.Min.Z, c.Max.Z, v0, v1, 0) && (Near(c.Min.Y, u1, tolerance) || Near(c.Max.Y, u1, tolerance)))
-                                seam[1] = true;
-                            if (Overlap(c.Min.Y, c.Max.Y, u0, u1, 0) && (Near(c.Min.Z, v0, tolerance) || Near(c.Max.Z, v0, tolerance)))
-                                seam[2] = true;
-                            if (Overlap(c.Min.Y, c.Max.Y, u0, u1, 0) && (Near(c.Min.Z, v1, tolerance) || Near(c.Max.Z, v1, tolerance)))
-                                seam[3] = true;
-                        }
-                        break;
-                    default:
-                        if (Near(c.Min.Y, w, tolerance) || Near(c.Max.Y, w, tolerance))
-                        {
-                            if (Overlap(c.Min.Z, c.Max.Z, v0, v1, 0) && (Near(c.Min.X, u0, tolerance) || Near(c.Max.X, u0, tolerance)))
-                                seam[0] = true;
-                            if (Overlap(c.Min.Z, c.Max.Z, v0, v1, 0) && (Near(c.Min.X, u1, tolerance) || Near(c.Max.X, u1, tolerance)))
-                                seam[1] = true;
-                            if (Overlap(c.Min.X, c.Max.X, u0, u1, 0) && (Near(c.Min.Z, v0, tolerance) || Near(c.Max.Z, v0, tolerance)))
-                                seam[2] = true;
-                            if (Overlap(c.Min.X, c.Max.X, u0, u1, 0) && (Near(c.Min.Z, v1, tolerance) || Near(c.Max.Z, v1, tolerance)))
-                                seam[3] = true;
-                        }
-                        break;
-                }
-            }
-
-            return seam;
-        }
-
-
-        private static bool TouchesX(BoundingBox c, double x, double y0, double y1, double z, double tolerance)
-        {
-            bool onX = Near(c.Min.X, x, tolerance) || Near(c.Max.X, x, tolerance);
-            bool onZ = c.Min.Z - tolerance <= z && z <= c.Max.Z + tolerance;
-            return onX && onZ && Overlap(c.Min.Y, c.Max.Y, y0, y1, 0);
-        }
-
-
-        private static bool TouchesY(BoundingBox c, double y, double x0, double x1, double z, double tolerance)
-        {
-            bool onY = Near(c.Min.Y, y, tolerance) || Near(c.Max.Y, y, tolerance);
-            bool onZ = c.Min.Z - tolerance <= z && z <= c.Max.Z + tolerance;
-            return onY && onZ && Overlap(c.Min.X, c.Max.X, x0, x1, 0);
         }
 
 

@@ -10,7 +10,7 @@ namespace SpruceBeetle.Packing
     {
         public ContactJoints_GH()
           : base("Contact Joints", "PackJoints",
-              "Cut tool-sized pockets at packed face contacts, offset toward a seam rather than the face center",
+              "Cut tool-sized pockets at packed face contacts, centered on the shared overlap rectangle of each contact",
               "Spruce Beetle", "   Packing")
         {
         }
@@ -20,7 +20,7 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Offcuts", "Oc", "Packed Offcuts (same list as Packed Contacts)", GH_ParamAccess.list);
             pManager.AddGenericParameter("Contacts", "C", "Selected contacts from Select Contacts", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Tool Diameter", "D", "CNC bit diameter (joint width, depth cap, fillet, and edge inset)", GH_ParamAccess.item, 0.25);
+            pManager.AddNumberParameter("Tool Diameter", "D", "CNC bit diameter (joint width, depth cap, and fillet)", GH_ParamAccess.item, 0.25);
             pManager.AddNumberParameter("Width Factor", "W", "Pocket width as a multiple of D", GH_ParamAccess.item, 1.0);
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -32,7 +32,7 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts after pocket cuts", GH_ParamAccess.list);
             pManager.AddBrepParameter("Joints", "J", "Pocket solids (matching keys / splines)", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Skipped", "Sk", "Contact planes skipped because the overlap is too small for D", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Contact planes skipped because the overlap is narrower than the pocket, depth is 0, or the boolean failed", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -93,7 +93,7 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!PackedNeighbors.OffsetTowardSeam(contact, boxes, diameter, pocketWidth, out Plane placed, out bool canCut) || !canCut)
+                if (!PackedNeighbors.CenterOnOverlap(contact, pocketWidth, out Plane placed, out bool canCut) || !canCut)
                 {
                     skipped.Add(contact.Plane);
                     continue;

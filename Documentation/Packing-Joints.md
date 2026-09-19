@@ -4,9 +4,9 @@ Thesis working spec for the **packed-column joint path**. It records intended fu
 
 This is **not** the user-facing [Component-Reference.md](Component-Reference.md). That file is already stale (packing still described as Brep-only; no Packed Stacks / Contacts). Sync it after we ship the Contact Tenon edits.
 
-No C# changes in this pass. Rename, extra knobs, and placement modes below are **proposed**.
+Rename and extra knobs below are **proposed**. Placement is **decided**: pockets sit at the **center of the shared overlap rectangle** (2026-09-19). T-junction / seam placement was removed as too complicated.
 
-Related: [joint-placement.png](joint-placement.png) (Seam placement target), [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) (pack a 24×24×96 box; still says packing does not make joints).
+Related: [joint-placement.png](joint-placement.png) (earlier Seam placement sketch, no longer the target), [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md) (pack a 24×24×96 box; still says packing does not make joints).
 
 ---
 
@@ -32,7 +32,7 @@ Bin Packing EB-AFIT  →  Oc
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
 | Packed Stacks | Consecutive pieces in a Z-stack | Face center (Alignment Tenon) | Alignment **Tenon Joints** (`JX`/`JY`/`JZ`/`R`) |
-| Contacts | Selected face pairs, including side faces | Placement mode (default Seam) | **Contact Tenon** (today Contact Joints) |
+| Contacts | Selected face pairs, including side faces | Center of the shared overlap rectangle | **Contact Tenon** (today Contact Joints) |
 
 **Spline Joints** stays on the curve-alignment tab. A later **Contact Spline** is a name only — not specified here.
 
@@ -76,7 +76,7 @@ Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Off
 
 ## Packed Contacts (`PackContacts`)
 
-**Intended job:** List every **face-to-face** contact between packed Offcuts (Z beds and XY stitches). Does not cut wood. Does not choose which contacts get joints. Contact plane is the **center** of the overlap rectangle; placement offset happens later on Contact Tenon.
+**Intended job:** List every **face-to-face** contact between packed Offcuts (Z beds and XY stitches). Does not cut wood. Does not choose which contacts get joints. Contact plane is the **center** of the overlap rectangle; Contact Tenon cuts at that same point.
 
 **Inputs / outputs (intended = as-built)**
 
@@ -129,7 +129,7 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 
 **Issues / adjustments**
 
-- **Seams filter is a known bug**, separate from Contact Tenon **Seam placement**. Tighten later so Seams matches the red-tick sketch. Do not implement in this doc pass.
+- **Seams filter is a known bug** (keeps 88 of 88). It is the last T-junction logic left in the plugin now that Seam *placement* is gone from Contact Tenon. Decide whether to drop the mode (and the seam-first ranking in Connected) or tighten it; not decided yet.
 - Connected vs Z-only still needs a real column test after Seams is trustworthy.
 - Function of All / Z / XY is correct enough.
 
@@ -156,23 +156,23 @@ A later **Contact Spline** would be a different cutter (dovetail / through key).
 | --- | --- | --- |
 | In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
 | In `C` | Selected contacts | |
-| In `D` | Tool diameter | Default `0.25`. Drives width, depth cap, fillet, **and** inset |
+| In `D` | Tool diameter | Default `0.25`. Drives width, depth cap, and fillet |
 | In `W` | Width factor | Pocket width = `W × D` (default `1`) |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Pocket solids | One cutter per successful contact |
-| Out `Sk` | Skipped planes | Overlap too small, depth 0, or boolean fail |
+| Out `Sk` | Skipped planes | Overlap narrower than the pocket, depth 0, or boolean fail |
 
 Geometry rules today:
 
 - Square pocket `width × width`, fillet `D/2`
 - Depth = `min(D, thinner member / 3)` along the contact axis
-- Placement = always `OffsetTowardSeam`: inset **`D`** toward a detected third-piece edge; if none fits, skip. Prefer seam edges, then shorter half-span.
-- Column test: 23 pockets cut, 65 skipped (`D = 0.25"` and/or boolean fail)
+- Placement = `CenterOnOverlap`: pocket origin at the **center of the shared overlap rectangle** (the intersection of the two touching faces — the smallest surface both pieces have in common). Skip only if the overlap is narrower than the pocket in either in-plane direction. No inset, no third-piece test.
+- Before 2026-09-19 placement was `OffsetTowardSeam` (inset `D` toward a detected T-junction edge, else the shortest edge). Column test with that rule: 23 pockets cut, 65 skipped. Removed as too complicated; re-run the column test with Center placement and record the new counts here.
 
 **Issues / adjustments**
 
-- Depth, inset, and placement are not independently adjustable. That is the next code pass (below), not this doc.
-- Many skips: overlap smaller than `D` + pocket, or `CreateBooleanDifference` fails.
+- Depth is not independently adjustable (always `min(D, thinner/3)`). That is the next code pass (below), not this doc.
+- Remaining skips: overlap narrower than `W × D`, or `CreateBooleanDifference` fails.
 - Output description still says “keys / splines”; after rename, call `J` the tenon solids.
 
 ### Proposed inputs (not built)
@@ -184,16 +184,10 @@ Defaults should match today’s look so old canvases do not jump.
 | Tool Diameter | `D` | `0.25` | Mill constraint, skip test, default fillet `D/2` |
 | Width Factor | `W` | `1` | Pocket width = `W × D` |
 | Depth | `Dep` | `D` | Requested cut depth; still clamp to `thinner / 3` |
-| Inset | `I` | `D` | Distance from the chosen overlap edge / T-junction |
-| Place | `Place` | `Seam` | **Center** / **Edge** / **Seam** |
 
-**Placement modes (intended)**
+**Placement** is fixed at the overlap center (Alignment Tenon analogue on the shared face). `Inset` / `Place` (Center / Edge / Seam) were proposed earlier and dropped with the T-junction logic; do not reintroduce without a new reason.
 
-- **Center** — origin at the overlap rectangle center (Alignment Tenon analogue). `I` unused.
-- **Edge** — inset `I` toward the **shortest** overlap edge (no third-piece test).
-- **Seam** (default) — inset `I` toward a **T-junction / third-piece corner**, as marked in [joint-placement.png](joint-placement.png). If no third piece, fall back to Edge.
-
-Later (not required for the first Contact Tenon edit): pocket **length** along the seam (non-square slot), explicit fillet `R` instead of `D/2`.
+Later (not required for the first Contact Tenon edit): pocket **length** along the overlap (non-square slot), explicit fillet `R` instead of `D/2`.
 
 ---
 
@@ -209,19 +203,19 @@ Packed Stacks is the only packing → Alignment Tenon hookup.
 
 ---
 
-## Out of scope (this doc pass)
+## Out of scope (this spec)
 
-- Any C# / Grasshopper edit, GUID change, or in-plugin rename
+- GUID change or in-plugin rename (proposed only)
 - Contact Spline design
 - Rewriting Column-Fill-2x2x8.md or Component-Reference.md
-- Tightening the Seams filter (record the bug only)
+- Tightening or removing the Seams filter (record the bug only)
 
 ---
 
 ## Open questions (resolve when we implement Contact Tenon)
 
 1. **`Dep` as a length vs a factor** — spec uses a length defaulting to `D`, clamped to thinner/3. A factor (`0.33` of thinner) would scale with stock; pick one in the first code PR.
-2. **Seams filter vs Seam placement** — different: Select Contacts *which* faces; Contact Tenon *where on the face*. Tighten the filter in a separate change.
+2. **Seams filter** — Seam *placement* is gone (Contact Tenon always centers). The Select Contacts Seams *filter* still exists; drop or tighten in a separate change.
 3. **Skip vs fail** — keep skipped planes, or also output failed cutters / a text report?
 4. **Connected mode** — keep after Seams works, or drop if Z + Seams is enough for the column?
 5. **Male tenon vs matching pocket** — Alignment Tenon already cuts both sides and outputs `J` as the body. Contact Tenon stays matching unless we explicitly want a stub left on one piece.
@@ -230,7 +224,9 @@ Packed Stacks is the only packing → Alignment Tenon hookup.
 
 ## Next code pass (after this spec is accepted)
 
-1. Rename Contact Joints → Contact Tenon (`PackTenon`), GUID unchanged, fix icon/description.
-2. Add `Dep`, `I`, `Place` (Center / Edge / Seam).
-3. Then, separately: tighten Select Contacts **Seams** to T-junctions.
-4. Then: Component-Reference packing section + Column-Fill joint wiring.
+1. ~~Center placement~~ — done 2026-09-19 (`CenterOnOverlap`; T-junction code removed).
+2. Re-run the column test; record cut / skipped counts under Contact Tenon above.
+3. Rename Contact Joints → Contact Tenon (`PackTenon`), GUID unchanged, fix icon/description.
+4. Add `Dep`.
+5. Then, separately: drop or tighten Select Contacts **Seams**.
+6. Then: Component-Reference packing section + Column-Fill joint wiring.

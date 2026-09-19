@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options (keep both): **Packed Stacks → Tenon Joints** (Z-columns, centered), or **Packed Contacts → Select Contacts → Contact Tenon** (today still named Contact Joints; Z + XY, placement Center / Edge / Seam). Spec: [Packing-Joints.md](Packing-Joints.md). Code rename and extra knobs are not shipped yet.
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Two joint options (keep both): **Packed Stacks → Tenon Joints** (Z-columns, centered), or **Packed Contacts → Select Contacts → Contact Tenon** (today still named Contact Joints; Z + XY, pocket centered on each shared overlap rectangle). Spec: [Packing-Joints.md](Packing-Joints.md). Code rename and extra knobs are not shipped yet.
 
 Related guides already in the repo:
 
@@ -45,6 +45,22 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-19 — feature: Contact Joints pockets centered on the shared overlap rectangle; T-junction placement removed
+
+- **Motivation:** Contact Joints (packed `Oc` → Packed Contacts → Select Contacts → cut) skipped 65 of 88 contacts on the column test because the pocket had to sit inset `D` from a detected third-piece edge. Decision this session: place each pocket at the **center of the smallest shared contact surface** — the overlap rectangle where the two touching faces intersect — and drop the T-junction / seam logic as too complicated for the thesis scope.
+- **Files:** `Packing/PackedNeighbors.cs`; `Packing/ContactJoints_GH.cs`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** `PackedNeighbors.OffsetTowardSeam` (plus private `EdgeSeams`, `TryPlaceOnEdge`, `TouchesX`, `TouchesY`, ~130 lines) deleted. New `CenterOnOverlap(contact, width, out plane, out canCut)` returns the overlap-rectangle center plane along the contact axis and `canCut = overlap ≥ pocket width in both in-plane directions`. Contact Joints calls it instead; `D` no longer acts as an inset, only width / depth cap / fillet. Component, `D`, and `Sk` descriptions updated. GUID, inputs, and outputs unchanged. The center plane equals Packed Contacts' `P` output for that contact. Select Contacts **Seams** mode and Connected's seam-first ranking are untouched (still the known 88/88 bug).
+- **Result / observation:** Compiles (MSBuild, only pre-existing warnings); copy to `bin/` blocked by Rhino 8 holding the `.gha`. Not yet re-tested in Grasshopper.
+- **Follow-ups:** Close Rhino, rebuild, re-run the column test and record cut/skipped counts in Packing-Joints.md (expect far fewer skips; remaining skips = overlap narrower than `W × D` or boolean fail). Decide whether Select Contacts Seams / Connected should also lose the T-junction logic. Component-Reference still does not document Contact Joints.
+
+### 2026-09-19 — fix: Used Offcuts title sticks on existing canvases
+
+- **Motivation:** Shop pick list was still reading as **Used Indices** / `UsedI` on placed components. “Index” is the Offcut field name, not how scraps are talked about.
+- **Files:** `Create/UsedOffcuts_GH.cs` (was `Create/UsedIndices_GH.cs`); `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Constructor already said Used Offcuts, but Grasshopper restores the serialized name from the `.gh` file. After Read / AddedToDocument the title is forced to **Used Offcuts** (`UsedOc`). Class/file renamed; GUID unchanged. Pins `U`/`Un` still output scrap numbers. Search “Used Indices” will not find a second component.
+- **Result / observation:** N/A until Rhino is restarted with the new `.gha`.
+- **Follow-ups:** Close Rhino and rebuild. Existing Used Indices boxes should retitle without re-wiring.
 
 ### 2026-09-14 — fix: Label Offcut Numbers prefers exposed (non-contact) faces
 
