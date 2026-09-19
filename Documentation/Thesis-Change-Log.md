@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-19 — feature: Contact Tenon takes Tool Diameter as a mill constraint
+
+- **Motivation:** Shops talk in bit diameter, and the earlier `W` pin ("Width Factor") read like a tenon width but was actually a multiplier (`pocket = W × D`). Confirmed this session that the confusion was the pin name, not the geometry. Wanted the bit size back as an explicit constraint without it silently setting the joint size again.
+- **Files:** `Packing/ContactTenon_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Inputs were `Oc`, `C`, `JX`, `JY`, `Dep`, `R`, `JT`, `TC`, `CS`. Added **Tool Diameter `D`** (default `0.25`) at index 2, so `JX` shifts to 3 and `CS` to 9. `D` is a **floor only**: `JX` and `JY` are raised to `D`, `R` is raised to `D / 2` (the tightest inside corner the bit can cut), each with a runtime warning naming the new value. `R` is still capped below `min(JX, JY) / 2`, which wins over the floor when a tenon is exactly `D` wide. `Dep` is unchanged (free value, still clamped to `thinner / 3` so a tenon cannot punch through). GUID unchanged.
+- **Result / observation:** Compiles (MSBuild Debug; only the pre-existing `CS0472` pair). Copy to `bin/` blocked — Rhino 8 (PID 20036) holds the `.gha`; the built assembly is in `obj/Debug/net48/`. Rejected the literal reading "radius of the tool diameter or larger" (floor `D`) in favor of `D / 2`, since a `D` bit physically cuts a `D / 2` corner; user confirmed. Also rejected collapsing `JX` / `JY` into one square Width — user wants long narrow keys as well as square pegs.
+- **Follow-ups:** Close Rhino, rebuild so the copy lands in `bin/`, then re-wire Contact Tenon (pins shifted by one from `JX` onward) and run the column test.
+
 ### 2026-09-19 — docs: packing nicknames, icons, and catalog sync
 
 - **Motivation:** Packing tab names and the user catalog still described the adapter path (Packed Stacks, Contact Joints / `PackJoints`, `PackBinC#`) after Contact Tenon shipped.

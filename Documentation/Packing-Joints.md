@@ -107,16 +107,17 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 
 A later **Contact Spline** would be a different cutter (dovetail / through key). Do not overload this component.
 
-**As-built:** [Packing/ContactTenon_GH.cs](../Packing/ContactTenon_GH.cs) (was Contact Joints / `PackJoints`). Display **Contact Tenon**, nick **ContactTenon**, GUID `7C2F5B18-E9A4-4D06-B3C1-8F47A0E256D9` unchanged. Icon is Tenon Joints. `ApplyDisplayNames` retitles old canvases. Pin layout changed (`D`/`W` replaced); re-wire `JX`/`JY`/`Dep`/`R`/`JT`/`TC`.
+**As-built:** [Packing/ContactTenon_GH.cs](../Packing/ContactTenon_GH.cs) (was Contact Joints / `PackJoints`). Display **Contact Tenon**, nick **ContactTenon**, GUID `7C2F5B18-E9A4-4D06-B3C1-8F47A0E256D9` unchanged. Icon is Tenon Joints. `ApplyDisplayNames` retitles old canvases. Pin layout changed (`W` gone, `D` re-purposed); re-wire `D`/`JX`/`JY`/`Dep`/`R`/`JT`/`TC`.
 
 | | Nick | Rule |
 | --- | --- | --- |
 | In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
 | In `C` | Selected contacts | |
-| In `JX` | Long-side size | Default `1`. Along the overlap's longer in-plane direction |
-| In `JY` | Short-side size | Default `1`. Across the overlap |
+| In `D` | Tool diameter | Default `0.25`. Mill constraint only: floors `JX`, `JY`, and `R`. Does not set size |
+| In `JX` | Long-side size | Default `1`. Along the overlap's longer in-plane direction. Raised to `D` if smaller |
+| In `JY` | Short-side size | Default `1`. Across the overlap. Raised to `D` if smaller |
 | In `Dep` | Total depth | Default `0.5`. Centered on the contact plane; clamped to `thinner member / 3` |
-| In `R` | Fillet radius | Default `0.125`. Clamped below `min(JX, JY) / 2` |
+| In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller; still capped below `min(JX, JY) / 2` |
 | In `JT` | Joint type | Auto value list: tenon / cross tenon / custom tenon |
 | In `TC` | Tenon count | Default `1`. Spread along the long side |
 | In `CS` | Custom curve | Optional closed planar curve |
@@ -129,6 +130,7 @@ Geometry rules:
 
 - Placement = `OrientOnOverlap`: origin at the **center of the shared overlap rectangle**; plane X along the longer in-plane side, Y along the shorter. Skip if `JX × TC` exceeds the long side or `JY` exceeds the short side. No inset, no third-piece test.
 - Depth = `min(Dep, thinner member / 3)` along the contact axis (total, centered, so each member takes half).
+- `D` is a **constraint, not a size** (unlike the old Contact Joints, where pocket width was `W × D`). A ¼″ bit is `D = 0.25`; it cannot cut a tenon narrower than `0.25` or an inside corner tighter than `0.125`. `JX` / `JY` / `R` are real model-unit sizes; the component warns when it raises one of them.
 - Types mirror Alignment Tenon (rect / cross / custom) but live in this file so Reisach's `TenonJoints_GH.cs` stays untouched.
 
 Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. Center placement and full-parity knobs are **not yet re-counted** on the column CSV.
@@ -158,4 +160,4 @@ There is no packing → Alignment Tenon hookup.
 
 1. Close Rhino and reload the `.gha`.
 2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon above.
-3. Re-wire old Contact Joints boxes (`D`/`W` pins are gone).
+3. Re-wire old Contact Joints boxes (`W` is gone; `D` is now a floor, not a size).

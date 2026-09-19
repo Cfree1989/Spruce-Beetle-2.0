@@ -26,15 +26,16 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Offcuts", "Oc", "Packed Offcuts (same list as Packed Contacts)", GH_ParamAccess.list);
             pManager.AddGenericParameter("Contacts", "C", "Selected contacts from Select Contacts", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Joint X", "JX", "Tenon size along the overlap long side", GH_ParamAccess.item, 1.0);
-            pManager.AddNumberParameter("Joint Y", "JY", "Tenon size along the overlap short side", GH_ParamAccess.item, 1.0);
+            pManager.AddNumberParameter("Tool Diameter", "D", "CNC bit diameter. Sets the smallest tenon and the smallest corner the bit can cut", GH_ParamAccess.item, 0.25);
+            pManager.AddNumberParameter("Joint X", "JX", "Tenon size along the overlap long side (raised to D if smaller)", GH_ParamAccess.item, 1.0);
+            pManager.AddNumberParameter("Joint Y", "JY", "Tenon size along the overlap short side (raised to D if smaller)", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("Depth", "Dep", "Total tenon depth, centered on the contact plane (clamped to thinner member / 3)", GH_ParamAccess.item, 0.5);
-            pManager.AddNumberParameter("Tool Radius", "R", "Fillet radius of the tenon corners", GH_ParamAccess.item, 0.125);
+            pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller)", GH_ParamAccess.item, 0.125);
             pManager.AddTextParameter("Joint Type", "JT", "tenon, cross tenon, or custom tenon", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Tenon Count", "TC", "Number of tenons along the overlap long side", GH_ParamAccess.item, 1);
             pManager.AddCurveParameter("Custom Shape", "CS", "Closed planar curve for a custom tenon", GH_ParamAccess.item);
-            pManager[8].Optional = true;
-            typeParameter = pManager[6];
+            pManager[9].Optional = true;
+            typeParameter = pManager[7];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -135,6 +136,7 @@ namespace SpruceBeetle.Packing
         {
             var packed = new List<Offcut>();
             var objs = new List<object>();
+            double diameter = 0.25;
             double jointX = 1.0;
             double jointY = 1.0;
             double depthRequest = 0.5;
@@ -147,13 +149,14 @@ namespace SpruceBeetle.Packing
                 return;
             if (!DA.GetDataList(1, objs))
                 return;
-            DA.GetData(2, ref jointX);
-            DA.GetData(3, ref jointY);
-            DA.GetData(4, ref depthRequest);
-            DA.GetData(5, ref toolRadius);
-            DA.GetData(6, ref jointKey);
-            DA.GetData(7, ref tenonCount);
-            DA.GetData(8, ref jointShape);
+            DA.GetData(2, ref diameter);
+            DA.GetData(3, ref jointX);
+            DA.GetData(4, ref jointY);
+            DA.GetData(5, ref depthRequest);
+            DA.GetData(6, ref toolRadius);
+            DA.GetData(7, ref jointKey);
+            DA.GetData(8, ref tenonCount);
+            DA.GetData(9, ref jointShape);
 
             if (packed.Count == 0)
             {
@@ -161,10 +164,26 @@ namespace SpruceBeetle.Packing
                 return;
             }
 
-            if (jointX <= 0 || jointY <= 0)
+            if (diameter <= 0)
             {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "JX and JY must be greater than 0.");
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Tool diameter must be greater than 0.");
                 return;
+            }
+
+            if (jointX < diameter || jointY < diameter)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    $"JX / JY raised to the tool diameter ({diameter}).");
+                jointX = Math.Max(jointX, diameter);
+                jointY = Math.Max(jointY, diameter);
+            }
+
+            double minRadius = diameter * 0.5;
+            if (toolRadius < minRadius)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    $"R raised to the tool radius ({minRadius}); a {diameter} bit cannot cut a tighter corner.");
+                toolRadius = minRadius;
             }
 
             if (tenonCount < 1)
