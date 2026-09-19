@@ -117,7 +117,7 @@ A later **Contact Spline** would be a different cutter (dovetail / through key).
 | In `JX` | Long-side size | Default `1`. Along the overlap's longer in-plane direction. Raised to `D` if smaller |
 | In `JY` | Short-side size | Default `1`. Across the overlap. Raised to `D` if smaller |
 | In `Dep` | Total depth | Default `0.5`. Centered on the contact plane; clamped to `thinner member / 3` |
-| In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller; still capped below `min(JX, JY) / 2` |
+| In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller (silent); still capped below `min(JX, JY) / 2` |
 | In `JT` | Joint type | Auto value list: tenon / cross tenon / custom tenon |
 | In `TC` | Tenon count | Default `1`. Spread along the long side |
 | In `CS` | Custom curve | Optional closed planar curve |
@@ -130,7 +130,7 @@ Geometry rules:
 
 - Placement = `OrientOnOverlap`: origin at the **center of the shared overlap rectangle**; plane X along the longer in-plane side, Y along the shorter. Skip if `JX × TC` exceeds the long side or `JY` exceeds the short side. No inset, no third-piece test.
 - Depth = `min(Dep, thinner member / 3)` along the contact axis (total, centered, so each member takes half).
-- `D` is a **constraint, not a size** (unlike the old Contact Joints, where pocket width was `W × D`). A ¼″ bit is `D = 0.25`; it cannot cut a tenon narrower than `0.25` or an inside corner tighter than `0.125`. `JX` / `JY` / `R` are real model-unit sizes; the component warns when it raises one of them.
+- `D` is a **constraint, not a size** (unlike the old Contact Joints, where pocket width was `W × D`). A ¼″ bit is `D = 0.25`; it cannot cut a tenon narrower than `0.25` or an inside corner tighter than `0.125`. `JX` / `JY` / `R` are real model-unit sizes. Raising `JX` / `JY` to `D` still warns; raising `R` to `D / 2` is silent.
 - Types mirror Alignment Tenon (rect / cross / custom) but live in this file so Reisach's `TenonJoints_GH.cs` stays untouched.
 
 Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. Center placement and full-parity knobs are **not yet re-counted** on the column CSV.

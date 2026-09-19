@@ -541,7 +541,7 @@ Old canvases may still show nickname `PickJoints`; same component (GUID unchange
 
 Old canvases may still show **Contact Joints** (`PackJoints`); same GUID. Re-wire: `W` is gone and `D` changed meaning (see below).
 
-`D` is the **mill constraint, not the tenon size**. On the old Contact Joints the pocket was `W × D` square; now `JX` and `JY` are real sizes in model units and `D` only sets the floor for them and for `R`. A ¼″ bit (`D = 0.25`) cannot cut a tenon narrower than `0.25″`, nor an inside corner tighter than `0.125″`. The component warns when it raises a value.
+`D` is the **mill constraint, not the tenon size**. On the old Contact Joints the pocket was `W × D` square; now `JX` and `JY` are real sizes in model units and `D` only sets the floor for them and for `R`. A ¼″ bit (`D = 0.25`) cannot cut a tenon narrower than `0.25″`, nor an inside corner tighter than `0.125″`. Raising `JX` / `JY` to `D` warns; raising `R` to `D / 2` is silent.
 
 Do **not** feed this from Alignment Tenon, or feed packed contacts into Alignment Tenon.
 
@@ -555,7 +555,7 @@ Do **not** feed this from Alignment Tenon, or feed packed contacts into Alignmen
 | Joint X | JX | Number | Item | `1` | Tenon size along the overlap long side. Raised to `D` if smaller. |
 | Joint Y | JY | Number | Item | `1` | Tenon size along the overlap short side. Raised to `D` if smaller. |
 | Depth | Dep | Number | Item | `0.5` | Total depth, centered on the contact. Clamped to thinner member / 3. |
-| Tool Radius | R | Number | Item | `0.125` | Corner fillet. Raised to `D / 2` if smaller; capped below `min(JX, JY) / 2`. |
+| Tool Radius | R | Number | Item | `0.125` | Corner fillet. Raised to `D / 2` if smaller (silent); capped below `min(JX, JY) / 2`. |
 | Joint Type | JT | Text | Item | — | Auto value list: `tenon`, `cross tenon`, `custom tenon`. |
 | Tenon Count | TC | Integer | Item | `1` | Number of tenons along the long side. |
 | Custom Shape | CS | Curve | Item | — | Closed planar curve (custom tenon only). Optional. |

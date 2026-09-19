@@ -30,7 +30,7 @@ namespace SpruceBeetle.Packing
             pManager.AddNumberParameter("Joint X", "JX", "Tenon size along the overlap long side (raised to D if smaller)", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("Joint Y", "JY", "Tenon size along the overlap short side (raised to D if smaller)", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("Depth", "Dep", "Total tenon depth, centered on the contact plane (clamped to thinner member / 3)", GH_ParamAccess.item, 0.5);
-            pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller)", GH_ParamAccess.item, 0.125);
+            pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller, no warning)", GH_ParamAccess.item, 0.125);
             pManager.AddTextParameter("Joint Type", "JT", "tenon, cross tenon, or custom tenon", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Tenon Count", "TC", "Number of tenons along the overlap long side", GH_ParamAccess.item, 1);
             pManager.AddCurveParameter("Custom Shape", "CS", "Closed planar curve for a custom tenon", GH_ParamAccess.item);
@@ -180,11 +180,7 @@ namespace SpruceBeetle.Packing
 
             double minRadius = diameter * 0.5;
             if (toolRadius < minRadius)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
-                    $"R raised to the tool radius ({minRadius}); a {diameter} bit cannot cut a tighter corner.");
                 toolRadius = minRadius;
-            }
 
             if (tenonCount < 1)
                 tenonCount = 1;

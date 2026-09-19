@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-19 — fix: Contact Tenon does not warn when raising R to D/2
+
+- **Motivation:** Unwired `R` defaults to `0.125`. With `D = 0.375` the component correctly used `0.1875` but painted the box orange, which read as a failed solve even though 63 contacts cut.
+- **Files:** `Packing/ContactTenon_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Floor `R` to `D / 2` still happens; the runtime warning is gone. `JX` / `JY` raised to `D` still warn.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). Copy to `bin/` blocked — Rhino 8 (PID 25928) holds the `.gha`. Built assembly is in `obj/Debug/net48/`.
+- **Follow-ups:** Close Rhino and rebuild. Unwired `R` with `D = 0.375` should stay grey except for the cut-count remark.
+
 ### 2026-09-19 — feature: Contact Tenon takes Tool Diameter as a mill constraint
 
 - **Motivation:** Shops talk in bit diameter, and the earlier `W` pin ("Width Factor") read like a tenon width but was actually a multiplier (`pocket = W × D`). Confirmed this session that the confusion was the pin name, not the geometry. Wanted the bit size back as an explicit constraint without it silently setting the joint size again.
