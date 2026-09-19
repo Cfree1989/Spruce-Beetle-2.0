@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-19 — fix: drop Select Contacts Seams and Connected
+
+- **Motivation:** T-junction placement is gone (overlap-center pockets). Seams was the leftover filter for those junctions and already kept 88 of 88 on the column test. Connected only existed to prefer those “seams” then stop at a spanning set — no separate thesis use once All / Z / XY remain.
+- **Files:** `Packing/SelectContacts_GH.cs`; `Packing/PackedNeighbors.cs`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Modes All / Z / XY / Seams / Connected → **All / Z / XY**. Deleted `SharesSeam`, `SelectSeams`, `SelectConnected`, `Rank`, `BoxesOverlap`. Pins `N` (piece count) and `T` (seam gap) removed; inputs are `C` then `M`. GUID unchanged. Auto value list is rewritten to the three modes on solve. A leftover `Seams` or `Connected` string warns and behaves as All.
+- **Result / observation:** Not yet re-tested in Grasshopper. Existing PickJoints boxes may need `M` re-wired if Grasshopper shifted the Mode pin from index 2 to 1.
+- **Follow-ups:** Close Rhino and rebuild. Confirm the value list shows All / Z / XY. Use All for every pocket, Z for beds, XY for side stitches.
+
 ### 2026-09-19 — feature: Contact Joints pockets centered on the shared overlap rectangle; T-junction placement removed
 
 - **Motivation:** Contact Joints (packed `Oc` → Packed Contacts → Select Contacts → cut) skipped 65 of 88 contacts on the column test because the pocket had to sit inset `D` from a detected third-piece edge. Decision this session: place each pocket at the **center of the smallest shared contact surface** — the overlap rectangle where the two touching faces intersect — and drop the T-junction / seam logic as too complicated for the thesis scope.

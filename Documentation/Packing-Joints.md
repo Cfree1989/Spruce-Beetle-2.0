@@ -109,29 +109,25 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 | | Nick | Type | Notes |
 | --- | --- | --- | --- |
 | In | `C` | Contacts | From Packed Contacts |
-| In | `N` | Integer | Piece count for Connected (optional; inferred from max index) |
-| In | `M` | Text | Mode (value list auto-added) |
-| In | `T` | Number | Seam-corner gap (default `0.01`) |
+| In | `M` | Text | Mode (value list auto-added; All / Z / XY) |
 | Out | `C` | Contacts | Kept subset |
 | Out | `P` | Planes | Planes of kept contacts |
 
-**Modes (keep these names)**
+**Modes**
 
-| Mode | Intended | As-built |
-| --- | --- | --- |
-| All | Every contact | Same |
-| Z | Z beds only | Same |
-| XY | X or Y stitches only | Same |
-| Seams | Contacts that meet a **T-junction / third piece**, matching the red ticks on [joint-placement.png](joint-placement.png) | `SharesSeam`: keep a contact if its overlap box is near any other contact of a **different** axis. Too loose — column test kept **88 of 88**. |
-| Connected | Small set that still ties the pack together (prefer seams, then Z, then XY by area) | `SelectConnected` union-find; stops when joinable pieces are one component |
+| Mode | Job |
+| --- | --- |
+| All | Every contact |
+| Z | Z beds only |
+| XY | X or Y stitches only |
+
+**Seams** and **Connected** were removed 2026-09-19 with T-junction logic. Seams kept 88 of 88 on the column test (too loose). Connected only ranked those bogus seams first, then stopped at a spanning set — not used once placement is overlap-center. Leftover `Seams` / `Connected` strings (old value lists) fall through to All with a warning. The auto value list is rewritten to All / Z / XY on solve. Pins `N` (piece count) and `T` (seam gap) are gone; existing canvases may need `M` re-wired if Grasshopper shifted inputs.
 
 **As-built:** [Packing/SelectContacts_GH.cs](../Packing/SelectContacts_GH.cs). GUID `1D9A6E40-C3B2-4F58-A817-6E0C4D92F1AB`. Icon is Unification (cosmetic).
 
 **Issues / adjustments**
 
-- **Seams filter is a known bug** (keeps 88 of 88). It is the last T-junction logic left in the plugin now that Seam *placement* is gone from Contact Tenon. Decide whether to drop the mode (and the seam-first ranking in Connected) or tighten it; not decided yet.
-- Connected vs Z-only still needs a real column test after Seams is trustworthy.
-- Function of All / Z / XY is correct enough.
+- All / Z / XY are the filter. Function is correct enough.
 
 ---
 
@@ -208,25 +204,22 @@ Packed Stacks is the only packing → Alignment Tenon hookup.
 - GUID change or in-plugin rename (proposed only)
 - Contact Spline design
 - Rewriting Column-Fill-2x2x8.md or Component-Reference.md
-- Tightening or removing the Seams filter (record the bug only)
 
 ---
 
 ## Open questions (resolve when we implement Contact Tenon)
 
 1. **`Dep` as a length vs a factor** — spec uses a length defaulting to `D`, clamped to thinner/3. A factor (`0.33` of thinner) would scale with stock; pick one in the first code PR.
-2. **Seams filter** — Seam *placement* is gone (Contact Tenon always centers). The Select Contacts Seams *filter* still exists; drop or tighten in a separate change.
-3. **Skip vs fail** — keep skipped planes, or also output failed cutters / a text report?
-4. **Connected mode** — keep after Seams works, or drop if Z + Seams is enough for the column?
-5. **Male tenon vs matching pocket** — Alignment Tenon already cuts both sides and outputs `J` as the body. Contact Tenon stays matching unless we explicitly want a stub left on one piece.
+2. **Skip vs fail** — keep skipped planes, or also output failed cutters / a text report?
+3. **Male tenon vs matching pocket** — Alignment Tenon already cuts both sides and outputs `J` as the body. Contact Tenon stays matching unless we explicitly want a stub left on one piece.
 
 ---
 
 ## Next code pass (after this spec is accepted)
 
 1. ~~Center placement~~ — done 2026-09-19 (`CenterOnOverlap`; T-junction code removed).
-2. Re-run the column test; record cut / skipped counts under Contact Tenon above.
-3. Rename Contact Joints → Contact Tenon (`PackTenon`), GUID unchanged, fix icon/description.
-4. Add `Dep`.
-5. Then, separately: drop or tighten Select Contacts **Seams**.
+2. ~~Drop Seams / Connected~~ — done 2026-09-19. Select Contacts is All / Z / XY only.
+3. Re-run the column test; record cut / skipped counts under Contact Tenon above.
+4. Rename Contact Joints → Contact Tenon (`PackTenon`), GUID unchanged, fix icon/description.
+5. Add `Dep`.
 6. Then: Component-Reference packing section + Column-Fill joint wiring.

@@ -10,12 +10,11 @@ namespace SpruceBeetle.Packing
 {
     public class SelectContacts_GH : GH_Component
     {
-        GH_ValueList valueList = null;
         IGH_Param parameter = null;
 
         public SelectContacts_GH()
           : base("Select Contacts", "PickJoints",
-              "Keep a subset of packed face contacts (all, Z, XY, seams, or connectivity)",
+              "Keep a subset of packed face contacts (all, Z beds, or XY stitches)",
               "Spruce Beetle", "   Packing")
         {
         }
@@ -24,12 +23,8 @@ namespace SpruceBeetle.Packing
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Contacts", "C", "Contacts from Packed Contacts", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Piece Count", "N", "Number of packed Offcuts (for Connected mode). Optional if Contacts cover all indices.", GH_ParamAccess.item);
-            pManager.AddTextParameter("Mode", "M", "All, Z, XY, Seams, or Connected", GH_ParamAccess.item);
-            pManager.AddNumberParameter("Tolerance", "T", "Gap used to detect seam corners", GH_ParamAccess.item, 0.01);
-
-            pManager[1].Optional = true;
-            parameter = pManager[2];
+            pManager.AddTextParameter("Mode", "M", "All, Z, or XY", GH_ParamAccess.item);
+            parameter = pManager[1];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -48,34 +43,54 @@ namespace SpruceBeetle.Packing
 
         protected override void BeforeSolveInstance()
         {
-            if (valueList != null)
-                return;
-
-            if (parameter.Sources.Count == 0)
-                valueList = new GH_ValueList();
-            else
+            GH_ValueList list = null;
+            foreach (var source in parameter.Sources)
             {
-                foreach (var source in parameter.Sources)
+                if (source is GH_ValueList vl)
                 {
-                    if (source is GH_ValueList)
-                        valueList = source as GH_ValueList;
-                    return;
+                    list = vl;
+                    break;
                 }
             }
 
-            if (Instances.ActiveCanvas?.Document == null)
-                return;
+            if (list == null)
+            {
+                if (Instances.ActiveCanvas?.Document == null)
+                    return;
 
-            valueList.CreateAttributes();
-            valueList.Attributes.Pivot = new System.Drawing.PointF(Attributes.Pivot.X - 200, Attributes.Pivot.Y);
-            valueList.ListItems.Clear();
+                list = new GH_ValueList();
+                list.CreateAttributes();
+                list.Attributes.Pivot = new System.Drawing.PointF(Attributes.Pivot.X - 200, Attributes.Pivot.Y);
+                Instances.ActiveCanvas.Document.AddObject(list, false);
+                parameter.AddSource(list);
+            }
 
-            foreach (string mode in PackedNeighbors.ContactModes())
-                valueList.ListItems.Add(new GH_ValueListItem(mode, $"\"{mode}\""));
-
-            Instances.ActiveCanvas.Document.AddObject(valueList, false);
-            parameter.AddSource(valueList);
+            SyncModeList(list);
             parameter.CollectData();
+        }
+
+
+        private static void SyncModeList(GH_ValueList list)
+        {
+            List<string> wanted = PackedNeighbors.ContactModes();
+            if (list.ListItems.Count == wanted.Count)
+            {
+                bool same = true;
+                for (int i = 0; i < wanted.Count; i++)
+                {
+                    if (!string.Equals(list.ListItems[i].Name, wanted[i], StringComparison.Ordinal))
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same)
+                    return;
+            }
+
+            list.ListItems.Clear();
+            foreach (string mode in wanted)
+                list.ListItems.Add(new GH_ValueListItem(mode, $"\"{mode}\""));
         }
 
 
@@ -83,25 +98,19 @@ namespace SpruceBeetle.Packing
         {
             var objs = new List<object>();
             string mode = "All";
-            double tolerance = 0.01;
-            int pieceCount = 0;
 
             if (!DA.GetDataList(0, objs))
                 return;
-            DA.GetData(1, ref pieceCount);
-            if (!DA.GetData(2, ref mode))
+            if (!DA.GetData(1, ref mode))
                 return;
-            DA.GetData(3, ref tolerance);
 
             var contacts = new List<PackedContact>();
-            int maxIndex = -1;
             for (int i = 0; i < objs.Count; i++)
             {
                 PackedContact c = PackedContact_GH.Parse(objs[i]);
                 if (c == null)
                     continue;
                 contacts.Add(c);
-                maxIndex = Math.Max(maxIndex, Math.Max(c.IndexA, c.IndexB));
             }
 
             if (contacts.Count == 0)
@@ -110,24 +119,31 @@ namespace SpruceBeetle.Packing
                 return;
             }
 
-            if (pieceCount < 1)
-                pieceCount = maxIndex + 1;
-
-            if (tolerance < 0)
-                tolerance = 0;
-
             List<PackedContact> selected;
             string key = (mode ?? "All").Trim();
             if (string.Equals(key, "Z", StringComparison.OrdinalIgnoreCase))
                 selected = contacts.FindAll(c => c.Axis == ContactAxis.Z);
             else if (string.Equals(key, "XY", StringComparison.OrdinalIgnoreCase))
                 selected = contacts.FindAll(c => c.Axis != ContactAxis.Z);
-            else if (string.Equals(key, "Seams", StringComparison.OrdinalIgnoreCase))
-                selected = PackedNeighbors.SelectSeams(contacts, tolerance);
-            else if (string.Equals(key, "Connected", StringComparison.OrdinalIgnoreCase))
-                selected = PackedNeighbors.SelectConnected(contacts, pieceCount, tolerance);
             else
+            {
                 selected = contacts;
+                if (string.Equals(key, "Seams", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(key, "Connected", StringComparison.OrdinalIgnoreCase))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                        $"{key} was removed with T-junction logic; using All.");
+                    key = "All";
+                }
+                else if (!string.Equals(key, "All", StringComparison.OrdinalIgnoreCase) && key.Length > 0)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                        $"Unknown mode '{key}'; using All.");
+                    key = "All";
+                }
+                else
+                    key = "All";
+            }
 
             var goos = new List<PackedContact_GH>(selected.Count);
             var planes = new List<Plane>(selected.Count);

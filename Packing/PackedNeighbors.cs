@@ -231,114 +231,6 @@ namespace SpruceBeetle.Packing
         }
 
 
-        public static bool SharesSeam(PackedContact a, PackedContact b, double tolerance)
-        {
-            if (a == null || b == null)
-                return false;
-            if (a.Axis == b.Axis)
-                return false;
-            if (!a.Overlap.IsValid || !b.Overlap.IsValid)
-                return false;
-
-            BoundingBox ia = a.Overlap;
-            BoundingBox ib = b.Overlap;
-            ia.Inflate(tolerance);
-            return ia.Contains(ib.Min) || ia.Contains(ib.Max) || BoxesOverlap(a.Overlap, b.Overlap, tolerance);
-        }
-
-
-        public static List<PackedContact> SelectSeams(List<PackedContact> contacts, double tolerance)
-        {
-            var keep = new List<PackedContact>();
-            for (int i = 0; i < contacts.Count; i++)
-            {
-                bool seam = false;
-                for (int j = 0; j < contacts.Count; j++)
-                {
-                    if (i == j)
-                        continue;
-                    if (!SharesSeam(contacts[i], contacts[j], tolerance))
-                        continue;
-                    seam = true;
-                    break;
-                }
-
-                if (seam)
-                    keep.Add(contacts[i]);
-            }
-
-            return keep;
-        }
-
-
-        public static List<PackedContact> SelectConnected(List<PackedContact> contacts, int pieceCount, double tolerance)
-        {
-            var seams = new HashSet<PackedContact>(SelectSeams(contacts, tolerance));
-            var ordered = new List<PackedContact>(contacts);
-            ordered.Sort((a, b) =>
-            {
-                int ra = Rank(a, seams);
-                int rb = Rank(b, seams);
-                int byRank = ra.CompareTo(rb);
-                if (byRank != 0)
-                    return byRank;
-                return b.Area.CompareTo(a.Area);
-            });
-
-            var used = new HashSet<int>();
-            foreach (PackedContact c in contacts)
-            {
-                used.Add(c.IndexA);
-                used.Add(c.IndexB);
-            }
-
-            var parent = new int[pieceCount];
-            for (int i = 0; i < pieceCount; i++)
-                parent[i] = i;
-
-            int Find(int x)
-            {
-                if (parent[x] == x)
-                    return x;
-                parent[x] = Find(parent[x]);
-                return parent[x];
-            }
-
-            void Union(int a, int b)
-            {
-                int pa = Find(a);
-                int pb = Find(b);
-                if (pa != pb)
-                    parent[pa] = pb;
-            }
-
-            int JoinableComponents()
-            {
-                var roots = new HashSet<int>();
-                foreach (int i in used)
-                {
-                    if (i >= 0 && i < pieceCount)
-                        roots.Add(Find(i));
-                }
-                return roots.Count;
-            }
-
-            var selected = new List<PackedContact>();
-            foreach (PackedContact c in ordered)
-            {
-                if (c.IndexA < 0 || c.IndexB < 0 || c.IndexA >= pieceCount || c.IndexB >= pieceCount)
-                    continue;
-
-                selected.Add(c);
-                Union(c.IndexA, c.IndexB);
-                if (used.Count > 0 && JoinableComponents() == 1)
-                    break;
-            }
-
-            return selected;
-        }
-
-
         public static List<List<int>> ZStacks(List<Offcut> packed, double tolerance, out List<Plane> contacts)
         {
             contacts = new List<Plane>();
@@ -417,20 +309,8 @@ namespace SpruceBeetle.Packing
             {
                 "All",
                 "Z",
-                "XY",
-                "Seams",
-                "Connected"
+                "XY"
             };
-        }
-
-
-        private static int Rank(PackedContact c, HashSet<PackedContact> seams)
-        {
-            if (seams.Contains(c))
-                return 0;
-            if (c.Axis == ContactAxis.Z)
-                return 1;
-            return 2;
         }
 
 
@@ -605,14 +485,6 @@ namespace SpruceBeetle.Packing
         private static bool Near(double a, double b, double tolerance)
         {
             return Math.Abs(a - b) <= tolerance;
-        }
-
-
-        private static bool BoxesOverlap(BoundingBox a, BoundingBox b, double tolerance)
-        {
-            return Overlap(a.Min.X, a.Max.X, b.Min.X, b.Max.X, -tolerance)
-                && Overlap(a.Min.Y, a.Max.Y, b.Min.Y, b.Max.Y, -tolerance)
-                && Overlap(a.Min.Z, a.Max.Z, b.Min.Z, b.Max.Z, -tolerance);
         }
 
 
