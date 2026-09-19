@@ -196,9 +196,9 @@ namespace SpruceBeetle.Packing
 
         /// <summary>
         /// Tenon frame at the overlap-rectangle center, X along the longer in-plane side.
-        /// canCut is false when JX × count exceeds the long side or JY exceeds the short side.
+        /// canCut is false when the tenon does not fit inside the overlap inset by edgeMargin on all sides.
         /// </summary>
-        public static bool OrientOnOverlap(PackedContact contact, double jointX, double jointY, int tenonCount, out Plane placed, out double longSide, out double shortSide, out bool canCut)
+        public static bool OrientOnOverlap(PackedContact contact, double jointX, double jointY, int tenonCount, double edgeMargin, out Plane placed, out double longSide, out double shortSide, out bool canCut)
         {
             placed = Plane.Unset;
             longSide = 0;
@@ -221,7 +221,10 @@ namespace SpruceBeetle.Packing
             placed = OrientedPlane(contact.Axis, uIsLong, uc, vc, w);
 
             int count = Math.Max(tenonCount, 1);
-            canCut = jointX * count <= longSide + 1e-9 && jointY <= shortSide + 1e-9;
+            double margin = Math.Max(edgeMargin, 0);
+            double usableLong = longSide - 2.0 * margin;
+            double usableShort = shortSide - 2.0 * margin;
+            canCut = jointX * count <= usableLong + 1e-9 && jointY <= usableShort + 1e-9;
             return true;
         }
 

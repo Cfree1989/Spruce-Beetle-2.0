@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-19 — feature: Contact Tenon skips undersized faces (D edge meat) and outputs SkC
+
+- **Motivation:** Column screenshots showed a pocket opening to a vertical edge on a thin bed. Centering was correct; `JX`/`JY` were allowed to fill the overlap flush, so the boolean chewed the rim. Need a mill inset, a way to see skips, and a way to retry those contacts with a smaller tenon.
+- **Files:** `Packing/PackedNeighbors.cs`; `Packing/ContactTenon_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Skip test was `JX×TC ≤ overlap long` and `JY ≤ overlap short` (flush allowed). Now the overlap is inset by **`D` on all sides** (`usable = overlap − 2D`). New output **Skipped Contacts `SkC`** (same GUID; `Sk` planes unchanged at index 3). `SkC` is the skipped `PackedContact` list so a second Contact Tenon can cut them with a smaller `JX`/`JY`. Second pass must take the first pass `Oc` (already cut), not the original pack list.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). Copy to `bin/` blocked — Rhino 8 (PID 28736) holds the `.gha`. A `D = 0.375`, `JX = 1.338` tenon now needs an overlap of at least `1.338 + 0.75` on the long side; the thin shoulder in the screenshot should skip.
+- **Follow-ups:** Close Rhino and rebuild. Preview `Sk` to see skip planes. Wire `SkC` → second Contact Tenon `C` if those faces should still get a smaller joint.
+
 ### 2026-09-19 — feature: Alignment Tenon Joints uses Tool Diameter like Contact Tenon
 
 - **Motivation:** Contact Tenon is driven by bit diameter. Alignment Tenon still used `R` as the mill input, and the "Nice Size Tenon" slider labeled Tool Radius was already set to `0.25` (a ¼″ bit diameter, not a fillet). Same mill language on both cutters.

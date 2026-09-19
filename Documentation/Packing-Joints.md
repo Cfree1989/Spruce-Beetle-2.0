@@ -124,11 +124,13 @@ A later **Contact Spline** would be a different cutter (dovetail / through key).
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Tenon solids | One solid per tenon (TC per successful contact) |
 | Out `JV` | Joint volumes | Volume of each `J` solid |
-| Out `Sk` | Skipped planes | Overlap too small, depth 0, missing custom curve, or boolean fail |
+| Out `Sk` | Skipped planes | Preview in the viewport (axis crosses at skipped contacts) |
+| Out `SkC` | Skipped contacts | Wire into a second Contact Tenon `C` with a smaller `JX` / `JY`. Use the first component's `Oc` as that second `Oc` |
 
 Geometry rules:
 
-- Placement = `OrientOnOverlap`: origin at the **center of the shared overlap rectangle**; plane X along the longer in-plane side, Y along the shorter. Skip if `JX × TC` exceeds the long side or `JY` exceeds the short side. No inset, no third-piece test.
+- Placement = `OrientOnOverlap`: origin at the **center of the shared overlap rectangle**; plane X along the longer in-plane side, Y along the shorter.
+- Edge meat: skip unless the tenon fits inside the overlap **inset by `D` on all sides** (`JX × TC ≤ long − 2D` and `JY ≤ short − 2D`). Flush-to-edge pockets that chewed the rim are skipped instead of cut.
 - Depth = `min(Dep, thinner member / 3)` along the contact axis (total, centered, so each member takes half).
 - `D` is a **constraint, not a size** (unlike the old Contact Joints, where pocket width was `W × D`). A ¼″ bit is `D = 0.25`; it cannot cut a tenon narrower than `0.25` or an inside corner tighter than `0.125`. `JX` / `JY` / `R` are real model-unit sizes. Raising `JX` / `JY` to `D` still warns; raising `R` to `D / 2` is silent.
 - Types mirror Alignment Tenon (rect / cross / custom) but live in this file so Reisach's `TenonJoints_GH.cs` stays untouched.

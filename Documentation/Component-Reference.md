@@ -563,7 +563,7 @@ Do **not** feed this from Alignment Tenon, or feed packed contacts into Alignmen
 | Tenon Count | TC | Integer | Item | `1` | Number of tenons along the long side. |
 | Custom Shape | CS | Curve | Item | — | Closed planar curve (custom tenon only). Optional. |
 
-Skipped when `JX × TC` exceeds the long side, `JY` exceeds the short side, depth is 0, custom curve is missing, or the boolean fails. Failed cuts keep the last successful solid.
+Skipped when the tenon does not fit inside the overlap inset by `D` on all sides (`JX × TC ≤ long − 2D`, `JY ≤ short − 2D`), depth is 0, custom curve is missing, or the boolean fails. Failed cuts keep the last successful solid.
 
 **Outputs**
 
@@ -572,7 +572,8 @@ Skipped when `JX × TC` exceeds the long side, `JY` exceeds the short side, dept
 | Offcuts | Oc | Offcut | List | Pieces after tenon cuts. |
 | Joints | J | Brep | List | Tenon solids (one per tenon). |
 | Joint Volume | JV | Number | List | Volume of each `J` solid. |
-| Skipped | Sk | Plane | List | Contact planes that were not cut. |
+| Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview this output to see skips in Rhino. |
+| Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Contact Tenon (`C`) with a smaller `JX` / `JY`; wire this component's `Oc` into that second `Oc`. |
 
 ---
 

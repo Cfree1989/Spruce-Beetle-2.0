@@ -47,7 +47,8 @@ namespace SpruceBeetle.Packing
             pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts after tenon cuts", GH_ParamAccess.list);
             pManager.AddBrepParameter("Joints", "J", "Tenon solids (matching pockets on both members)", GH_ParamAccess.list);
             pManager.AddNumberParameter("Joint Volume", "JV", "Volume of each tenon solid", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Skipped", "Sk", "Contact planes skipped because the overlap is too small, depth is 0, custom curve is missing, or the boolean failed", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut (preview these to see skips in the viewport)", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Skipped Contacts", "SkC", "The same skipped contacts, for a second Contact Tenon with a smaller JX / JY", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -208,8 +209,15 @@ namespace SpruceBeetle.Packing
             var cutters = new List<Brep>();
             var volumes = new List<double>();
             var skipped = new List<Plane>();
+            var skippedContacts = new List<PackedContact_GH>();
             int cutCount = 0;
             int failCount = 0;
+
+            void Skip(PackedContact contact, Plane plane)
+            {
+                skipped.Add(plane);
+                skippedContacts.Add(new PackedContact_GH(contact));
+            }
 
             for (int i = 0; i < objs.Count; i++)
             {
@@ -218,32 +226,32 @@ namespace SpruceBeetle.Packing
                     continue;
                 if (contact.IndexA < 0 || contact.IndexB < 0 || contact.IndexA >= packed.Count || contact.IndexB >= packed.Count)
                 {
-                    skipped.Add(contact.Plane);
+                    Skip(contact, contact.Plane);
                     continue;
                 }
 
-                if (!PackedNeighbors.OrientOnOverlap(contact, jointX, jointY, tenonCount, out Plane placed, out double longSide, out _, out bool canCut) || !canCut)
+                if (!PackedNeighbors.OrientOnOverlap(contact, jointX, jointY, tenonCount, diameter, out Plane placed, out double longSide, out _, out bool canCut) || !canCut)
                 {
-                    skipped.Add(contact.Plane);
+                    Skip(contact, contact.Plane);
                     continue;
                 }
 
                 double depth = PocketDepth(boxes[contact.IndexA], boxes[contact.IndexB], contact.Axis, depthRequest);
                 if (depth <= 0)
                 {
-                    skipped.Add(placed);
+                    Skip(contact, placed);
                     continue;
                 }
 
                 if (jointType == 2 && (jointShape == null || !jointShape.IsClosed || !jointShape.IsPlanar()))
                 {
-                    skipped.Add(placed);
+                    Skip(contact, placed);
                     continue;
                 }
 
                 if (!TryCreateTenons(placed, jointX, jointY, depth, toolRadius, tenonCount, longSide, jointType, jointShape, out Brep[] joints))
                 {
-                    skipped.Add(placed);
+                    Skip(contact, placed);
                     continue;
                 }
 
@@ -264,7 +272,7 @@ namespace SpruceBeetle.Packing
                 else
                 {
                     failCount++;
-                    skipped.Add(placed);
+                    Skip(contact, placed);
                 }
             }
 
@@ -293,6 +301,7 @@ namespace SpruceBeetle.Packing
             DA.SetDataList(1, cutters);
             DA.SetDataList(2, volumes);
             DA.SetDataList(3, skipped);
+            DA.SetDataList(4, skippedContacts);
         }
 
 
