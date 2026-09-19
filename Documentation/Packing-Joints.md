@@ -141,7 +141,7 @@ Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. C
 
 Do not duplicate these on the packing tab.
 
-**Tenon Joints** (`Tenon`): ordered `AOc` chain; cut `FirstPlane`/`SecondPlane`; size `JX`/`JY`/`JZ`; `R` is fillet only; types tenon / cross / custom.
+**Tenon Joints** (`Tenon`): ordered `AOc` chain; cut `FirstPlane`/`SecondPlane`; mill constraint `D`; size `JX`/`JY`/`JZ`; optional `R` (unwired = `D / 2`); types tenon / cross / custom.
 
 **Spline Joints** (`Spline`): same chain; dovetail slots through Y; not for packed XY faces.
 

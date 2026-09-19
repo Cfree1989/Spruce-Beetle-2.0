@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Special;
@@ -50,16 +51,18 @@ namespace SpruceBeetle.Alignment
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Aligned Offcuts", "AOc", "List of aligned Offcuts", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Tool Radius", "R", "Radius of the milling tool", GH_ParamAccess.item, 0.005);
-            pManager.AddNumberParameter("Joint X", "JX", "Joint dimension in X direction", GH_ParamAccess.item, 0.02);
-            pManager.AddNumberParameter("Joint Y", "JY", "Joint dimension in Y direction", GH_ParamAccess.item, 0.05);
-            pManager.AddNumberParameter("Joint Z", "JZ", "Joint dimension in Z direction", GH_ParamAccess.item, 0.04);
+            pManager.AddNumberParameter("Tool Diameter", "D", "CNC bit diameter. Sets the smallest tenon and the smallest corner the bit can cut", GH_ParamAccess.item, 0.01);
+            pManager.AddNumberParameter("Joint X", "JX", "Joint dimension in X direction (raised to D if smaller)", GH_ParamAccess.item, 0.02);
+            pManager.AddNumberParameter("Joint Y", "JY", "Joint dimension in Y direction (raised to D if smaller)", GH_ParamAccess.item, 0.05);
+            pManager.AddNumberParameter("Joint Z", "JZ", "Joint dimension in Z direction (tenon depth through the interface)", GH_ParamAccess.item, 0.04);
             pManager.AddTextParameter("Joint Type", "JT", "Adds the specified joint type", GH_ParamAccess.item);
             pManager.AddIntegerParameter("Tenon Count", "TC", "The number of tenons to be created", GH_ParamAccess.item, 1);
 
             pManager.AddCurveParameter("Custom Shape", "CS", "Creates a custom tenon from the specifc shape of a closed planar curve", GH_ParamAccess.item);
             pManager[7].Optional = true;
- 
+            pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller). Unwired uses D / 2", GH_ParamAccess.item);
+            pManager[8].Optional = true;
+
             parameter = pManager[5];
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -78,6 +81,35 @@ namespace SpruceBeetle.Alignment
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            ApplyPinNames();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            ApplyPinNames();
+            base.AddedToDocument(document);
+        }
+
+
+        void ApplyPinNames()
+        {
+            if (Params.Input.Count < 2)
+                return;
+            Params.Input[1].Name = "Tool Diameter";
+            Params.Input[1].NickName = "D";
+            if (Params.Input.Count > 8)
+            {
+                Params.Input[8].Name = "Tool Radius";
+                Params.Input[8].NickName = "R";
+            }
         }
 
 
@@ -120,23 +152,49 @@ namespace SpruceBeetle.Alignment
         {
             // variables to reference the input parameters to
             List<Offcut> alignedOffcuts = new List<Offcut>();
-            double toolRadius = 0.005;
+            double diameter = 0.01;
             double jointX = 0.0;
             double jointY = 0.0;
             double jointZ = 0.0;
             string jointKey = "";
             int tenonCount = 1;
             Curve jointShape = null;
+            double toolRadius = 0;
 
             // access input parameters
             if (!DA.GetDataList(0, alignedOffcuts)) return;
-            if (!DA.GetData(1, ref toolRadius)) return;
+            if (!DA.GetData(1, ref diameter)) return;
             if (!DA.GetData(2, ref jointX)) return;
             if (!DA.GetData(3, ref jointY)) return;
             if (!DA.GetData(4, ref jointZ)) return;
             if (!DA.GetData(5, ref jointKey)) return;
             if (!DA.GetData(6, ref tenonCount)) return;
             DA.GetData(7, ref jointShape);
+            bool hasRadius = DA.GetData(8, ref toolRadius);
+
+            if (diameter <= 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Tool diameter must be greater than 0.");
+                return;
+            }
+
+            if (jointX < diameter || jointY < diameter)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    $"JX / JY raised to the tool diameter ({diameter}).");
+                jointX = Math.Max(jointX, diameter);
+                jointY = Math.Max(jointY, diameter);
+            }
+
+            double minRadius = diameter * 0.5;
+            if (!hasRadius || toolRadius < minRadius)
+                toolRadius = minRadius;
+
+            double maxFillet = Math.Min(jointX, jointY) * 0.5 - 1e-4;
+            if (maxFillet > 1e-6)
+                toolRadius = Math.Min(toolRadius, maxFillet);
+            else
+                toolRadius = 0;
 
             // check if the curve is closed and planar
             if (jointShape != null)

@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-19 — feature: Alignment Tenon Joints uses Tool Diameter like Contact Tenon
+
+- **Motivation:** Contact Tenon is driven by bit diameter. Alignment Tenon still used `R` as the mill input, and the "Nice Size Tenon" slider labeled Tool Radius was already set to `0.25` (a ¼″ bit diameter, not a fillet). Same mill language on both cutters.
+- **Files:** `Alignment/TenonJoints_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Pin 1 **Tool Radius `R`** (default `0.005`, used as fillet) → **Tool Diameter `D`** (default `0.01` = twice the old radius, so unwired fillet stays `0.005`). Existing wires on pin 1 keep their number and now mean diameter; fillet is `D / 2`. `JX` / `JY` raised to `D` (warns). New optional `R` after `CS` for a larger fillet; unwired or smaller than `D / 2` uses `D / 2` with no warning. `JZ`, `JT`, `TC`, `CS` indices unchanged. GUID unchanged. `ApplyPinNames` retitles pin 1 on old canvases.
+- **Result / observation:** A slider of `0.25` on the old R pin becomes a ¼″ bit with `0.125` corners instead of a 0.25″ fillet. Spline Joints still uses `R` as fillet (not changed).
+- **Follow-ups:** Close Rhino and rebuild. Relabel the Nice Size Tenon slider from Tool Radius to Tool Diameter. Optional: same `D` treatment on Spline Joints.
+
 ### 2026-09-19 — fix: Contact Tenon does not warn when raising R to D/2
 
 - **Motivation:** Unwired `R` defaults to `0.125`. With `D = 0.375` the component correctly used `0.1875` but painted the box orange, which read as a failed solve even though 63 contacts cut.

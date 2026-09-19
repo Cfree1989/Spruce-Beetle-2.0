@@ -392,6 +392,8 @@ A remark reports how many intersections were found.
 
 **What it does:** Cuts tenon/mortise geometry on the **ends** of consecutive Offcuts in one alignment. First piece is cut on its second plane, last piece on its first plane, middle pieces on both. Joint size is limited using the overlapping neighbour’s smaller X/Y.
 
+Mill constraint matches **Contact Tenon**: `D` is the bit diameter, not a fillet. `R` is optional.
+
 A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon`.
 
 **Inputs**
@@ -399,13 +401,14 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 | Name | Nick | Type | Access | Default | Description |
 | --- | --- | --- | --- | --- | --- |
 | Aligned Offcuts | AOc | Offcut | List | — | Ordered pieces along one curve. |
-| Tool Radius | R | Number | Item | `0.005` | Corner fillet on the joint profile (milling bit). |
-| Joint X | JX | Number | Item | `0.02` | Joint size in X. |
-| Joint Y | JY | Number | Item | `0.05` | Joint size in Y. |
+| Tool Diameter | D | Number | Item | `0.01` | CNC bit diameter. Floors `JX`, `JY`, and `R`. Same mill constraint as Contact Tenon. Old canvases wired **Tool Radius** to this pin: that value is now a diameter (fillet is `D / 2`). |
+| Joint X | JX | Number | Item | `0.02` | Joint size in X. Raised to `D` if smaller. |
+| Joint Y | JY | Number | Item | `0.05` | Joint size in Y. Raised to `D` if smaller. |
 | Joint Z | JZ | Number | Item | `0.04` | Extrusion depth of the tenon (through the interface). |
 | Joint Type | JT | Text | Item | — | `tenon` (rectangle), `cross tenon` (crossed rectangles), `custom tenon`. |
 | Tenon Count | TC | Integer | Item | `1` | Number of tenons spaced along the interface. |
 | Custom Shape | CS | Curve | Item | optional | Closed **planar** curve; scaled into JX×JY for `custom tenon`. |
+| Tool Radius | R | Number | Item | optional | Corner fillet. Unwired uses `D / 2`. Raised to `D / 2` if smaller (silent). |
 
 **Outputs**
 
