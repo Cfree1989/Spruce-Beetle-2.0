@@ -257,11 +257,11 @@ namespace SpruceBeetle.Packing
                 basePlane.Origin = origins[i];
                 basePlane.Transform(Transform.Translation(-basePlane.ZAxis * depth * 0.5));
 
-                var cutterRect = new Rectangle3d(basePlane, cutterX, dY);
                 var keyRect = new Rectangle3d(basePlane, keyX, dY);
-                if (!TryExtrude(cutterRect.ToNurbsCurve(), depth, fillet, out Brep cutter))
+                Curve cutterProfile = SlotProfile(basePlane, cutterX, dY, fillet);
+                if (!TryExtrude(cutterProfile, depth, out Brep cutter))
                     return false;
-                if (!TryExtrude(keyRect.ToNurbsCurve(), depth, 0, out Brep key))
+                if (!TryExtrude(keyRect.ToNurbsCurve(), depth, out Brep key))
                     return false;
 
                 Point3d mouthPt = basePlane.PointAt(mouthX, 0, depth * 0.5);
@@ -300,19 +300,68 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool TryExtrude(Curve outline, double depth, double fillet, out Brep pocket)
+        /// <summary>
+        /// Rectangle in the slot plane. Fillet only the closed-stop corners so the mouth
+        /// meets the member edge at 90 degrees.
+        /// </summary>
+        private static Curve SlotProfile(Plane plane, Interval x, Interval y, double fillet)
+        {
+            var rect = new Rectangle3d(plane, x, y);
+            Curve sharp = rect.ToNurbsCurve();
+            if (fillet <= 1e-6 || sharp == null)
+                return sharp;
+
+            double run = x.Length;
+            double width = y.Length;
+            double r = Math.Min(fillet, Math.Min(run, width) * 0.5 - 1e-4);
+            if (r <= 1e-6)
+                return sharp;
+
+            Vector3d xDir = plane.XAxis;
+            Vector3d yDir = plane.YAxis;
+            Point3d a = plane.PointAt(x.Min, y.Min, 0);
+            Point3d b = plane.PointAt(x.Max, y.Min, 0);
+            Point3d c = plane.PointAt(x.Max, y.Max, 0);
+            Point3d d = plane.PointAt(x.Min, y.Max, 0);
+
+            Point3d b1 = b - xDir * r;
+            Point3d b2 = b + yDir * r;
+            Point3d centerB = b - xDir * r + yDir * r;
+            Point3d midB = centerB + (xDir - yDir) * (r / Math.Sqrt(2.0));
+
+            Point3d c1 = c - yDir * r;
+            Point3d c2 = c - xDir * r;
+            Point3d centerC = c - xDir * r - yDir * r;
+            Point3d midC = centerC + (xDir + yDir) * (r / Math.Sqrt(2.0));
+
+            var parts = new List<Curve>
+            {
+                new Line(a, b1).ToNurbsCurve(),
+                new Arc(b1, midB, b2).ToNurbsCurve(),
+                new Line(b2, c1).ToNurbsCurve(),
+                new Arc(c1, midC, c2).ToNurbsCurve(),
+                new Line(c2, d).ToNurbsCurve(),
+                new Line(d, a).ToNurbsCurve()
+            };
+
+            Curve[] joined = Curve.JoinCurves(parts, 0.0001);
+            if (joined == null || joined.Length == 0 || joined[0] == null)
+                return sharp;
+
+            Curve profile = joined[0];
+            if (!profile.IsClosed)
+                profile.MakeClosed(0.0001);
+            return profile;
+        }
+
+
+        private static bool TryExtrude(Curve outline, double depth, out Brep pocket)
         {
             pocket = null;
             if (outline == null)
                 return false;
 
             Curve profile = outline;
-            if (fillet > 1e-6)
-            {
-                Curve filleted = Curve.CreateFilletCornersCurve(outline, fillet, 0.0001, 0.0001);
-                if (filleted != null)
-                    profile = filleted;
-            }
 
             Brep extrude = Extrusion.Create(profile, depth, true)?.ToBrep();
             if (extrude == null)

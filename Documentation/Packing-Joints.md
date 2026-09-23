@@ -167,7 +167,7 @@ Geometry rules:
 
 - Placement frame from `TrySplineMouth` in [Packing/PackedNeighbors.cs](../Packing/PackedNeighbors.cs): overlap center; X from mouth toward stop; depth along the contact axis.
 - Mouth search: a probe just outside the overlap edge, about `JX` long, must miss every packed box except the two members. Order: world **+Z** when the contact is vertical (`X` or `Y`), then either long-side end, then either short-side end (run and width swap). First free mouth wins.
-- Closed end and both long edges keep `D` of meat (`JX ≤ run − D`, `JY × TC ≤ across − 2D`). Mouth is flush and the cutter overruns the edge by `0.01` so the boolean opens.
+- Closed end and both long edges keep `D` of meat (`JX ≤ run − D`, `JY × TC ≤ across − 2D`). Mouth is flush and the cutter overruns the edge by `0.01` so the boolean opens. Mill fillet `R` is only on the **closed-stop** corners; the mouth meets the member edge at 90 degrees.
 - Skip if no free mouth, the slot does not fit, depth is 0, or the boolean fails. A bed whose side mouth is blocked by a neighbor in the same course stays on Contact Tenon or unjointed.
 
 ---

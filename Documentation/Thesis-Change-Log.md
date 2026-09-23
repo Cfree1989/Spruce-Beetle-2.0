@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-23 — fix: Contact Spline mouth is square to the edge
+
+- **Motivation:** Edge-open spline has to accept a rectangular key. Filleting every cutter corner rounded the mouth where it breaks the member edge.
+- **Files:** `Packing/ContactSpline_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** `CreateFilletCornersCurve` on the full slot rectangle → profile fillets only the two closed-stop corners; the mouth stays 90 degrees. `R` still mill-rounds the inside stop.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). Copy to `bin/` blocked — Rhino 8 (PID 2088) holds the `.gha`. Built assembly is in `obj/Debug/net48/`. Viewport check after reload: the opening on the face should be a rectangular notch, not a bullnose.
+- **Follow-ups:** Close Rhino and reload. Check a cut XY stitch against the previous curved mouth.
+
 ### 2026-09-23 — feature: Contact Spline cuts edge-open keys after the column is stacked
 
 - **Motivation:** Two perpendicular captured tenons on one stick cannot be closed in one move (each joint needs the other to be absent or already finished). An edge-open spline lets both scraps sit in their packed pose, then a loose key slides in through a free edge.

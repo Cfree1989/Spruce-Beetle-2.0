@@ -597,7 +597,7 @@ Typical split: Contact Tenon on `Z` beds, Contact Spline on `XY` stitches. The s
 | Joint X | JX | Number | Item | `1` | Key length along the slot. Closed end keeps `D` of meat. |
 | Joint Y | JY | Number | Item | `1` | Slot width across the run. Raised to `D` if smaller. |
 | Depth | Dep | Number | Item | `0.5` | Total depth, centered on the contact. Clamped to thinner member / 3. |
-| Tool Radius | R | Number | Item | `0.125` | Corner fillet. Raised to `D / 2` if smaller (silent). |
+| Tool Radius | R | Number | Item | `0.125` | Fillet on the **closed stop** only. Mouth stays square to the edge. Raised to `D / 2` if smaller (silent). |
 | Tenon Count | TC | Integer | Item | `1` | Parallel channels across the overlap. |
 
 **Outputs**
