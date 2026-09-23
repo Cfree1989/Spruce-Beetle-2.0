@@ -46,6 +46,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-23 — fix: Contact Spline key fills the slot
+
+- **Motivation:** Edge-open keys were coming out `JX` long (1.25 in the column test) while the cut runs from the open edge to the closed stop. The viewport showed a short solid and a drive line for the rest of the joint.
+- **Files:** `Packing/ContactSpline_GH.cs`; `Packing/PackedNeighbors.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** `J` was a `JX` box against the closed stop. Now `J` spans the slot: open edge to the stop (`run − D`). The cutter still overruns the mouth by `0.01`; the key stops flush with the edge. `JX` stays on the component so `JY` / `Dep` / `R` / `TC` wires do not shift, and the value is ignored. The mouth probe is the key length, not `JX`, so a mouth blocked for the full key is skipped.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). `.gha` wrote to `bin/Debug/net48/`. A contact that fit a 1.25 key may now skip if there is not a clear path as long as the slot outside the mouth. Viewport check still needs a Rhino reload.
+- **Follow-ups:** Close Rhino and reload. Confirm `J` matches the cut from mouth to stop. If dense XY stitches skip, the probe length is the reason.
+
+### 2026-09-23 — fix: Contact planes stay in the viewport and are not baked
+
+- **Motivation:** Packed Contacts, Select Contacts, Contact Tenon, and Contact Spline draw contact planes that are useful in the viewport. Baking the component was also baking those planes.
+- **Files:** `Packing/PackedContacts_GH.cs`; `Packing/SelectContacts_GH.cs`; `Packing/ContactTenon_GH.cs`; `Packing/ContactSpline_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; this log.
+- **Before → after:** Component Bake wrote every bakeable output, including plane parameters (`P` and `Sk`). Bake now skips `Param_Plane`. Preview is unchanged. Overlap rectangles (`R` on Packed Contacts) still bake.
+- **Result / observation:** Compiles with the key-length change (MSBuild Debug; only pre-existing `CS0472`). `.gha` wrote to `bin/Debug/net48/`. Bake behavior still needs a Rhino check.
+- **Follow-ups:** Bake a Contact Spline and a Packed Contacts component. Planes should stay out of the document; joints, offcuts, and overlap rectangles should still bake.
+
 ### 2026-09-23 — fix: Contact Spline mouth is square to the edge
 
 - **Motivation:** Edge-open spline has to accept a rectangular key. Filleting every cutter corner rounded the mouth where it breaks the member edge.

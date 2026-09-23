@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
+using Rhino;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 
 
@@ -29,7 +32,7 @@ namespace SpruceBeetle.Packing
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Contacts", "C", "Face contacts between packed Offcuts", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Planes", "P", "Contact planes at overlap centers", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Planes", "P", "Contact planes at overlap centers. Preview only; baking this component skips planes", GH_ParamAccess.list);
             pManager.AddCurveParameter("Rectangles", "R", "Overlap rectangles of each contact", GH_ParamAccess.list);
             pManager.AddTextParameter("Axis", "A", "Contact axis: Z, X, or Y", GH_ParamAccess.list);
 
@@ -86,6 +89,27 @@ namespace SpruceBeetle.Packing
             DA.SetDataList(1, planes);
             DA.SetDataList(2, rects);
             DA.SetDataList(3, axes);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            BakeGeometry(doc, doc?.CreateDefaultAttributes(), obj_ids);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            if (doc == null)
+                return;
+
+            foreach (IGH_Param param in Params.Output)
+            {
+                if (param is Param_Plane)
+                    continue;
+                if (param is IGH_BakeAwareObject baker)
+                    baker.BakeGeometry(doc, att, obj_ids);
+            }
         }
 
 

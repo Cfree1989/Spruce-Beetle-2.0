@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
+using Rhino;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 
 
@@ -21,7 +24,7 @@ namespace SpruceBeetle.Packing
             pManager.AddGenericParameter("Offcuts", "Oc", "Packed Offcuts (same list as Packed Contacts)", GH_ParamAccess.list);
             pManager.AddGenericParameter("Contacts", "C", "Selected contacts from Select Contacts", GH_ParamAccess.list);
             pManager.AddNumberParameter("Tool Diameter", "D", "CNC bit diameter. Floors JY and the corner fillet", GH_ParamAccess.item, 0.25);
-            pManager.AddNumberParameter("Joint X", "JX", "Key length along the slot run (closed end keeps D of meat)", GH_ParamAccess.item, 1.0);
+            pManager.AddNumberParameter("Joint X", "JX", "Ignored. The key spans the full slot from the open edge to the closed stop", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("Joint Y", "JY", "Slot width across the run (raised to D if smaller)", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("Depth", "Dep", "Total slot depth, centered on the contact plane (clamped to thinner member / 3)", GH_ParamAccess.item, 0.5);
             pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller, no warning)", GH_ParamAccess.item, 0.125);
@@ -37,7 +40,7 @@ namespace SpruceBeetle.Packing
             pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts after spline cuts", GH_ParamAccess.list);
             pManager.AddBrepParameter("Joints", "J", "Key solids (one per channel)", GH_ParamAccess.list);
             pManager.AddNumberParameter("Joint Volume", "JV", "Volume of each key solid", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut (preview these to see skips in the viewport)", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut. Preview only; baking this component skips planes", GH_ParamAccess.list);
             pManager.AddGenericParameter("Skipped Contacts", "SkC", "The same skipped contacts, for a second Contact Spline with a smaller JX / JY", GH_ParamAccess.list);
             pManager.AddLineParameter("Direction", "Dir", "Drive-in line per key, from the mouth toward the closed stop", GH_ParamAccess.list);
 
@@ -51,7 +54,6 @@ namespace SpruceBeetle.Packing
             var packed = new List<Offcut>();
             var objs = new List<object>();
             double diameter = 0.25;
-            double jointX = 1.0;
             double jointY = 1.0;
             double depthRequest = 0.5;
             double toolRadius = 0.125;
@@ -62,7 +64,6 @@ namespace SpruceBeetle.Packing
             if (!DA.GetDataList(1, objs))
                 return;
             DA.GetData(2, ref diameter);
-            DA.GetData(3, ref jointX);
             DA.GetData(4, ref jointY);
             DA.GetData(5, ref depthRequest);
             DA.GetData(6, ref toolRadius);
@@ -127,7 +128,7 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!PackedNeighbors.TrySplineMouth(contact, boxes, jointX, jointY, channelCount, diameter, out SplineMouth mouth) || mouth == null)
+                if (!PackedNeighbors.TrySplineMouth(contact, boxes, jointY, channelCount, diameter, out SplineMouth mouth) || mouth == null)
                 {
                     Skip(contact, contact.Plane);
                     continue;
@@ -140,7 +141,7 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!TryCreateSplines(mouth, jointX, jointY, depth, toolRadius, channelCount, diameter, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
+                if (!TryCreateSplines(mouth, jointY, depth, toolRadius, channelCount, diameter, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
                 {
                     Skip(contact, mouth.Frame);
                     continue;
@@ -226,7 +227,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool TryCreateSplines(SplineMouth mouth, double jointX, double jointY, double depth, double toolRadius, int channelCount, double diameter, out Brep[] cutters, out Brep[] keys, out Line[] dirs)
+        private static bool TryCreateSplines(SplineMouth mouth, double jointY, double depth, double toolRadius, int channelCount, double diameter, out Brep[] cutters, out Brep[] keys, out Line[] dirs)
         {
             cutters = null;
             keys = null;
@@ -239,16 +240,16 @@ namespace SpruceBeetle.Packing
             double meat = Math.Max(diameter, 0);
             double stop = run * 0.5 - meat;
             double mouthX = -run * 0.5;
-            double keyStart = stop - jointX;
+            double keyLength = stop - mouthX;
 
             Point3d[] origins = ChannelOrigins(frame, across, channelCount);
             cutters = new Brep[origins.Length];
             keys = new Brep[origins.Length];
             dirs = new Line[origins.Length];
-            double fillet = FilletRadius(toolRadius, jointX, jointY);
+            double fillet = FilletRadius(toolRadius, keyLength, jointY);
 
             var cutterX = new Interval(mouthX - hair, stop);
-            var keyX = new Interval(keyStart, stop);
+            var keyX = new Interval(mouthX, stop);
             var dY = new Interval(-jointY * 0.5, jointY * 0.5);
 
             for (int i = 0; i < origins.Length; i++)
@@ -408,6 +409,27 @@ namespace SpruceBeetle.Packing
             catch
             {
                 return 0;
+            }
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            BakeGeometry(doc, doc?.CreateDefaultAttributes(), obj_ids);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            if (doc == null)
+                return;
+
+            foreach (IGH_Param param in Params.Output)
+            {
+                if (param is Param_Plane)
+                    continue;
+                if (param is IGH_BakeAwareObject baker)
+                    baker.BakeGeometry(doc, att, obj_ids);
             }
         }
 

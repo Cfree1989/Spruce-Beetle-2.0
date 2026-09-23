@@ -244,8 +244,9 @@ namespace SpruceBeetle.Packing
         /// First free mouth for an edge-open spline. Prefer world +Z on vertical contacts,
         /// then either long-side end, then either short-side end. Closed end and both long
         /// edges keep <paramref name="diameter"/> of meat; the mouth is not inset.
+        /// The key fills the slot, so the mouth probe is the slot length (run minus meat).
         /// </summary>
-        public static bool TrySplineMouth(PackedContact contact, BoundingBox[] boxes, double jointX, double jointY, int channelCount, double diameter, out SplineMouth mouth)
+        public static bool TrySplineMouth(PackedContact contact, BoundingBox[] boxes, double jointY, int channelCount, double diameter, out SplineMouth mouth)
         {
             mouth = null;
             if (contact == null || boxes == null || !contact.Overlap.IsValid)
@@ -266,7 +267,7 @@ namespace SpruceBeetle.Packing
                 int key = (runU ? 1 : 0) | (mouthMax ? 2 : 0);
                 if (!tried.Add(key))
                     return false;
-                return EvaluateSplineMouth(contact, boxes, jointX, jointY, channelCount, diameter, runU, mouthMax, u0, u1, v0, v1, uAxis, vAxis, wAxis, origin, out found);
+                return EvaluateSplineMouth(contact, boxes, jointY, channelCount, diameter, runU, mouthMax, u0, u1, v0, v1, uAxis, vAxis, wAxis, origin, out found);
             }
 
             if (contact.Axis != ContactAxis.Z && Consider(false, true, out mouth))
@@ -295,7 +296,6 @@ namespace SpruceBeetle.Packing
         private static bool EvaluateSplineMouth(
             PackedContact contact,
             BoundingBox[] boxes,
-            double jointX,
             double jointY,
             int channelCount,
             double diameter,
@@ -312,17 +312,16 @@ namespace SpruceBeetle.Packing
             Vector3d runAxis = runU ? uAxis : vAxis;
             int count = Math.Max(channelCount, 1);
             double meat = Math.Max(diameter, 0);
+            double keyLength = runLen - meat;
 
-            if (jointX > runLen - meat + 1e-9)
-                return false;
             if (jointY * count > acrLen - 2.0 * meat + 1e-9)
                 return false;
-            if (runLen <= meat + 1e-9 || acrLen <= 2.0 * meat + 1e-9)
+            if (keyLength <= 1e-9 || acrLen <= 2.0 * meat + 1e-9)
                 return false;
 
             Vector3d outDir = mouthMax ? runAxis : -runAxis;
             Vector3d drive = -outDir;
-            BoundingBox probe = MouthProbe(contact.Overlap, contact.Axis, outDir, Math.Max(jointX, 1e-3));
+            BoundingBox probe = MouthProbe(contact.Overlap, contact.Axis, outDir, keyLength);
             if (ProbeHitsOther(probe, boxes, contact.IndexA, contact.IndexB))
                 return false;
 

@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
+using Rhino;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 
 
@@ -36,7 +39,7 @@ namespace SpruceBeetle.Packing
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
             pManager.AddGenericParameter("Contacts", "C", "Selected contacts", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Planes", "P", "Planes of selected contacts", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Planes", "P", "Planes of selected contacts. Preview only; baking this component skips planes", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -182,6 +185,27 @@ namespace SpruceBeetle.Packing
 
             DA.SetDataList(0, goos);
             DA.SetDataList(1, planes);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            BakeGeometry(doc, doc?.CreateDefaultAttributes(), obj_ids);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            if (doc == null)
+                return;
+
+            foreach (IGH_Param param in Params.Output)
+            {
+                if (param is Param_Plane)
+                    continue;
+                if (param is IGH_BakeAwareObject baker)
+                    baker.BakeGeometry(doc, att, obj_ids);
+            }
         }
 
 

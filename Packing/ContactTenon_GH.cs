@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Parameters;
 using Grasshopper.Kernel.Special;
+using Rhino;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 
 
@@ -47,7 +50,7 @@ namespace SpruceBeetle.Packing
             pManager.AddGenericParameter("Offcuts", "Oc", "Offcuts after tenon cuts", GH_ParamAccess.list);
             pManager.AddBrepParameter("Joints", "J", "Tenon solids (matching pockets on both members)", GH_ParamAccess.list);
             pManager.AddNumberParameter("Joint Volume", "JV", "Volume of each tenon solid", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut (preview these to see skips in the viewport)", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut. Preview only; baking this component skips planes", GH_ParamAccess.list);
             pManager.AddGenericParameter("Skipped Contacts", "SkC", "The same skipped contacts, for a second Contact Tenon with a smaller JX / JY", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -539,6 +542,27 @@ namespace SpruceBeetle.Packing
             catch
             {
                 return 0;
+            }
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, List<Guid> obj_ids)
+        {
+            BakeGeometry(doc, doc?.CreateDefaultAttributes(), obj_ids);
+        }
+
+
+        public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            if (doc == null)
+                return;
+
+            foreach (IGH_Param param in Params.Output)
+            {
+                if (param is Param_Plane)
+                    continue;
+                if (param is IGH_BakeAwareObject baker)
+                    baker.BakeGeometry(doc, att, obj_ids);
             }
         }
 

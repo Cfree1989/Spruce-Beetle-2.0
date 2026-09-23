@@ -29,7 +29,7 @@ Bin Packing EB-AFIT  →  Oc
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
 | Tenon | Selected face pairs (typical: Z beds) | Center of the shared overlap rectangle; X along the long side; inset `D` on all sides | **Contact Tenon** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
-| Spline | Selected face pairs (typical: XY stitches) | Same overlap; channel opens one free edge so a key can be driven in after both pieces are seated | **Contact Spline** (`JX`/`JY`/`Dep`/`R`/`TC`) |
+| Spline | Selected face pairs (typical: XY stitches) | Same overlap; channel opens one free edge so a key can be driven in after both pieces are seated | **Contact Spline** (`JY`/`Dep`/`R`/`TC`; key length is the slot) |
 
 **Spline Joints** stays on the curve-alignment tab (dovetail on a chain). **Contact Spline** is the packing cutter: a rectangular edge-open slot, not a dovetail. Use the two packing cutters on different contacts. The same contact sent to both gets two cuts.
 
@@ -56,7 +56,7 @@ Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Off
 | In | `Oc` | Offcut list | Same list Contact Tenon will cut |
 | In | `T` | Number | Max gap for a contact (default `0.01`) |
 | Out | `C` | `PackedContact` list | Pair indices, axis, overlap, center plane |
-| Out | `P` | Planes | Same planes as `C` (preview) |
+| Out | `P` | Planes | Same planes as `C`. Preview only; component Bake skips planes |
 | Out | `R` | Curves | Overlap rectangles |
 | Out | `A` | Text | `Z`, `X`, or `Y` |
 
@@ -82,7 +82,7 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 | In | `C` | Contacts | From Packed Contacts |
 | In | `M` | Text | Mode (value list auto-added; All / Z / XY) |
 | Out | `C` | Contacts | Kept subset |
-| Out | `P` | Planes | Planes of kept contacts |
+| Out | `P` | Planes | Planes of kept contacts. Preview only; component Bake skips planes |
 
 **Modes**
 
@@ -125,7 +125,7 @@ Do not overload this component with edge-open slots — that is **Contact Spline
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Tenon solids | One solid per tenon (TC per successful contact) |
 | Out `JV` | Joint volumes | Volume of each `J` solid |
-| Out `Sk` | Skipped planes | Preview in the viewport (axis crosses at skipped contacts) |
+| Out `Sk` | Skipped planes | Preview in the viewport. Not baked with the component |
 | Out `SkC` | Skipped contacts | Wire into a second Contact Tenon `C` with a smaller `JX` / `JY`. Use the first component's `Oc` as that second `Oc` |
 
 Geometry rules:
@@ -151,23 +151,23 @@ Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. C
 | In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
 | In `C` | Selected contacts | |
 | In `D` | Tool diameter | Default `0.25`. Floors `JY` and `R`. Does not set size |
-| In `JX` | Key length | Default `1`. Along the slot run. Closed end keeps `D` of meat; mouth is not inset |
+| In `JX` | Ignored | Pin kept so later wires do not shift. Key length is the slot, not this number |
 | In `JY` | Slot width | Default `1`. Across the run. Raised to `D` if smaller |
 | In `Dep` | Total depth | Default `0.5`. Centered; clamped to `thinner member / 3` |
 | In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller (silent) |
 | In `TC` | Channel count | Default `1`. Parallel channels across the overlap |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
-| Out `J` | Key solids | One `JX` key per channel (short of the mouth when the overlap is longer) |
+| Out `J` | Key solids | One key per channel, from the open edge to the closed stop |
 | Out `JV` | Joint volumes | Volume of each `J` solid |
-| Out `Sk` | Skipped planes | Preview skips |
-| Out `SkC` | Skipped contacts | Wire into a second Contact Spline `C` with a smaller `JX` / `JY`. Second pass `Oc` is the first pass `Oc` |
+| Out `Sk` | Skipped planes | Preview only; not baked with the component |
+| Out `SkC` | Skipped contacts | Wire into a second Contact Spline `C` with a smaller `JY`. Second pass `Oc` is the first pass `Oc` |
 | Out `Dir` | Drive-in lines | Mouth toward the closed stop |
 
 Geometry rules:
 
 - Placement frame from `TrySplineMouth` in [Packing/PackedNeighbors.cs](../Packing/PackedNeighbors.cs): overlap center; X from mouth toward stop; depth along the contact axis.
-- Mouth search: a probe just outside the overlap edge, about `JX` long, must miss every packed box except the two members. Order: world **+Z** when the contact is vertical (`X` or `Y`), then either long-side end, then either short-side end (run and width swap). First free mouth wins.
-- Closed end and both long edges keep `D` of meat (`JX ≤ run − D`, `JY × TC ≤ across − 2D`). Mouth is flush and the cutter overruns the edge by `0.01` so the boolean opens. Mill fillet `R` is only on the **closed-stop** corners; the mouth meets the member edge at 90 degrees.
+- Mouth search: a probe just outside the overlap edge, as long as the key, must miss every packed box except the two members. Order: world **+Z** when the contact is vertical (`X` or `Y`), then either long-side end, then either short-side end (run and width swap). First free mouth wins.
+- Key length is the slot: open edge to the closed stop (`run − D`). `JX` does not shorten it. Closed end and both long edges keep `D` of meat (`JY × TC ≤ across − 2D`). Mouth is flush and the cutter overruns the edge by `0.01` so the boolean opens; the key stops at the edge. Mill fillet `R` is only on the **closed-stop** corners; the mouth meets the member edge at 90 degrees.
 - Skip if no free mouth, the slot does not fit, depth is 0, or the boolean fails. A bed whose side mouth is blocked by a neighbor in the same course stays on Contact Tenon or unjointed.
 
 ---
