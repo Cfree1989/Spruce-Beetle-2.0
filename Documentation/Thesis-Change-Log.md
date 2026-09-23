@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (matching pockets at the center of each shared overlap rectangle; X along the long side). Alignment Tenon stays on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys) **or Contact Spline** (edge-open keys driven in after the stack). Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,14 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-23 — feature: Contact Spline cuts edge-open keys after the column is stacked
+
+- **Motivation:** Two perpendicular captured tenons on one stick cannot be closed in one move (each joint needs the other to be absent or already finished). An edge-open spline lets both scraps sit in their packed pose, then a loose key slides in through a free edge.
+- **Files:** `Packing/PackedNeighbors.cs`; `Packing/ContactSpline_GH.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; `Documentation/README.md`; this log.
+- **Before → after:** Packing cutters were Contact Tenon only (blind pocket, inset `D` on all sides). New **Contact Spline** (`ContactSpline`, GUID `A8D31C47-…`) takes the same `Oc` + `PackedContact` list and cuts a rectangular channel that breaks one unblocked overlap edge. Mouth order is world `+Z` on vertical contacts, then long side, then short side. `J` is the `JX` key against the closed stop; `Dir` is mouth toward stop. Contact Tenon is unchanged.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). `.gha` wrote to `bin/Debug/net48/` this build. Viewport proof (open mouth, `Dir` arrow, skip on a buried bed) still needs a Rhino reload. Typical split: Tenon on `Z`, Spline on `XY`. Buried mouths (Z bed boxed in by a course) skip; those contacts stay on Contact Tenon.
+- **Follow-ups:** Close Rhino and reload. Preview `Dir` on an XY stitch. Confirm a buried bed goes to `SkC`. Component-Reference packing section includes Contact Spline.
 
 ### 2026-09-19 — feature: Contact Tenon skips undersized faces (D edge meat) and outputs SkC
 

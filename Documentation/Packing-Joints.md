@@ -22,15 +22,16 @@ Shared source: **Bin Packing EB-AFIT** (`PackBin`) output `Oc` — packed Offcut
 
 ```text
 Bin Packing EB-AFIT  →  Oc
-        └─ Packed Contacts → Select Contacts → Contact Tenon
-              Z beds + XY stitches; which contacts; then cut
+        └─ Packed Contacts → Select Contacts ┬→ Contact Tenon   (captured blind key)
+                                             └→ Contact Spline  (edge-open key, after stack)
 ```
 
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
-| Contacts | Selected face pairs (Z beds and XY stitches) | Center of the shared overlap rectangle; X along the long side | **Contact Tenon** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
+| Tenon | Selected face pairs (typical: Z beds) | Center of the shared overlap rectangle; X along the long side; inset `D` on all sides | **Contact Tenon** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
+| Spline | Selected face pairs (typical: XY stitches) | Same overlap; channel opens one free edge so a key can be driven in after both pieces are seated | **Contact Spline** (`JX`/`JY`/`Dep`/`R`/`TC`) |
 
-**Spline Joints** stays on the curve-alignment tab. A later **Contact Spline** is a name only — not specified here.
+**Spline Joints** stays on the curve-alignment tab (dovetail on a chain). **Contact Spline** is the packing cutter: a rectangular edge-open slot, not a dovetail. Use the two packing cutters on different contacts. The same contact sent to both gets two cuts.
 
 Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Offcut list and cuts `FirstPlane`/`SecondPlane` only. It does not read `PackedContact`.
 
@@ -105,7 +106,7 @@ A `PackedContact` is two packed indices plus `ContactAxis`, overlap box, area, a
 
 **Intended job:** Cut a **matching tenon pocket** on both pieces at each selected contact. Packing cutter, not a feeder into Alignment Tenon. Same idea as Alignment Tenon: boolean-difference the same solid from both members; output `J` is the tenon body (loose tenon / key), not a male stub left on one stick.
 
-A later **Contact Spline** would be a different cutter (dovetail / through key). Do not overload this component.
+Do not overload this component with edge-open slots — that is **Contact Spline**.
 
 **As-built:** [Packing/ContactTenon_GH.cs](../Packing/ContactTenon_GH.cs) (was Contact Joints / `PackJoints`). Display **Contact Tenon**, nick **ContactTenon**, GUID `7C2F5B18-E9A4-4D06-B3C1-8F47A0E256D9` unchanged. Icon is Tenon Joints. `ApplyDisplayNames` retitles old canvases. Pin layout changed (`W` gone, `D` re-purposed); re-wire `D`/`JX`/`JY`/`Dep`/`R`/`JT`/`TC`.
 
@@ -139,6 +140,38 @@ Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. C
 
 ---
 
+## Contact Spline (`ContactSpline`)
+
+**Intended job:** Cut an **edge-open rectangular slot** on both members of a packed contact so a loose key can be driven in **after** the scraps are already stacked. Solves the assembly deadlock of two perpendicular captured tenons on one stick. Does not replace Contact Tenon.
+
+**As-built:** [Packing/ContactSpline_GH.cs](../Packing/ContactSpline_GH.cs). Display **Contact Spline**, nick **ContactSpline**, GUID `A8D31C47-6E2B-4F90-9C14-5B7A2E8D0146`. Icon is Alignment Spline Joints (cosmetic debt). New component.
+
+| | Nick | Rule |
+| --- | --- | --- |
+| In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
+| In `C` | Selected contacts | |
+| In `D` | Tool diameter | Default `0.25`. Floors `JY` and `R`. Does not set size |
+| In `JX` | Key length | Default `1`. Along the slot run. Closed end keeps `D` of meat; mouth is not inset |
+| In `JY` | Slot width | Default `1`. Across the run. Raised to `D` if smaller |
+| In `Dep` | Total depth | Default `0.5`. Centered; clamped to `thinner member / 3` |
+| In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller (silent) |
+| In `TC` | Channel count | Default `1`. Parallel channels across the overlap |
+| Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
+| Out `J` | Key solids | One `JX` key per channel (short of the mouth when the overlap is longer) |
+| Out `JV` | Joint volumes | Volume of each `J` solid |
+| Out `Sk` | Skipped planes | Preview skips |
+| Out `SkC` | Skipped contacts | Wire into a second Contact Spline `C` with a smaller `JX` / `JY`. Second pass `Oc` is the first pass `Oc` |
+| Out `Dir` | Drive-in lines | Mouth toward the closed stop |
+
+Geometry rules:
+
+- Placement frame from `TrySplineMouth` in [Packing/PackedNeighbors.cs](../Packing/PackedNeighbors.cs): overlap center; X from mouth toward stop; depth along the contact axis.
+- Mouth search: a probe just outside the overlap edge, about `JX` long, must miss every packed box except the two members. Order: world **+Z** when the contact is vertical (`X` or `Y`), then either long-side end, then either short-side end (run and width swap). First free mouth wins.
+- Closed end and both long edges keep `D` of meat (`JX ≤ run − D`, `JY × TC ≤ across − 2D`). Mouth is flush and the cutter overruns the edge by `0.01` so the boolean opens.
+- Skip if no free mouth, the slot does not fit, depth is 0, or the boolean fails. A bed whose side mouth is blocked by a neighbor in the same course stays on Contact Tenon or unjointed.
+
+---
+
 ## What Alignment Tenon / Spline already do
 
 Do not duplicate these on the packing tab.
@@ -153,13 +186,12 @@ There is no packing → Alignment Tenon hookup.
 
 ## Out of scope (this spec)
 
-- Contact Spline design
-- New packing-tab icons (Select Contacts still borrows Unification)
+- New packing-tab icons (Select Contacts still borrows Unification; Contact Spline borrows Alignment Spline Joints)
 
 ---
 
 ## Next
 
 1. Close Rhino and reload the `.gha`.
-2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon above.
+2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon and Contact Spline (XY vs buried Z).
 3. Re-wire old Contact Joints boxes (`W` is gone; `D` is now a floor, not a size).

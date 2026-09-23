@@ -469,7 +469,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box, list face contacts, then cut matching tenons. Alignment **Tenon Joints** is for curve chains only — do not wire packed contacts into it.
+Pack rectangular leftovers into a box, list face contacts, then cut **Contact Tenon** (captured keys) and/or **Contact Spline** (edge-open keys after stacking). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
@@ -574,6 +574,42 @@ Skipped when the tenon does not fit inside the overlap inset by `D` on all sides
 | Joint Volume | JV | Number | List | Volume of each `J` solid. |
 | Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview this output to see skips in Rhino. |
 | Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Contact Tenon (`C`) with a smaller `JX` / `JY`; wire this component's `Oc` into that second `Oc`. |
+
+---
+
+### Contact Spline (`ContactSpline`)
+
+**What it does:** Cuts an **edge-open rectangular slot** from both members at each selected contact. The same channel is boolean-differenced from both Offcuts; `J` is the loose key that slides in **after** the two scraps are already stacked. One overlap edge is left open (no `D` inset on the mouth) so the key is not captured. This is the packing spline; Alignment Spline Joints is still the dovetail on a curve chain.
+
+`D` floors `JY` and `R` the same way as Contact Tenon. `JX` is key length along the run. Closed end and both long edges keep `D` of meat.
+
+Mouth search (first free edge): world **up** (`+Z`) when the contact plane is vertical, then either end of the overlap long side, then either end of the short side. A mouth is free when a probe just outside that edge, about `JX` long, misses every packed box except the two members. No free mouth, no fit, depth 0, or a failed boolean → skip (`Sk` / `SkC`).
+
+Typical split: Contact Tenon on `Z` beds, Contact Spline on `XY` stitches. The same contact sent to both components gets both cuts.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | — | Packed Offcuts (same list / order as Packed Contacts). |
+| Contacts | C | PackedContact | List | — | From Select Contacts. |
+| Tool Diameter | D | Number | Item | `0.25` | CNC bit diameter. Floors `JY` and `R`. |
+| Joint X | JX | Number | Item | `1` | Key length along the slot. Closed end keeps `D` of meat. |
+| Joint Y | JY | Number | Item | `1` | Slot width across the run. Raised to `D` if smaller. |
+| Depth | Dep | Number | Item | `0.5` | Total depth, centered on the contact. Clamped to thinner member / 3. |
+| Tool Radius | R | Number | Item | `0.125` | Corner fillet. Raised to `D / 2` if smaller (silent). |
+| Tenon Count | TC | Integer | Item | `1` | Parallel channels across the overlap. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | Pieces after spline cuts. |
+| Joints | J | Brep | List | Key solids (one per channel). |
+| Joint Volume | JV | Number | List | Volume of each `J` solid. |
+| Skipped | Sk | Plane | List | Planes of contacts that were not cut. |
+| Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Contact Spline with a smaller `JX` / `JY`; use this component's `Oc` as that second `Oc`. |
+| Direction | Dir | Line | List | Drive-in line per key, mouth toward the closed stop. Preview in the viewport. |
 
 ---
 

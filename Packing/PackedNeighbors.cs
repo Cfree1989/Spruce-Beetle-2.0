@@ -83,6 +83,17 @@ namespace SpruceBeetle.Packing
     }
 
 
+    /// <summary>
+    /// Edge-open spline layout: Frame.X points from the mouth toward the closed stop.
+    /// </summary>
+    public class SplineMouth
+    {
+        public Plane Frame { get; set; }
+        public double RunLength { get; set; }
+        public double AcrossLength { get; set; }
+    }
+
+
     internal static class PackedNeighbors
     {
         public static BoundingBox WorldBox(Offcut offcut)
@@ -226,6 +237,213 @@ namespace SpruceBeetle.Packing
             double usableShort = shortSide - 2.0 * margin;
             canCut = jointX * count <= usableLong + 1e-9 && jointY <= usableShort + 1e-9;
             return true;
+        }
+
+
+        /// <summary>
+        /// First free mouth for an edge-open spline. Prefer world +Z on vertical contacts,
+        /// then either long-side end, then either short-side end. Closed end and both long
+        /// edges keep <paramref name="diameter"/> of meat; the mouth is not inset.
+        /// </summary>
+        public static bool TrySplineMouth(PackedContact contact, BoundingBox[] boxes, double jointX, double jointY, int channelCount, double diameter, out SplineMouth mouth)
+        {
+            mouth = null;
+            if (contact == null || boxes == null || !contact.Overlap.IsValid)
+                return false;
+            if (!OverlapExtents(contact, out double u0, out double u1, out double v0, out double v1, out double w))
+                return false;
+
+            UvWorld(contact.Axis, out Vector3d uAxis, out Vector3d vAxis, out Vector3d wAxis);
+            double uLen = u1 - u0;
+            double vLen = v1 - v0;
+            bool uIsLong = uLen >= vLen;
+            Point3d origin = OrientedPlane(contact.Axis, uIsLong, (u0 + u1) * 0.5, (v0 + v1) * 0.5, w).Origin;
+
+            var tried = new HashSet<int>();
+            bool Consider(bool runU, bool mouthMax, out SplineMouth found)
+            {
+                found = null;
+                int key = (runU ? 1 : 0) | (mouthMax ? 2 : 0);
+                if (!tried.Add(key))
+                    return false;
+                return EvaluateSplineMouth(contact, boxes, jointX, jointY, channelCount, diameter, runU, mouthMax, u0, u1, v0, v1, uAxis, vAxis, wAxis, origin, out found);
+            }
+
+            if (contact.Axis != ContactAxis.Z && Consider(false, true, out mouth))
+                return true;
+
+            if (uIsLong)
+            {
+                if (Consider(true, true, out mouth)) return true;
+                if (Consider(true, false, out mouth)) return true;
+                if (Consider(false, true, out mouth)) return true;
+                if (Consider(false, false, out mouth)) return true;
+            }
+            else
+            {
+                if (Consider(false, true, out mouth)) return true;
+                if (Consider(false, false, out mouth)) return true;
+                if (Consider(true, true, out mouth)) return true;
+                if (Consider(true, false, out mouth)) return true;
+            }
+
+            mouth = null;
+            return false;
+        }
+
+
+        private static bool EvaluateSplineMouth(
+            PackedContact contact,
+            BoundingBox[] boxes,
+            double jointX,
+            double jointY,
+            int channelCount,
+            double diameter,
+            bool runU,
+            bool mouthMax,
+            double u0, double u1, double v0, double v1,
+            Vector3d uAxis, Vector3d vAxis, Vector3d wAxis,
+            Point3d origin,
+            out SplineMouth mouth)
+        {
+            mouth = null;
+            double runLen = runU ? (u1 - u0) : (v1 - v0);
+            double acrLen = runU ? (v1 - v0) : (u1 - u0);
+            Vector3d runAxis = runU ? uAxis : vAxis;
+            int count = Math.Max(channelCount, 1);
+            double meat = Math.Max(diameter, 0);
+
+            if (jointX > runLen - meat + 1e-9)
+                return false;
+            if (jointY * count > acrLen - 2.0 * meat + 1e-9)
+                return false;
+            if (runLen <= meat + 1e-9 || acrLen <= 2.0 * meat + 1e-9)
+                return false;
+
+            Vector3d outDir = mouthMax ? runAxis : -runAxis;
+            Vector3d drive = -outDir;
+            BoundingBox probe = MouthProbe(contact.Overlap, contact.Axis, outDir, Math.Max(jointX, 1e-3));
+            if (ProbeHitsOther(probe, boxes, contact.IndexA, contact.IndexB))
+                return false;
+
+            Vector3d across = Vector3d.CrossProduct(wAxis, drive);
+            if (!across.Unitize() || !drive.Unitize())
+                return false;
+
+            var frame = new Plane(origin, drive, across);
+            if (!frame.IsValid)
+                return false;
+
+            mouth = new SplineMouth
+            {
+                Frame = frame,
+                RunLength = runLen,
+                AcrossLength = acrLen
+            };
+            return true;
+        }
+
+
+        private static void UvWorld(ContactAxis axis, out Vector3d uAxis, out Vector3d vAxis, out Vector3d wAxis)
+        {
+            switch (axis)
+            {
+                case ContactAxis.X:
+                    uAxis = Vector3d.YAxis;
+                    vAxis = Vector3d.ZAxis;
+                    wAxis = Vector3d.XAxis;
+                    break;
+                case ContactAxis.Y:
+                    uAxis = Vector3d.XAxis;
+                    vAxis = Vector3d.ZAxis;
+                    wAxis = Vector3d.YAxis;
+                    break;
+                default:
+                    uAxis = Vector3d.XAxis;
+                    vAxis = Vector3d.YAxis;
+                    wAxis = Vector3d.ZAxis;
+                    break;
+            }
+        }
+
+
+        private static BoundingBox MouthProbe(BoundingBox overlap, ContactAxis axis, Vector3d outDir, double length)
+        {
+            const double hair = 1e-4;
+            const double inflate = 0.01;
+            Point3d min = overlap.Min;
+            Point3d max = overlap.Max;
+
+            switch (axis)
+            {
+                case ContactAxis.X:
+                    min.X -= inflate;
+                    max.X += inflate;
+                    break;
+                case ContactAxis.Y:
+                    min.Y -= inflate;
+                    max.Y += inflate;
+                    break;
+                default:
+                    min.Z -= inflate;
+                    max.Z += inflate;
+                    break;
+            }
+
+            if (outDir.Z > 0.5)
+            {
+                min.Z = overlap.Max.Z + hair;
+                max.Z = overlap.Max.Z + hair + length;
+            }
+            else if (outDir.Z < -0.5)
+            {
+                max.Z = overlap.Min.Z - hair;
+                min.Z = overlap.Min.Z - hair - length;
+            }
+            else if (outDir.Y > 0.5)
+            {
+                min.Y = overlap.Max.Y + hair;
+                max.Y = overlap.Max.Y + hair + length;
+            }
+            else if (outDir.Y < -0.5)
+            {
+                max.Y = overlap.Min.Y - hair;
+                min.Y = overlap.Min.Y - hair - length;
+            }
+            else if (outDir.X > 0.5)
+            {
+                min.X = overlap.Max.X + hair;
+                max.X = overlap.Max.X + hair + length;
+            }
+            else
+            {
+                max.X = overlap.Min.X - hair;
+                min.X = overlap.Min.X - hair - length;
+            }
+
+            return new BoundingBox(min, max);
+        }
+
+
+        private static bool ProbeHitsOther(BoundingBox probe, BoundingBox[] boxes, int skipA, int skipB)
+        {
+            if (!probe.IsValid)
+                return true;
+
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                if (i == skipA || i == skipB)
+                    continue;
+                BoundingBox other = boxes[i];
+                if (!other.IsValid)
+                    continue;
+                if (probe.Min.X <= other.Max.X && probe.Max.X >= other.Min.X
+                    && probe.Min.Y <= other.Max.Y && probe.Max.Y >= other.Min.Y
+                    && probe.Min.Z <= other.Max.Z && probe.Max.Z >= other.Min.Z)
+                    return true;
+            }
+
+            return false;
         }
 
 
