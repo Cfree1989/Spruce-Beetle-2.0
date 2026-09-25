@@ -23,15 +23,17 @@ Shared source: **Bin Packing EB-AFIT** (`PackBin`) output `Oc` — packed Offcut
 ```text
 Bin Packing EB-AFIT  →  Oc
         └─ Packed Contacts → Select Contacts ┬→ Contact Tenon   (captured blind key)
-                                             └→ Contact Spline  (edge-open key, after stack)
+                                             ├→ Contact Spline  (edge-open key, after stack)
+                                             └→ Outside Key     (face key on the column skin)
 ```
 
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
 | Tenon | Selected face pairs (typical: Z beds) | Center of the shared overlap rectangle; X along the long side; inset `D` on all sides | **Contact Tenon** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
 | Spline | Selected face pairs (typical: XY stitches) | Same overlap; channel opens one free edge so a key can be driven in after both pieces are seated | **Contact Spline** (`JY`/`Dep`/`R`/`TC`; key length is the slot) |
+| Outside key | Contacts that reach a vertical hull face | Pocket on the packed AABB skin, centered on the seam, half in each piece | **Outside Key** (`JX`/`JY`/`Dep`/`R`/`JT`/`TC`) |
 
-**Spline Joints** stays on the curve-alignment tab (dovetail on a chain). **Contact Spline** is the packing cutter: a rectangular edge-open slot, not a dovetail. Use the two packing cutters on different contacts. The same contact sent to both gets two cuts.
+**Spline Joints** stays on the curve-alignment tab (dovetail on a chain). **Contact Spline** is the packing cutter: a rectangular edge-open slot, not a dovetail. **Outside Key** is a different cut: a pocket in the outer face, not a slot along the mating plane. Wire Contact Tenon `Oc` into Outside Key when Z tenons are cut first. The same contact sent to more than one cutter gets each cut.
 
 Do **not** wire Select Contacts into Alignment Tenon. Tenon takes an ordered Offcut list and cuts `FirstPlane`/`SecondPlane` only. It does not read `PackedContact`.
 
@@ -172,6 +174,41 @@ Geometry rules:
 
 ---
 
+## Outside Key (`OutsideKey`)
+
+**Intended job:** Cut a **face key** into the packed column’s vertical skin, centered on a seam where both members share that outer face. The same pocket is boolean-differenced from both Offcuts; `J` is the loose key inserted after the stack is up. This is not Contact Spline (a channel along the mating face). Interior seams and stepped faces (one piece set back from the hull) are skipped.
+
+**As-built:** [Packing/OutsideKey_GH.cs](../Packing/OutsideKey_GH.cs). Display **Outside Key**, nick **OutsideKey**, GUID `9B4E7D12-5A83-4C6F-B291-0E8F3A47D5C1`. Icon is Alignment Spline Joints (cosmetic debt). New component. Seat search: `TryOutsideSeats` in [Packing/PackedNeighbors.cs](../Packing/PackedNeighbors.cs).
+
+| | Nick | Rule |
+| --- | --- | --- |
+| In `Oc` | Packed Offcuts | Same list / same order as Packed Contacts |
+| In `C` | Selected contacts | Feed All, or both Z and XY. Horizontal skin seams come from Z beds; vertical skin seams from X/Y stitches |
+| In `D` | Tool diameter | Default `0.25`. Floors `JX`, `JY`, and `R` |
+| In `JX` | Along the seam | Default `1`. Raised to `D` if smaller |
+| In `JY` | Across the seam | Default `1`. Split into both pieces. Raised to `D` if smaller |
+| In `Dep` | Depth into the face | Default `0.5`. Clamped to `thinner member / 3` along the inward axis |
+| In `R` | Fillet radius | Default `0.125`. Rectangular keys only. Raised to `D / 2` if smaller (silent) |
+| In `JT` | Joint type | Auto value list: `rectangular` / `custom key` |
+| In `TC` | Key count | Default `1`. Spread along the exposed seam |
+| In `CS` | Custom curve | Optional closed planar curve; scaled into `JX` × `JY` |
+| Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
+| Out `J` | Key solids | Flush with the outer face; one per key |
+| Out `JV` | Joint volumes | Volume of each `J` solid |
+| Out `Sk` | Skipped planes | Preview only; not baked with the component |
+| Out `SkC` | Skipped contacts | Wire into a second Outside Key `C` with a smaller `JX` / `JY`. Second pass `Oc` is the first pass `Oc` |
+| Out `Dir` | Drive-in lines | From just outside the face inward |
+
+Geometry rules:
+
+- Hull is the AABB of the packed Offcut boxes (not a separate Box input). A seat exists only on ±X or ±Y of that hull, and only when both members and the overlap sit on that face (`0.01`). Top and bottom faces are not used.
+- Frame: origin at the seam center on the face; X along the seam; Y across the seam; Z into the wood. One contact can seat on two sides (a corner).
+- Fit: `JX × TC ≤ seam − 2D`, and `JY / 2` must fit in each member across the seam. Depth = `min(Dep, thinner inward thickness / 3)`.
+- Rectangular profile is filleted with `R`. A custom curve is extruded as drawn (a bowtie stays a bowtie). The cutter overruns the face by `0.01`; `J` stops flush.
+- Skip the contact when there is no skin seat, nothing fits, custom curve is missing, or every seat fails the boolean.
+
+---
+
 ## What Alignment Tenon / Spline already do
 
 Do not duplicate these on the packing tab.
@@ -186,12 +223,12 @@ There is no packing → Alignment Tenon hookup.
 
 ## Out of scope (this spec)
 
-- New packing-tab icons (Select Contacts still borrows Unification; Contact Spline borrows Alignment Spline Joints)
+- New packing-tab icons (Select Contacts still borrows Unification; Contact Spline and Outside Key borrow Alignment Spline Joints)
 
 ---
 
 ## Next
 
 1. Close Rhino and reload the `.gha`.
-2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon and Contact Spline (XY vs buried Z).
+2. Re-run the column test (`stock_column_in.csv`); record cut / skipped counts under Contact Tenon, Contact Spline, and Outside Key (skin vs stepped vs interior).
 3. Re-wire old Contact Joints boxes (`W` is gone; `D` is now a floor, not a size).

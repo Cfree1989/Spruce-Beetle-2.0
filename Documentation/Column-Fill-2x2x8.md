@@ -162,7 +162,7 @@ CSV to Offcut  (D = ;)  ── OcD ──► Bin Packing EB-AFIT ──► Packe
 ## 7. What this will not do
 
 - It will **not** follow a curve. That is **Curve Alignment** / Alignment **Tenon Joints**.
-- Packed-column joints are a separate path: packing `Oc` → **Packed Contacts** → **Select Contacts** → **Contact Tenon**.
+- Packed-column joints are a separate path: packing `Oc` → **Packed Contacts** → **Select Contacts** → **Contact Tenon** / **Outside Key**.
 - It will **not** fill an arbitrary Brep (tapered column, fluted section). Only a **rectangular** Box.
 - It will **not** guarantee a 100% fill. EB-AFIT is a fast packer, not a perfect one. Add more stock or smaller pieces if you see voids.
 

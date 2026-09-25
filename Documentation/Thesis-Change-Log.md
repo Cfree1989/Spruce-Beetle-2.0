@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys) **or Contact Spline** (edge-open keys driven in after the stack). Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,14 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-09-25 — feature: Outside Key cuts face keys on the packed column skin
+
+- **Motivation:** Contact Spline opens a channel along the mating face and takes the first clear edge, usually world +Z. The shop lock is a pocket on the outer vertical face, overlapping the seam, inserted after the stack is up.
+- **Files:** `Packing/PackedNeighbors.cs`; `Packing/OutsideKey_GH.cs`; `Base/Joint.cs`; `Documentation/Packing-Joints.md`; `Documentation/Component-Reference.md`; `Documentation/README.md`; `Documentation/Column-Fill-2x2x8.md`; this log.
+- **Before → after:** Packing cutters were Contact Tenon (blind) and Contact Spline (edge-open along the contact). New **Outside Key** (`OutsideKey`, GUID `9B4E7D12-…`) takes packed `Oc` + contacts and cuts a rectangular (or custom) pocket into ±X/±Y of the packed AABB where both members share that face. `JT` value list is `rectangular` / `custom key`. `J` is flush with the face; `Dir` points inward. Stepped and interior seams skip. Contact Tenon and Contact Spline are unchanged.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). Copy to `bin/` blocked — Rhino 8 (PID 30752) holds the `.gha`. Built assembly is in `obj/Debug/net48/`. Viewport proof (keys on flush cheeks, skip on 43/58 step, skip on lid) still needs a Rhino reload.
+- **Follow-ups:** Close Rhino and reload. Wire Packed Contacts (All, or Z plus XY) into Outside Key. Confirm no keys on the top face or on stepped seams.
 
 ### 2026-09-23 — fix: Contact Spline key fills the slot
 

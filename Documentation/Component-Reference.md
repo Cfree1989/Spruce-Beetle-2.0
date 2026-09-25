@@ -5,7 +5,7 @@ Spruce Beetle is a Grasshopper toolkit for designing with timber (or other) **of
 1. **Create** offcut records from numbers, CSV, Excel, or JSON.
 2. **Align** them along a curve (straight or free-form).
 3. Optionally **unify** the stack, then cut **joints**.
-4. **Pack** leftovers into a container, cut **contact tenons**, or **orient** pieces for fabrication and export data.
+4. **Pack** leftovers into a container, cut **contact tenons** or **outside keys**, or **orient** pieces for fabrication and export data.
 
 Packed-column joint design notes (why contacts, not Alignment Tenon): [Packing-Joints.md](Packing-Joints.md).
 
@@ -469,7 +469,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box, list face contacts, then cut **Contact Tenon** (captured keys) and/or **Contact Spline** (edge-open keys after stacking). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
+Pack rectangular leftovers into a box, list face contacts, then cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
@@ -610,6 +610,44 @@ Typical split: Contact Tenon on `Z` beds, Contact Spline on `XY` stitches. The s
 | Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview only; Bake on this component skips planes. |
 | Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Contact Spline with a smaller `JY`; use this component's `Oc` as that second `Oc`. |
 | Direction | Dir | Line | List | Drive-in line per key, open edge toward the closed stop. Same length as the key. |
+
+---
+
+### Outside Key (`OutsideKey`)
+
+**What it does:** Cuts a **face key** into the packed column’s vertical skin at seams where both Offcuts share that outer face. The same pocket is boolean-differenced from both members; `J` is the loose key that goes in **after** the stack is up. Horizontal seams on a side face come from Z contacts; vertical seams come from X/Y stitches. Interior seams and stepped faces (one piece set back) are skipped.
+
+The hull is the axis-aligned box of the packed Offcuts. Top and bottom faces are not used. One contact can get a key on more than one side.
+
+`D` floors `JX`, `JY`, and `R` the same way as Contact Tenon. `JX` is along the seam; `JY` is across the seam (half in each piece). Depth is into the face, clamped to the thinner piece’s inward thickness / 3. Rectangular keys are filleted with `R`. A custom curve on `CS` is scaled into `JX` × `JY` and extruded as drawn.
+
+Skip when the seam misses the skin, the key does not fit (`JX × TC ≤ seam − 2D`, `JY / 2` in each piece), depth is 0, the custom curve is missing, or the boolean fails. The cutter overruns the face by `0.01`; `J` stops flush.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | — | Packed Offcuts (same list / order as Packed Contacts). |
+| Contacts | C | PackedContact | List | — | From Packed Contacts or Select Contacts. |
+| Tool Diameter | D | Number | Item | `0.25` | CNC bit diameter. Floors `JX`, `JY`, and `R`. |
+| Joint X | JX | Number | Item | `1` | Key length along the seam. Raised to `D` if smaller. |
+| Joint Y | JY | Number | Item | `1` | Key width across the seam. Raised to `D` if smaller. |
+| Depth | Dep | Number | Item | `0.5` | Depth into the outer face. Clamped to thinner member / 3. |
+| Tool Radius | R | Number | Item | `0.125` | Corner fillet on a rectangular key. Raised to `D / 2` if smaller (silent). |
+| Joint Type | JT | Text | Item | — | Auto value list: `rectangular`, `custom key`. |
+| Tenon Count | TC | Integer | Item | `1` | Number of keys along the exposed seam. |
+| Custom Shape | CS | Curve | Item | — | Closed planar curve (`custom key` only). Optional. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Offcuts | Oc | Offcut | List | Pieces after face-key cuts. |
+| Joints | J | Brep | List | Key solids (one per key), flush with the outer face. |
+| Joint Volume | JV | Number | List | Volume of each `J` solid. |
+| Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview only; Bake on this component skips planes. |
+| Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Outside Key with a smaller `JX` / `JY`; use this component's `Oc` as that second `Oc`. |
+| Direction | Dir | Line | List | Drive-in line per key, from outside the face inward. |
 
 ---
 

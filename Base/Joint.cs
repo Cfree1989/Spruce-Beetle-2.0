@@ -54,6 +54,16 @@ namespace SpruceBeetle
         }
 
 
+        public static List<string> OutsideKeyTypes()
+        {
+            return new List<string>
+            {
+                "rectangular",
+                "custom key",
+            };
+        }
+
+
         // list of 'direct' joint types as reference for the value list
         public static List<string> DirectJointType()
         {

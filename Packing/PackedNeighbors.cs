@@ -94,6 +94,21 @@ namespace SpruceBeetle.Packing
     }
 
 
+    /// <summary>
+    /// Face-key layout on the packed hull. Frame origin sits on the outer face at the
+    /// seam center; X along the seam, Y across the seam, Z into the wood.
+    /// </summary>
+    public class OutsideSeat
+    {
+        public Plane Frame { get; set; }
+        public double SeamLength { get; set; }
+        public double AcrossA { get; set; }
+        public double AcrossB { get; set; }
+        public double InwardA { get; set; }
+        public double InwardB { get; set; }
+    }
+
+
     internal static class PackedNeighbors
     {
         public static BoundingBox WorldBox(Offcut offcut)
@@ -290,6 +305,197 @@ namespace SpruceBeetle.Packing
 
             mouth = null;
             return false;
+        }
+
+
+        /// <summary>
+        /// Vertical hull faces where both members of <paramref name="contact"/> are
+        /// coplanar with the packed AABB. Stepped and interior seams yield an empty list.
+        /// One contact can seat on more than one side.
+        /// </summary>
+        public static bool TryOutsideSeats(PackedContact contact, BoundingBox[] boxes, out List<OutsideSeat> seats)
+        {
+            seats = new List<OutsideSeat>();
+            if (contact == null || boxes == null || !contact.Overlap.IsValid)
+                return false;
+            if (contact.IndexA < 0 || contact.IndexB < 0 || contact.IndexA >= boxes.Length || contact.IndexB >= boxes.Length)
+                return false;
+
+            BoundingBox hull = UnionHull(boxes);
+            if (!hull.IsValid)
+                return false;
+
+            BoundingBox a = boxes[contact.IndexA];
+            BoundingBox b = boxes[contact.IndexB];
+            if (!a.IsValid || !b.IsValid)
+                return false;
+
+            const double tol = 0.01;
+            if (!OverlapExtents(contact, out _, out _, out _, out _, out double w))
+                return false;
+
+            TryAddOutsideSeat(seats, contact, a, b, hull, 0, true, w, tol);
+            TryAddOutsideSeat(seats, contact, a, b, hull, 0, false, w, tol);
+            TryAddOutsideSeat(seats, contact, a, b, hull, 1, true, w, tol);
+            TryAddOutsideSeat(seats, contact, a, b, hull, 1, false, w, tol);
+            return seats.Count > 0;
+        }
+
+
+        private static void TryAddOutsideSeat(
+            List<OutsideSeat> seats,
+            PackedContact contact,
+            BoundingBox a,
+            BoundingBox b,
+            BoundingBox hull,
+            int faceAxis,
+            bool facePositive,
+            double contactW,
+            double tol)
+        {
+            int contactAxis = (int)contact.Axis;
+            if (contactAxis == faceAxis)
+                return;
+
+            if (!OnVertFace(a, hull, faceAxis, facePositive, tol) || !OnVertFace(b, hull, faceAxis, facePositive, tol))
+                return;
+            if (!OnVertFace(contact.Overlap, hull, faceAxis, facePositive, tol))
+                return;
+
+            int seamAxis = 3 - faceAxis - contactAxis;
+            if (seamAxis < 0 || seamAxis > 2)
+                return;
+
+            AxisRange(contact.Overlap, seamAxis, out double seam0, out double seam1);
+            double seamLen = seam1 - seam0;
+            if (seamLen <= tol)
+                return;
+
+            double faceCoord = facePositive ? MaxCoord(hull, faceAxis) : MinCoord(hull, faceAxis);
+            var origin = new Point3d();
+            SetCoord(ref origin, faceAxis, faceCoord);
+            SetCoord(ref origin, contactAxis, contactW);
+            SetCoord(ref origin, seamAxis, (seam0 + seam1) * 0.5);
+
+            Vector3d xDir = WorldAxis(seamAxis);
+            Vector3d inward = facePositive ? -WorldAxis(faceAxis) : WorldAxis(faceAxis);
+            Vector3d yDir = Vector3d.CrossProduct(inward, xDir);
+            if (!xDir.Unitize() || !yDir.Unitize() || !inward.Unitize())
+                return;
+
+            var frame = new Plane(origin, xDir, yDir);
+            if (!frame.IsValid)
+                return;
+            if (frame.ZAxis * inward < 0)
+                frame.Flip();
+
+            double acrossA = AcrossFromContact(a, contact.Axis, contactW, tol);
+            double acrossB = AcrossFromContact(b, contact.Axis, contactW, tol);
+            if (acrossA <= tol || acrossB <= tol)
+                return;
+
+            seats.Add(new OutsideSeat
+            {
+                Frame = frame,
+                SeamLength = seamLen,
+                AcrossA = acrossA,
+                AcrossB = acrossB,
+                InwardA = ThicknessOnAxis(a, faceAxis),
+                InwardB = ThicknessOnAxis(b, faceAxis)
+            });
+        }
+
+
+        private static BoundingBox UnionHull(BoundingBox[] boxes)
+        {
+            var hull = BoundingBox.Empty;
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                if (boxes[i].IsValid)
+                    hull.Union(boxes[i]);
+            }
+            return hull;
+        }
+
+
+        private static bool OnVertFace(BoundingBox box, BoundingBox hull, int axis, bool positive, double tol)
+        {
+            if (!box.IsValid)
+                return false;
+            double face = positive ? MaxCoord(hull, axis) : MinCoord(hull, axis);
+            double edge = positive ? MaxCoord(box, axis) : MinCoord(box, axis);
+            return Near(edge, face, tol);
+        }
+
+
+        private static double AcrossFromContact(BoundingBox box, ContactAxis axis, double w, double tolerance)
+        {
+            switch (axis)
+            {
+                case ContactAxis.X:
+                    return Near(box.Max.X, w, tolerance) ? w - box.Min.X : box.Max.X - w;
+                case ContactAxis.Y:
+                    return Near(box.Max.Y, w, tolerance) ? w - box.Min.Y : box.Max.Y - w;
+                default:
+                    return Near(box.Max.Z, w, tolerance) ? w - box.Min.Z : box.Max.Z - w;
+            }
+        }
+
+
+        private static double ThicknessOnAxis(BoundingBox box, int axis)
+        {
+            return MaxCoord(box, axis) - MinCoord(box, axis);
+        }
+
+
+        private static void AxisRange(BoundingBox box, int axis, out double min, out double max)
+        {
+            min = MinCoord(box, axis);
+            max = MaxCoord(box, axis);
+        }
+
+
+        private static double MinCoord(BoundingBox box, int axis)
+        {
+            switch (axis)
+            {
+                case 0: return box.Min.X;
+                case 1: return box.Min.Y;
+                default: return box.Min.Z;
+            }
+        }
+
+
+        private static double MaxCoord(BoundingBox box, int axis)
+        {
+            switch (axis)
+            {
+                case 0: return box.Max.X;
+                case 1: return box.Max.Y;
+                default: return box.Max.Z;
+            }
+        }
+
+
+        private static void SetCoord(ref Point3d point, int axis, double value)
+        {
+            switch (axis)
+            {
+                case 0: point.X = value; break;
+                case 1: point.Y = value; break;
+                default: point.Z = value; break;
+            }
+        }
+
+
+        private static Vector3d WorldAxis(int axis)
+        {
+            switch (axis)
+            {
+                case 0: return Vector3d.XAxis;
+                case 1: return Vector3d.YAxis;
+                default: return Vector3d.ZAxis;
+            }
         }
 
 
