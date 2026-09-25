@@ -15,6 +15,7 @@ namespace SpruceBeetle.Packing
     public class ContactTenon_GH : GH_Component
     {
         IGH_Param typeParameter = null;
+        IGH_Param clearanceParameter = null;
 
         public ContactTenon_GH()
           : base("Contact Tenon", "ContactTenon",
@@ -38,7 +39,9 @@ namespace SpruceBeetle.Packing
             pManager.AddIntegerParameter("Tenon Count", "TC", "Number of tenons along the overlap long side", GH_ParamAccess.item, 1);
             pManager.AddCurveParameter("Custom Shape", "CS", "Closed planar curve for a custom tenon", GH_ParamAccess.item);
             pManager[9].Optional = true;
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the key and the pocket. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
             typeParameter = pManager[7];
+            clearanceParameter = pManager[10];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -82,6 +85,8 @@ namespace SpruceBeetle.Packing
 
         protected override void BeforeSolveInstance()
         {
+            ClearanceSlider.Ensure(clearanceParameter, this);
+
             if (typeParameter == null)
                 return;
 
@@ -148,6 +153,7 @@ namespace SpruceBeetle.Packing
             string jointKey = "tenon";
             int tenonCount = 1;
             Curve jointShape = null;
+            double clearance = ClearanceSlider.Default;
 
             if (!DA.GetDataList(0, packed))
                 return;
@@ -161,6 +167,8 @@ namespace SpruceBeetle.Packing
             DA.GetData(7, ref jointKey);
             DA.GetData(8, ref tenonCount);
             DA.GetData(9, ref jointShape);
+            DA.GetData(10, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             if (packed.Count == 0)
             {
@@ -233,14 +241,17 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!PackedNeighbors.OrientOnOverlap(contact, jointX, jointY, tenonCount, diameter, out Plane placed, out double longSide, out _, out bool canCut) || !canCut)
+                double fitX = jointX + 2.0 * clearance;
+                double fitY = jointY + 2.0 * clearance;
+                if (!PackedNeighbors.OrientOnOverlap(contact, fitX, fitY, tenonCount, diameter, out Plane placed, out double longSide, out _, out bool canCut) || !canCut)
                 {
                     Skip(contact, contact.Plane);
                     continue;
                 }
 
-                double depth = PocketDepth(boxes[contact.IndexA], boxes[contact.IndexB], contact.Axis, depthRequest);
-                if (depth <= 0)
+                double pocketDepth = PocketDepth(boxes[contact.IndexA], boxes[contact.IndexB], contact.Axis, depthRequest + 2.0 * clearance);
+                double keyDepth = pocketDepth - 2.0 * clearance;
+                if (keyDepth <= 1e-6)
                 {
                     Skip(contact, placed);
                     continue;
@@ -252,7 +263,7 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!TryCreateTenons(placed, jointX, jointY, depth, toolRadius, tenonCount, longSide, jointType, jointShape, out Brep[] joints))
+                if (!TryCreateTenons(placed, jointX, jointY, keyDepth, clearance, toolRadius, tenonCount, longSide, jointType, jointShape, out Brep[] pockets, out Brep[] keys))
                 {
                     Skip(contact, placed);
                     continue;
@@ -260,13 +271,13 @@ namespace SpruceBeetle.Packing
 
                 bool okA = true;
                 bool okB = true;
-                for (int j = 0; j < joints.Length; j++)
+                for (int j = 0; j < keys.Length; j++)
                 {
-                    cutters.Add(joints[j]);
-                    volumes.Add(SafeVolume(joints[j]));
-                    if (!TryCut(geometry[contact.IndexA], joints[j], out geometry[contact.IndexA]))
+                    cutters.Add(keys[j]);
+                    volumes.Add(SafeVolume(keys[j]));
+                    if (!TryCut(geometry[contact.IndexA], pockets[j], out geometry[contact.IndexA]))
                         okA = false;
-                    if (!TryCut(geometry[contact.IndexB], joints[j], out geometry[contact.IndexB]))
+                    if (!TryCut(geometry[contact.IndexB], pockets[j], out geometry[contact.IndexB]))
                         okB = false;
                 }
 
@@ -348,18 +359,44 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool TryCreateTenons(Plane plane, double jointX, double jointY, double depth, double toolRadius, int tenonCount, double longSide, int jointType, Curve jointShape, out Brep[] joints)
+        private static bool TryCreateTenons(Plane plane, double jointX, double jointY, double keyDepth, double clearance, double toolRadius, int tenonCount, double longSide, int jointType, Curve jointShape, out Brep[] pockets, out Brep[] keys)
         {
-            joints = null;
+            pockets = null;
+            keys = null;
+            if (!BuildJoint(plane, jointX, jointY, keyDepth, 0, toolRadius, tenonCount, longSide, jointType, jointShape, out keys))
+                return false;
+            if (clearance <= 1e-9)
+            {
+                pockets = DuplicateBreps(keys);
+                return pockets != null;
+            }
+
+            return BuildJoint(plane, jointX, jointY, keyDepth + 2.0 * clearance, clearance, toolRadius, tenonCount, longSide, jointType, jointShape, out pockets);
+        }
+
+
+        private static bool BuildJoint(Plane plane, double jointX, double jointY, double depth, double grow, double toolRadius, int tenonCount, double longSide, int jointType, Curve jointShape, out Brep[] joints)
+        {
             switch (jointType)
             {
                 case 1:
-                    return CrossJoint(plane, jointX, jointY, depth, toolRadius, tenonCount, longSide, out joints);
+                    return CrossJoint(plane, jointX, jointY, depth, grow, toolRadius, tenonCount, longSide, out joints);
                 case 2:
-                    return CreateCustomTenon(jointShape, plane, jointX, jointY, depth, toolRadius, tenonCount, longSide, out joints);
+                    return CreateCustomTenon(jointShape, plane, jointX, jointY, depth, grow, toolRadius, tenonCount, longSide, out joints);
                 default:
-                    return RectJoint(plane, jointX, jointY, depth, toolRadius, tenonCount, longSide, out joints);
+                    return RectJoint(plane, jointX, jointY, depth, grow, toolRadius, tenonCount, longSide, out joints);
             }
+        }
+
+
+        private static Brep[] DuplicateBreps(Brep[] source)
+        {
+            if (source == null)
+                return null;
+            var copy = new Brep[source.Length];
+            for (int i = 0; i < source.Length; i++)
+                copy[i] = source[i]?.DuplicateBrep();
+            return copy;
         }
 
 
@@ -386,16 +423,18 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool RectJoint(Plane plane, double jointX, double jointY, double depth, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
+        private static bool RectJoint(Plane plane, double jointX, double jointY, double depth, double grow, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
         {
             joints = null;
             Plane basePlane = plane;
             basePlane.Transform(Transform.Translation(-basePlane.ZAxis * depth * 0.5));
             Point3d[] origins = TenonOrigins(basePlane, longSide, tenonCount);
             joints = new Brep[origins.Length];
-            Interval dX = new Interval(-jointX * 0.5, jointX * 0.5);
-            Interval dY = new Interval(-jointY * 0.5, jointY * 0.5);
-            double fillet = FilletRadius(toolRadius, jointX, jointY);
+            double sizeX = jointX + 2.0 * grow;
+            double sizeY = jointY + 2.0 * grow;
+            Interval dX = new Interval(-sizeX * 0.5, sizeX * 0.5);
+            Interval dY = new Interval(-sizeY * 0.5, sizeY * 0.5);
+            double fillet = FilletRadius(toolRadius, sizeX, sizeY);
 
             for (int i = 0; i < origins.Length; i++)
             {
@@ -410,18 +449,20 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool CrossJoint(Plane plane, double jointX, double jointY, double depth, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
+        private static bool CrossJoint(Plane plane, double jointX, double jointY, double depth, double grow, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
         {
             joints = null;
             Plane basePlane = new Plane(plane);
             basePlane.Transform(Transform.Translation(-basePlane.ZAxis * depth * 0.5));
             Point3d[] origins = TenonOrigins(basePlane, longSide, tenonCount);
             joints = new Brep[origins.Length];
-            Interval dX = new Interval(-jointX * 0.5, jointX * 0.5);
-            Interval dY = new Interval(-jointY * 0.5, jointY * 0.5);
-            Interval dXArm = new Interval(-jointY * 0.5, jointY * 0.5);
-            Interval dYArm = new Interval(-jointX / 3.0, jointX / 3.0);
-            double fillet = FilletRadius(toolRadius, jointX, jointY);
+            double hx = jointX * 0.5 + grow;
+            double hy = jointY * 0.5 + grow;
+            Interval dX = new Interval(-hx, hx);
+            Interval dY = new Interval(-hy, hy);
+            Interval dXArm = new Interval(-hy, hy);
+            Interval dYArm = new Interval(-(jointX / 3.0 + grow), jointX / 3.0 + grow);
+            double fillet = FilletRadius(toolRadius, jointX + 2.0 * grow, jointY + 2.0 * grow);
 
             for (int i = 0; i < origins.Length; i++)
             {
@@ -442,7 +483,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool CreateCustomTenon(Curve shape, Plane plane, double jointX, double jointY, double depth, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
+        private static bool CreateCustomTenon(Curve shape, Plane plane, double jointX, double jointY, double depth, double grow, double toolRadius, int tenonCount, double longSide, out Brep[] joints)
         {
             joints = null;
             if (shape == null)
@@ -474,7 +515,7 @@ namespace SpruceBeetle.Packing
                 placed.Transform(Transform.PlaneToPlane(curvePlane, basePlane));
                 if (!placed.IsClosed)
                     placed.MakeClosed(0.0001);
-                if (!TryExtrude(placed, depth, fillet, out Brep joint))
+                if (!TryExtrude(placed, depth, fillet, grow, basePlane, out Brep joint))
                     return false;
                 joints[i] = joint;
             }
@@ -484,6 +525,12 @@ namespace SpruceBeetle.Packing
 
 
         private static bool TryExtrude(Curve outline, double depth, double fillet, out Brep pocket)
+        {
+            return TryExtrude(outline, depth, fillet, 0, Plane.Unset, out pocket);
+        }
+
+
+        private static bool TryExtrude(Curve outline, double depth, double fillet, double grow, Plane plane, out Brep pocket)
         {
             pocket = null;
             if (outline == null)
@@ -495,6 +542,14 @@ namespace SpruceBeetle.Packing
                 Curve filleted = Curve.CreateFilletCornersCurve(outline, fillet, 0.0001, 0.0001);
                 if (filleted != null)
                     profile = filleted;
+            }
+
+            if (grow > 1e-9)
+            {
+                Curve grown = Joint.GrowClosed(profile, plane, grow);
+                if (grown == null)
+                    return false;
+                profile = grown;
             }
 
             Brep extrude = Extrusion.Create(profile, depth, true)?.ToBrep();

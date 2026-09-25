@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-09-25 — feature: Clearance slider on every joint cutter
+
+- **Motivation:** Loose keys were cut to the same size as the pocket, so a key had no fitting gap. Shop clearance only needs a few thousandths of an inch.
+- **Files:** `Base/ClearanceSlider.cs`; `Base/Joint.cs`; `Packing/ContactTenon_GH.cs`; `Packing/ContactSpline_GH.cs`; `Packing/OutsideKey_GH.cs`; `Alignment/TenonJoints_GH.cs`; `Alignment/SplineJoints_GH.cs`; `Alignment/IntersectionJoints_GH.cs`; `Documentation/Component-Reference.md`; `Documentation/Packing-Joints.md`; this log.
+- **Before → after:** Joint components had no clearance pin. Each now has `Cl` at the end of its inputs (existing wires stay put). If `Cl` is unwired, a number slider is added with init code `0.001<0.005<0.01` (default `0.005`). `J` stays the key size. The boolean cutter is larger by `Cl` on each closed side. Centered tenons and contact splines also add `Cl` at each end of the depth. Outside keys add `Cl` inward only. Intersection laps offset the cutter solid by `Cl`.
+- **Result / observation:** Compiles (MSBuild Debug; only pre-existing `CS0472`). Copy to `bin/` blocked — Rhino 8 (PID 37704) holds the `.gha`. Built assembly is in `obj/Debug/net48/`. Viewport check still needs a Rhino reload. A `0.005` slider makes a `1` key cut a `1.01` pocket.
+- **Follow-ups:** Close Rhino and reload. Confirm the slider range is `0.001` to `0.01` and that `J` is smaller than the notch.
+
 ### 2026-09-25 — feature: Outside Key cuts face keys on the packed column skin
 
 - **Motivation:** Contact Spline opens a channel along the mating face and takes the first clear edge, usually world +Z. The shop lock is a pocket on the outer vertical face, overlapping the seam, inserted after the stack is up.

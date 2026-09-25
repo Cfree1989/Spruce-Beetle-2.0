@@ -33,6 +33,8 @@ namespace SpruceBeetle.Alignment
 {
     public class SplineJoints_GH : GH_Component
     {
+        IGH_Param clearanceParameter = null;
+
         public SplineJoints_GH()
           : base("Spline Joints", "Spline", "Create spline joints between the aligned Offcuts", "Spruce Beetle", "    Alignment")
         {
@@ -47,6 +49,8 @@ namespace SpruceBeetle.Alignment
             pManager.AddNumberParameter("Joint X", "JX", "Joint dimension in X direction", GH_ParamAccess.item, 0.02);
             pManager.AddNumberParameter("Joint Y", "JY", "Joint dimension in Y direction", GH_ParamAccess.item, 0.05);
             pManager.AddIntegerParameter("Spline Count", "SC", "The number of splines to be created", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side of the spline profile. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
+            clearanceParameter = pManager[5];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -67,6 +71,12 @@ namespace SpruceBeetle.Alignment
         }
 
 
+        protected override void BeforeSolveInstance()
+        {
+            ClearanceSlider.Ensure(clearanceParameter, this);
+        }
+
+
         // main
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -76,6 +86,7 @@ namespace SpruceBeetle.Alignment
             double jointX = 0.0;
             double jointY = 0.0;
             int splineCount = 1;
+            double clearance = ClearanceSlider.Default;
 
             // access input parameters
             if (!DA.GetDataList(0, alignedOffcuts)) return;
@@ -83,6 +94,8 @@ namespace SpruceBeetle.Alignment
             if (!DA.GetData(2, ref jointX)) return;
             if (!DA.GetData(3, ref jointY)) return;
             if (!DA.GetData(4, ref splineCount)) return;
+            DA.GetData(5, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             // initialise lists to store all the data
             Brep[] outputOffcuts = new Brep[alignedOffcuts.Count];
@@ -102,7 +115,7 @@ namespace SpruceBeetle.Alignment
                 if (i == 0)
                 {
                     // call CreateJoints method
-                    CreateSplines(alignedOffcuts[i].SecondPlane, jointX, jointY, toolRadius, secondMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, out Brep[] joints, out Brep[] display);
+                    CreateSplines(alignedOffcuts[i].SecondPlane, jointX, jointY, toolRadius, secondMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, clearance, out Brep[] joints, out Brep[] display);
 
                     // call CutOffcut method
                     Brep cutOffcut = Joint.CutOffcut(joints, alignedOffcuts[i].OffcutGeometry);
@@ -123,7 +136,7 @@ namespace SpruceBeetle.Alignment
                 else if (i == alignedOffcuts.Count - 1)
                 {
                     // call CreateJoints method
-                    CreateSplines(alignedOffcuts[i].FirstPlane, jointX, jointY, toolRadius, firstMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, out Brep[] joints, out Brep[] display);
+                    CreateSplines(alignedOffcuts[i].FirstPlane, jointX, jointY, toolRadius, firstMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, clearance, out Brep[] joints, out Brep[] display);
 
                     // call CutOffcut method
                     Brep cutOffcut = Joint.CutOffcut(joints, alignedOffcuts[i].OffcutGeometry);
@@ -136,8 +149,8 @@ namespace SpruceBeetle.Alignment
                 else
                 {
                     // call CreateJoints method for both ends of the Offcuts
-                    CreateSplines(alignedOffcuts[i].FirstPlane, jointX, jointY, toolRadius, firstMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, out Brep[] firstJoints, out Brep[] firstDisplay);
-                    CreateSplines(alignedOffcuts[i].SecondPlane, jointX, jointY, toolRadius, secondMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, out Brep[] secondJoints, out Brep[] secondDisplay);
+                    CreateSplines(alignedOffcuts[i].FirstPlane, jointX, jointY, toolRadius, firstMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, clearance, out Brep[] firstJoints, out Brep[] firstDisplay);
+                    CreateSplines(alignedOffcuts[i].SecondPlane, jointX, jointY, toolRadius, secondMin, alignedOffcuts[i].Y, alignedOffcuts[i].PositionIndex, splineCount, clearance, out Brep[] secondJoints, out Brep[] secondDisplay);
 
                     // add all joints to one single array
                     Brep[] cutterBreps = new Brep[splineCount * 2];
@@ -196,7 +209,7 @@ namespace SpruceBeetle.Alignment
         //------------------------------------------------------------
         // CreateSplines method
         //------------------------------------------------------------
-        protected void CreateSplines(Plane plane, double jointX, double jointY, double toolRadius, double[] minValue, double yDim, int positionIndex, int splineCount, out Brep[] returnJoint, out Brep[] displayJoint)
+        protected void CreateSplines(Plane plane, double jointX, double jointY, double toolRadius, double[] minValue, double yDim, int positionIndex, int splineCount, double clearance, out Brep[] returnJoint, out Brep[] displayJoint)
         {
             // initialise empty brep variable
             returnJoint = new Brep[splineCount];
@@ -214,6 +227,8 @@ namespace SpruceBeetle.Alignment
             // joint dimensions
             Interval dX = new Interval(-jointX / 2, jointX / 2);
             Interval dY = new Interval(-jointY / 2, jointY / 2);
+            Interval cX = new Interval(-(jointX / 2 + clearance), jointX / 2 + clearance);
+            Interval cY = new Interval(-(jointY / 2 + clearance), jointY / 2 + clearance);
             double dZ = yDim * 2;
 
             // rotate base plane
@@ -235,7 +250,7 @@ namespace SpruceBeetle.Alignment
                     basePlane.Origin = divPts[i];
 
                     // create rectangle
-                    Rectangle3d baseRect = new Rectangle3d(basePlane, dX, dY);
+                    Rectangle3d baseRect = new Rectangle3d(basePlane, cX, cY);
                     Curve baseCurve = DovetailRect(baseRect, basePlane, toolRadius);
 
                     // extrude first base to create first joint
@@ -264,7 +279,7 @@ namespace SpruceBeetle.Alignment
                     basePlane.Origin = divPts[i];
 
                     // create rectangle
-                    Rectangle3d baseRect = new Rectangle3d(basePlane, dX, dY);
+                    Rectangle3d baseRect = new Rectangle3d(basePlane, cX, cY);
                     Curve baseCurve = DovetailRect(baseRect, basePlane, toolRadius);
 
                     // extrude first base to create first joint

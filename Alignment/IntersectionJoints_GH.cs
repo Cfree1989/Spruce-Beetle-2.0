@@ -37,6 +37,8 @@ namespace SpruceBeetle.Alignment
 {
     public class IntersectionJoints_GH : GH_Component
     {
+        IGH_Param clearanceParameter = null;
+
         public IntersectionJoints_GH()
           : base("Intersection Joints", "IntJoints", "Create joints at the intersections of the alignments of Offcuts", "Spruce Beetle", "    Alignment")
         {
@@ -52,6 +54,8 @@ namespace SpruceBeetle.Alignment
             pManager.AddNumberParameter("Rotate Joint", "RJ", "Rotate the joint to alter its direction", GH_ParamAccess.item, 0.0);
             pManager.AddNumberParameter("Width", "W", "The width of the lap joint", GH_ParamAccess.item, 1.0);
             pManager.AddIntegerParameter("Joint Type", "JT", "Adds the specified joint type: 0 = spline joint, 1 = cross-lap joint", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Clearance", "Cl", "Extra gap around the lap cutter. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
+            clearanceParameter = pManager[6];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -69,6 +73,12 @@ namespace SpruceBeetle.Alignment
         }
 
 
+        protected override void BeforeSolveInstance()
+        {
+            ClearanceSlider.Ensure(clearanceParameter, this);
+        }
+
+
         // main
         protected override void SolveInstance(IGH_DataAccess DA)
         {
@@ -79,6 +89,7 @@ namespace SpruceBeetle.Alignment
             double angle = 0.0;
             double width = 2.0;
             int jointType = 0;
+            double clearance = ClearanceSlider.Default;
 
             // access input parameters
             if (!DA.GetDataList(0, firstOffcuts)) return;
@@ -87,6 +98,8 @@ namespace SpruceBeetle.Alignment
             if (!DA.GetData(3, ref angle)) return;
             if (!DA.GetData(4, ref width)) return;
             if (!DA.GetData(5, ref jointType)) return;
+            DA.GetData(6, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             // initialise data trees and paths
             DataTree<Offcut_GH> offcutGHList = new DataTree<Offcut_GH>();
@@ -107,6 +120,7 @@ namespace SpruceBeetle.Alignment
                         // create Cutter geometry through scaling the closest brep
                         Brep offcutCutter = firstOffcut.OffcutGeometry.DuplicateBrep();
                         offcutCutter.Transform(Transform.Scale(firstOffcut.AveragePlane, 2, width, 4));
+                        offcutCutter = Inflate(offcutCutter, clearance);
 
                         // call CreateIntersectionJoint method
                         CreateIntersectionJoint(offcutCutter, secondOffcuts, secondIndices, out List<Offcut> secondOffcutList, out List<Offcut> secondIntOffcuts);
@@ -154,6 +168,8 @@ namespace SpruceBeetle.Alignment
                         // call GetCuttingGeometry method
                         GetCuttingGeometry(averagePlane, firstPlane, firstOffcut, 1, width, out Brep firstBrep);
                         GetCuttingGeometry(averagePlane, secondPlane, secondOffcut, -1, width, out Brep secondBrep);
+                        firstBrep = Inflate(firstBrep, clearance);
+                        secondBrep = Inflate(secondBrep, clearance);
 
                         // call CreateIntersectionJoint method
                         CreateIntersectionJoint(firstBrep, firstOffcuts, firstIndices, out List<Offcut> firstOffcutList, out List<Offcut> firstIntOffcuts);
@@ -183,6 +199,7 @@ namespace SpruceBeetle.Alignment
                         // create Cutter geometry through scaling the closest brep
                         Brep offcutCutter = firstOffcut.OffcutGeometry.DuplicateBrep();
                         offcutCutter.Transform(Transform.Scale(firstOffcut.AveragePlane, 2, width, 4));
+                        offcutCutter = Inflate(offcutCutter, clearance);
 
                         // call CreateIntersectionJoint method
                         CreateIntersectionJoint(offcutCutter, secondOffcuts, secondIndices, out List<Offcut> secondOffcutList, out List<Offcut> secondIntOffcuts);
@@ -216,6 +233,18 @@ namespace SpruceBeetle.Alignment
             // access output parameters
             DA.SetDataTree(0, offcutGHList);
             DA.SetDataTree(1, intOffcutGHList);
+        }
+
+
+        protected static Brep Inflate(Brep cutter, double clearance)
+        {
+            if (cutter == null || clearance <= 1e-9)
+                return cutter;
+
+            Brep[] grown = Brep.CreateOffsetBrep(cutter, clearance, true, true, 0.001, out _, out _);
+            if (grown == null || grown.Length == 0 || grown[0] == null)
+                return cutter;
+            return grown[0];
         }
 
 

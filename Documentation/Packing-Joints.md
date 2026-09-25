@@ -124,6 +124,7 @@ Do not overload this component with edge-open slots — that is **Contact Spline
 | In `JT` | Joint type | Auto value list: tenon / cross tenon / custom tenon |
 | In `TC` | Tenon count | Default `1`. Spread along the long side |
 | In `CS` | Custom curve | Optional closed planar curve |
+| In `Cl` | Clearance | Default `0.005`. Auto slider `0.001`–`0.01`. Gap on each side; pocket is `JX`/`JY`/`Dep` plus `2 × Cl`. `J` is the key |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Tenon solids | One solid per tenon (TC per successful contact) |
 | Out `JV` | Joint volumes | Volume of each `J` solid |
@@ -158,6 +159,7 @@ Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. C
 | In `Dep` | Total depth | Default `0.5`. Centered; clamped to `thinner member / 3` |
 | In `R` | Fillet radius | Default `0.125`. Raised to `D / 2` if smaller (silent) |
 | In `TC` | Channel count | Default `1`. Parallel channels across the overlap |
+| In `Cl` | Clearance | Default `0.005`. Auto slider `0.001`–`0.01`. Widens and deepens the slot, and lengthens the closed stop, by `Cl` per side. `J` stays the key |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Key solids | One key per channel, from the open edge to the closed stop |
 | Out `JV` | Joint volumes | Volume of each `J` solid |
@@ -192,6 +194,7 @@ Geometry rules:
 | In `JT` | Joint type | Auto value list: `rectangular` / `custom key` |
 | In `TC` | Key count | Default `1`. Spread along the exposed seam |
 | In `CS` | Custom curve | Optional closed planar curve; scaled into `JX` × `JY` |
+| In `Cl` | Clearance | Default `0.005`. Auto slider `0.001`–`0.01`. Gap on each side in the face and extra depth inward. `J` stays the key |
 | Out `Oc` | Cut Offcuts | Failed boolean keeps last successful solid |
 | Out `J` | Key solids | Flush with the outer face; one per key |
 | Out `JV` | Joint volumes | Volume of each `J` solid |

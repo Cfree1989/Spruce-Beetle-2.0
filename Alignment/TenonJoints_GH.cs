@@ -45,6 +45,7 @@ namespace SpruceBeetle.Alignment
         // value list
         GH_ValueList valueList = null;
         IGH_Param parameter = null;
+        IGH_Param clearanceParameter = null;
 
 
         // parameter inputs
@@ -62,8 +63,10 @@ namespace SpruceBeetle.Alignment
             pManager[7].Optional = true;
             pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller). Unwired uses D / 2", GH_ParamAccess.item);
             pManager[8].Optional = true;
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the key and the pocket. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
 
             parameter = pManager[5];
+            clearanceParameter = pManager[9];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -116,6 +119,8 @@ namespace SpruceBeetle.Alignment
         // create value list
         protected override void BeforeSolveInstance()
         {
+            ClearanceSlider.Ensure(clearanceParameter, this);
+
             if (valueList == null)
             {
                 if (parameter.Sources.Count == 0)
@@ -160,6 +165,7 @@ namespace SpruceBeetle.Alignment
             int tenonCount = 1;
             Curve jointShape = null;
             double toolRadius = 0;
+            double clearance = ClearanceSlider.Default;
 
             // access input parameters
             if (!DA.GetDataList(0, alignedOffcuts)) return;
@@ -171,6 +177,8 @@ namespace SpruceBeetle.Alignment
             if (!DA.GetData(6, ref tenonCount)) return;
             DA.GetData(7, ref jointShape);
             bool hasRadius = DA.GetData(8, ref toolRadius);
+            DA.GetData(9, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             if (diameter <= 0)
             {
@@ -218,6 +226,18 @@ namespace SpruceBeetle.Alignment
             // parallel computed joints with boolean difference
             System.Threading.Tasks.Parallel.For(0, alignedOffcuts.Count, (i, state) =>
             {
+                void Pair(Plane plane, double[] minValue, int positionIndex, out Brep[] keys, out Brep[] pockets)
+                {
+                    CreateTenons(plane, jointX, jointY, jointZ, toolRadius, minValue, positionIndex, jointType, tenonCount, jointShape, out keys);
+                    if (clearance <= 1e-9)
+                    {
+                        pockets = keys;
+                        return;
+                    }
+
+                    CreateTenons(plane, jointX + 2.0 * clearance, jointY + 2.0 * clearance, jointZ + 2.0 * clearance, toolRadius, minValue, positionIndex, jointType, tenonCount, jointShape, out pockets);
+                }
+
                 // get the base for the joint position of each Offcut
                 List<double[]> minimumDimensions = Utility.GetMinimumDimension(alignedOffcuts, i);
                 double[] firstMin = minimumDimensions[0];
@@ -226,62 +246,49 @@ namespace SpruceBeetle.Alignment
                 // create joints with their respective volumes according to the joint type
                 if (i == 0)
                 {
-                    // call CreateJoints method
-                    CreateTenons(alignedOffcuts[i].SecondPlane, jointX, jointY, jointZ, toolRadius, secondMin, alignedOffcuts[i].PositionIndex, jointType, tenonCount, jointShape, out Brep[] joints);
+                    Pair(alignedOffcuts[i].SecondPlane, secondMin, alignedOffcuts[i].PositionIndex, out Brep[] keys, out Brep[] pockets);
 
-                    // call CutOffcut method
-                    Brep cutOffcut = Joint.CutOffcut(joints, alignedOffcuts[i].OffcutGeometry);
+                    Brep cutOffcut = Joint.CutOffcut(pockets, alignedOffcuts[i].OffcutGeometry);
 
-                    // add data to the Offcut
                     outputOffcuts[i] = cutOffcut;
                     outputOffcutVol[i] = cutOffcut.GetVolume(0.0001, 0.0001);
 
-                    // output joint data
-                    outputJointVol[i] = joints[0].GetVolume(0.0001, 0.0001) * tenonCount;
+                    outputJointVol[i] = keys[0].GetVolume(0.0001, 0.0001) * tenonCount;
 
-                    for (int j = 0; j < joints.Length; j++)
+                    for (int j = 0; j < keys.Length; j++)
                     {
-                        outputJoints[i, j] = joints[j];
+                        outputJoints[i, j] = keys[j];
                     }
                 }
 
                 else if (i == alignedOffcuts.Count - 1)
                 {
-                    // call CreateJoints method
-                    CreateTenons(alignedOffcuts[i].FirstPlane, jointX, jointY, jointZ, toolRadius, firstMin, alignedOffcuts[i].PositionIndex, jointType, tenonCount, jointShape, out Brep[] joints);
+                    Pair(alignedOffcuts[i].FirstPlane, firstMin, alignedOffcuts[i].PositionIndex, out _, out Brep[] pockets);
 
-                    // call CutOffcut method
-                    Brep cutOffcut = Joint.CutOffcut(joints, alignedOffcuts[i].OffcutGeometry);
+                    Brep cutOffcut = Joint.CutOffcut(pockets, alignedOffcuts[i].OffcutGeometry);
 
-                    // add data to the Offcut
                     outputOffcuts[i] = cutOffcut;
                     outputOffcutVol[i] = cutOffcut.GetVolume(0.0001, 0.0001);
                 }
 
                 else
                 {
-                    // call CreateJoints method for both ends of the Offcuts
-                    CreateTenons(alignedOffcuts[i].FirstPlane, jointX, jointY, jointZ, toolRadius, firstMin, alignedOffcuts[i].PositionIndex, jointType, tenonCount, jointShape, out Brep[] firstJoints);
-                    CreateTenons(alignedOffcuts[i].SecondPlane, jointX, jointY, jointZ, toolRadius, secondMin, alignedOffcuts[i].PositionIndex, jointType, tenonCount, jointShape, out Brep[] secondJoints);
+                    Pair(alignedOffcuts[i].FirstPlane, firstMin, alignedOffcuts[i].PositionIndex, out _, out Brep[] firstPockets);
+                    Pair(alignedOffcuts[i].SecondPlane, secondMin, alignedOffcuts[i].PositionIndex, out Brep[] secondKeys, out Brep[] secondPockets);
 
-                    // add all joints to one single array
                     Brep[] cutterBreps = new Brep[tenonCount * 2];
 
-                    // output joint data and add joints to brep array
-                    outputJointVol[i] = secondJoints[0].GetVolume(0.0001, 0.0001) * tenonCount;
+                    outputJointVol[i] = secondKeys[0].GetVolume(0.0001, 0.0001) * tenonCount;
 
-                    // add all joints to one single array
-                    for (int j = 0; j < secondJoints.Length; j++)
+                    for (int j = 0; j < secondKeys.Length; j++)
                     {
-                        cutterBreps[j] = firstJoints[j];
-                        cutterBreps[j + tenonCount] = secondJoints[j];
-                        outputJoints[i, j] = secondJoints[j];
+                        cutterBreps[j] = firstPockets[j];
+                        cutterBreps[j + tenonCount] = secondPockets[j];
+                        outputJoints[i, j] = secondKeys[j];
                     }
 
-                    // call CutOffcut method
                     Brep cutOffcut = Joint.CutOffcut(cutterBreps, alignedOffcuts[i].OffcutGeometry);
 
-                    // add data to the Offcut
                     outputOffcuts[i] = cutOffcut;
                     outputOffcutVol[i] = cutOffcut.GetVolume(0.0001, 0.0001);
                 }

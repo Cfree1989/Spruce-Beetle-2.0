@@ -206,5 +206,49 @@ namespace SpruceBeetle
             else
                 return finOffcut[0];
         }
+
+
+        /// <summary>
+        /// Offset a closed curve outward by <paramref name="distance"/>. Returns null when the offset fails.
+        /// </summary>
+        public static Curve GrowClosed(Curve curve, Plane plane, double distance)
+        {
+            if (curve == null)
+                return null;
+            if (distance <= 1e-9 || !plane.IsValid)
+                return curve.DuplicateCurve();
+
+            double area = CurveArea(curve);
+            Curve best = null;
+            double bestArea = area;
+            Consider(curve.Offset(plane, distance, 0.0001, CurveOffsetCornerStyle.Sharp));
+            Consider(curve.Offset(plane, -distance, 0.0001, CurveOffsetCornerStyle.Sharp));
+            return best;
+
+            void Consider(Curve[] offsets)
+            {
+                if (offsets == null)
+                    return;
+                for (int i = 0; i < offsets.Length; i++)
+                {
+                    Curve candidate = offsets[i];
+                    if (candidate == null || !candidate.IsClosed)
+                        continue;
+                    double candidateArea = CurveArea(candidate);
+                    if (candidateArea > bestArea + 1e-9)
+                    {
+                        best = candidate;
+                        bestArea = candidateArea;
+                    }
+                }
+            }
+        }
+
+
+        private static double CurveArea(Curve curve)
+        {
+            AreaMassProperties amp = AreaMassProperties.Compute(curve);
+            return amp == null ? 0 : amp.Area;
+        }
     }
 }

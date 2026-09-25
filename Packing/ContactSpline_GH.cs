@@ -11,6 +11,8 @@ namespace SpruceBeetle.Packing
 {
     public class ContactSpline_GH : GH_Component
     {
+        IGH_Param clearanceParameter = null;
+
         public ContactSpline_GH()
           : base("Contact Spline", "ContactSpline",
               "Cut an edge-open spline slot on both packed Offcuts so a loose key can be driven in after the pieces are stacked",
@@ -29,6 +31,8 @@ namespace SpruceBeetle.Packing
             pManager.AddNumberParameter("Depth", "Dep", "Total slot depth, centered on the contact plane (clamped to thinner member / 3)", GH_ParamAccess.item, 0.5);
             pManager.AddNumberParameter("Tool Radius", "R", "Corner fillet radius (raised to D / 2 if smaller, no warning)", GH_ParamAccess.item, 0.125);
             pManager.AddIntegerParameter("Tenon Count", "TC", "Number of parallel channels across the overlap", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the key and the slot. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
+            clearanceParameter = pManager[8];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -49,6 +53,12 @@ namespace SpruceBeetle.Packing
         }
 
 
+        protected override void BeforeSolveInstance()
+        {
+            ClearanceSlider.Ensure(clearanceParameter, this);
+        }
+
+
         protected override void SolveInstance(IGH_DataAccess DA)
         {
             var packed = new List<Offcut>();
@@ -58,6 +68,7 @@ namespace SpruceBeetle.Packing
             double depthRequest = 0.5;
             double toolRadius = 0.125;
             int channelCount = 1;
+            double clearance = ClearanceSlider.Default;
 
             if (!DA.GetDataList(0, packed))
                 return;
@@ -68,6 +79,8 @@ namespace SpruceBeetle.Packing
             DA.GetData(5, ref depthRequest);
             DA.GetData(6, ref toolRadius);
             DA.GetData(7, ref channelCount);
+            DA.GetData(8, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             if (packed.Count == 0)
             {
@@ -128,20 +141,21 @@ namespace SpruceBeetle.Packing
                     continue;
                 }
 
-                if (!PackedNeighbors.TrySplineMouth(contact, boxes, jointY, channelCount, diameter, out SplineMouth mouth) || mouth == null)
+                if (!PackedNeighbors.TrySplineMouth(contact, boxes, jointY + 2.0 * clearance, channelCount, diameter, out SplineMouth mouth) || mouth == null)
                 {
                     Skip(contact, contact.Plane);
                     continue;
                 }
 
-                double depth = PocketDepth(boxes[contact.IndexA], boxes[contact.IndexB], contact.Axis, depthRequest);
-                if (depth <= 0)
+                double pocketDepth = PocketDepth(boxes[contact.IndexA], boxes[contact.IndexB], contact.Axis, depthRequest + 2.0 * clearance);
+                double keyDepth = pocketDepth - 2.0 * clearance;
+                if (keyDepth <= 1e-6)
                 {
                     Skip(contact, mouth.Frame);
                     continue;
                 }
 
-                if (!TryCreateSplines(mouth, jointY, depth, toolRadius, channelCount, diameter, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
+                if (!TryCreateSplines(mouth, jointY, keyDepth, clearance, toolRadius, channelCount, diameter, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
                 {
                     Skip(contact, mouth.Frame);
                     continue;
@@ -227,7 +241,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool TryCreateSplines(SplineMouth mouth, double jointY, double depth, double toolRadius, int channelCount, double diameter, out Brep[] cutters, out Brep[] keys, out Line[] dirs)
+        private static bool TryCreateSplines(SplineMouth mouth, double jointY, double depth, double clearance, double toolRadius, int channelCount, double diameter, out Brep[] cutters, out Brep[] keys, out Line[] dirs)
         {
             cutters = null;
             keys = null;
@@ -241,32 +255,38 @@ namespace SpruceBeetle.Packing
             double stop = run * 0.5 - meat;
             double mouthX = -run * 0.5;
             double keyLength = stop - mouthX;
+            double cutDepth = depth + 2.0 * clearance;
 
             Point3d[] origins = ChannelOrigins(frame, across, channelCount);
             cutters = new Brep[origins.Length];
             keys = new Brep[origins.Length];
             dirs = new Line[origins.Length];
-            double fillet = FilletRadius(toolRadius, keyLength, jointY);
+            double fillet = FilletRadius(toolRadius, keyLength, jointY + 2.0 * clearance);
 
-            var cutterX = new Interval(mouthX - hair, stop);
+            var cutterX = new Interval(mouthX - hair, stop + clearance);
             var keyX = new Interval(mouthX, stop);
-            var dY = new Interval(-jointY * 0.5, jointY * 0.5);
+            var keyY = new Interval(-jointY * 0.5, jointY * 0.5);
+            var cutY = new Interval(-(jointY * 0.5 + clearance), jointY * 0.5 + clearance);
 
             for (int i = 0; i < origins.Length; i++)
             {
-                Plane basePlane = frame;
-                basePlane.Origin = origins[i];
-                basePlane.Transform(Transform.Translation(-basePlane.ZAxis * depth * 0.5));
+                Plane keyPlane = frame;
+                keyPlane.Origin = origins[i];
+                keyPlane.Transform(Transform.Translation(-keyPlane.ZAxis * depth * 0.5));
 
-                var keyRect = new Rectangle3d(basePlane, keyX, dY);
-                Curve cutterProfile = SlotProfile(basePlane, cutterX, dY, fillet);
-                if (!TryExtrude(cutterProfile, depth, out Brep cutter))
+                Plane cutPlane = frame;
+                cutPlane.Origin = origins[i];
+                cutPlane.Transform(Transform.Translation(-cutPlane.ZAxis * cutDepth * 0.5));
+
+                var keyRect = new Rectangle3d(keyPlane, keyX, keyY);
+                Curve cutterProfile = SlotProfile(cutPlane, cutterX, cutY, fillet);
+                if (!TryExtrude(cutterProfile, cutDepth, out Brep cutter))
                     return false;
                 if (!TryExtrude(keyRect.ToNurbsCurve(), depth, out Brep key))
                     return false;
 
-                Point3d mouthPt = basePlane.PointAt(mouthX, 0, depth * 0.5);
-                Point3d stopPt = basePlane.PointAt(stop, 0, depth * 0.5);
+                Point3d mouthPt = keyPlane.PointAt(mouthX, 0, depth * 0.5);
+                Point3d stopPt = keyPlane.PointAt(stop, 0, depth * 0.5);
                 cutters[i] = cutter;
                 keys[i] = key;
                 dirs[i] = new Line(mouthPt, stopPt);

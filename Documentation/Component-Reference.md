@@ -409,6 +409,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 | Tenon Count | TC | Integer | Item | `1` | Number of tenons spaced along the interface. |
 | Custom Shape | CS | Curve | Item | optional | Closed **planar** curve; scaled into JX×JY for `custom tenon`. |
 | Tool Radius | R | Number | Item | optional | Corner fillet. Unwired uses `D / 2`. Raised to `D / 2` if smaller (silent). |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side. Auto slider is `0.001` to `0.01`. `J` stays the key; the pocket is larger. |
 
 **Outputs**
 
@@ -433,6 +434,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 | Joint X | JX | Number | Item | `0.02` | Spline width. |
 | Joint Y | JY | Number | Item | `0.05` | Spline depth in the profile plane. |
 | Spline Count | SC | Integer | Item | `1` | Number of splines along the interface. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side of the dovetail profile. Auto slider is `0.001` to `0.01`. The displayed key stays at `JX` / `JY`; the slot is larger. |
 
 **Outputs** — same as Tenon Joints (`Oc`, `J`, `JV`). Display joints are shorter than the actual cutters so they read as keys sitting in the slot.
 
@@ -457,6 +459,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 | Rotate Joint | RJ | Number | Item | `0` | Rotation of the joint frame around the piece Z, in **degrees**. |
 | Width | W | Number | Item | `1.0` | Scale factor for lap / cutter width. |
 | Joint Type | JT | Integer | Item | `1` | `0` spline cut, `1` cross-lap. |
+| Clearance | Cl | Number | Item | `0.005` | Extra gap around the lap cutter. Auto slider is `0.001` to `0.01`. |
 
 **Outputs**
 
@@ -562,6 +565,7 @@ Do **not** feed this from Alignment Tenon, or feed packed contacts into Alignmen
 | Joint Type | JT | Text | Item | — | Auto value list: `tenon`, `cross tenon`, `custom tenon`. |
 | Tenon Count | TC | Integer | Item | `1` | Number of tenons along the long side. |
 | Custom Shape | CS | Curve | Item | — | Closed planar curve (custom tenon only). Optional. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side, including both ends of the depth. Auto slider is `0.001` to `0.01`. `J` is the key; the pocket is larger. |
 
 Skipped when the tenon does not fit inside the overlap inset by `D` on all sides (`JX × TC ≤ long − 2D`, `JY ≤ short − 2D`), depth is 0, custom curve is missing, or the boolean fails. Failed cuts keep the last successful solid.
 
@@ -599,6 +603,7 @@ Typical split: Contact Tenon on `Z` beds, Contact Spline on `XY` stitches. The s
 | Depth | Dep | Number | Item | `0.5` | Total depth, centered on the contact. Clamped to thinner member / 3. |
 | Tool Radius | R | Number | Item | `0.125` | Fillet on the **closed stop** only. Mouth stays square to the edge. Raised to `D / 2` if smaller (silent). |
 | Tenon Count | TC | Integer | Item | `1` | Parallel channels across the overlap. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side of the slot and at the closed stop. Auto slider is `0.001` to `0.01`. `J` is the key. |
 
 **Outputs**
 
@@ -637,6 +642,7 @@ Skip when the seam misses the skin, the key does not fit (`JX × TC ≤ seam −
 | Joint Type | JT | Text | Item | — | Auto value list: `rectangular`, `custom key`. |
 | Tenon Count | TC | Integer | Item | `1` | Number of keys along the exposed seam. |
 | Custom Shape | CS | Curve | Item | — | Closed planar curve (`custom key` only). Optional. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side in the face, plus extra depth inward. Auto slider is `0.001` to `0.01`. `J` stays flush and at `JX` / `JY`. |
 
 **Outputs**
 

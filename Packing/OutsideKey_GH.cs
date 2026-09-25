@@ -14,6 +14,7 @@ namespace SpruceBeetle.Packing
     public class OutsideKey_GH : GH_Component
     {
         IGH_Param typeParameter = null;
+        IGH_Param clearanceParameter = null;
 
         public OutsideKey_GH()
           : base("Outside Key", "OutsideKey",
@@ -36,7 +37,9 @@ namespace SpruceBeetle.Packing
             pManager.AddIntegerParameter("Tenon Count", "TC", "Number of keys along the exposed seam", GH_ParamAccess.item, 1);
             pManager.AddCurveParameter("Custom Shape", "CS", "Closed planar curve for a custom key", GH_ParamAccess.item);
             pManager[9].Optional = true;
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the key and the pocket, plus extra depth into the face. Auto slider runs from 0.001 to 0.01", GH_ParamAccess.item, ClearanceSlider.Default);
             typeParameter = pManager[7];
+            clearanceParameter = pManager[10];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -59,6 +62,7 @@ namespace SpruceBeetle.Packing
 
         protected override void BeforeSolveInstance()
         {
+            ClearanceSlider.Ensure(clearanceParameter, this);
             if (typeParameter == null)
                 return;
 
@@ -125,6 +129,7 @@ namespace SpruceBeetle.Packing
             string jointKey = "rectangular";
             int keyCount = 1;
             Curve jointShape = null;
+            double clearance = ClearanceSlider.Default;
 
             if (!DA.GetDataList(0, packed))
                 return;
@@ -138,6 +143,8 @@ namespace SpruceBeetle.Packing
             DA.GetData(7, ref jointKey);
             DA.GetData(8, ref keyCount);
             DA.GetData(9, ref jointShape);
+            DA.GetData(10, ref clearance);
+            clearance = ClearanceSlider.Read(this, clearance);
 
             if (packed.Count == 0)
             {
@@ -228,10 +235,10 @@ namespace SpruceBeetle.Packing
                 for (int s = 0; s < seats.Count; s++)
                 {
                     OutsideSeat seat = seats[s];
-                    if (!SeatFits(seat, jointX, jointY, keyCount, diameter, depthRequest, out double depth))
+                    if (!SeatFits(seat, jointX, jointY, keyCount, diameter, depthRequest, clearance, out double depth))
                         continue;
 
-                    if (!TryCreateKeys(seat, jointX, jointY, depth, toolRadius, keyCount, custom, jointShape, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
+                    if (!TryCreateKeys(seat, jointX, jointY, depth, clearance, toolRadius, keyCount, custom, jointShape, out Brep[] cutters, out Brep[] keySolids, out Line[] dirs))
                     {
                         anyFail = true;
                         continue;
@@ -308,21 +315,24 @@ namespace SpruceBeetle.Packing
         }
 
 
-        private static bool SeatFits(OutsideSeat seat, double jointX, double jointY, int keyCount, double diameter, double depthRequest, out double depth)
+        private static bool SeatFits(OutsideSeat seat, double jointX, double jointY, int keyCount, double diameter, double depthRequest, double clearance, out double depth)
         {
             depth = 0;
             int count = Math.Max(keyCount, 1);
             double margin = Math.Max(diameter, 0);
-            if (jointX * count > seat.SeamLength - 2.0 * margin + 1e-9)
+            double fitX = jointX + 2.0 * clearance;
+            double fitY = jointY + 2.0 * clearance;
+            if (fitX * count > seat.SeamLength - 2.0 * margin + 1e-9)
                 return false;
-            if (jointY * 0.5 > seat.AcrossA + 1e-9 || jointY * 0.5 > seat.AcrossB + 1e-9)
+            if (fitY * 0.5 > seat.AcrossA + 1e-9 || fitY * 0.5 > seat.AcrossB + 1e-9)
                 return false;
             if (depthRequest <= 0)
                 return false;
 
             double cap = Math.Min(seat.InwardA, seat.InwardB) / 3.0;
-            depth = Math.Min(depthRequest, cap);
-            return depth > 0;
+            double pocket = Math.Min(depthRequest + clearance, cap);
+            depth = pocket - clearance;
+            return depth > 1e-6;
         }
 
 
@@ -331,6 +341,7 @@ namespace SpruceBeetle.Packing
             double jointX,
             double jointY,
             double depth,
+            double clearance,
             double toolRadius,
             int keyCount,
             bool custom,
@@ -349,6 +360,7 @@ namespace SpruceBeetle.Packing
             dirs = new Line[origins.Length];
             const double hair = 0.01;
             double fillet = custom ? 0 : FilletRadius(toolRadius, jointX, jointY);
+            double cutDepth = depth + clearance;
 
             for (int i = 0; i < origins.Length; i++)
             {
@@ -358,12 +370,25 @@ namespace SpruceBeetle.Packing
                 if (!TryProfile(face, jointX, jointY, fillet, custom, jointShape, out Curve profile))
                     return false;
 
+                Curve cutterProfile;
+                if (custom)
+                {
+                    cutterProfile = clearance <= 1e-9
+                        ? profile.DuplicateCurve()
+                        : Joint.GrowClosed(profile, face, clearance);
+                    if (cutterProfile == null)
+                        return false;
+                }
+                else if (!TryProfile(face, jointX + 2.0 * clearance, jointY + 2.0 * clearance, fillet, false, null, out cutterProfile))
+                {
+                    return false;
+                }
+
                 Plane cutterPlane = face;
                 cutterPlane.Origin = face.Origin - face.ZAxis * hair;
-                Curve cutterProfile = profile.DuplicateCurve();
                 cutterProfile.Transform(Transform.PlaneToPlane(face, cutterPlane));
 
-                if (!TryExtrude(cutterProfile, depth + hair, out Brep cutter))
+                if (!TryExtrude(cutterProfile, cutDepth + hair, out Brep cutter))
                     return false;
                 if (!TryExtrude(profile, depth, out Brep key))
                     return false;
