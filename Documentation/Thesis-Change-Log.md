@@ -46,6 +46,30 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-01 — experiment: drop scraps shorter than 8 inches
+
+- **Motivation:** Pieces under 8″ are hard to hold on the table, so the scrap piles should only include stock that can be fixtured.
+- **Files:** `Documentation/TestData/stock_2x4_scraps.csv`, `Documentation/TestData/stock_short_scraps.csv`
+- **Before → after:** `stock_2x4_scraps.csv` started at 4″ (nine pieces from 4″ to 7.5″). Those lengths are now 8″, 10″, 12″, 14.5″, 16″, 18″, 24″, 36″, and 48″; the file is still 100 dressed `1.5 × 3.5` sticks, shortest 8″, longest 92″. `stock_short_scraps.csv` started at 2″. Eighteen studs under 8″ were replaced with lengths from 8″ to 19.5″, and seven non-stud lengths under 8″ were raised into that same band (sections unchanged). Both files still have 100 rows. Short-file lengths stay under 20″.
+- **Result / observation:** Minimum length in both scrap files is 8″. An 8″ piece is kept; only lengths below 8″ were removed.
+- **Follow-ups:** Reload the CSV in Grasshopper before the next pack. Component-Reference does not need an update (test data only).
+
+### 2026-09-30 — experiment: short scrap pile under 20 inches
+
+- **Motivation:** Column-fill tests also need a bin of short offcuts, mostly stud stock, with a minority of other thin sections, instead of only the longer 2×4 leftovers.
+- **Files:** `Documentation/TestData/stock_short_scraps.csv`
+- **Before → after:** No short mixed-section scrap file → 100 rows, `index;x;y;z` in inches. Rows 1–75 are dressed studs `1.5 × 3.5`, lengths 2″–19.5″ (shortest first), including repeated 6″, 8″, 12″, 14.5″, 16″, and 18″ cuts. Rows 76–100 are other sections with thickness 0.75″–2″ (1× boards, 2×2 through 2×12, a few 1″ and 1.75″, and three rough pieces at 2″ thick). Every length is under 20″.
+- **Result / observation:** Stud rows stay the dressed 1½″ × 3½″ section. The other rows keep thickness in `x` at 2″ or below and put the wider face in `y`. Nothing in this file is a full stud or a piece 20″ or longer.
+- **Follow-ups:** Pack `stock_short_scraps.csv` into the 24×24×96 column. Component-Reference does not need an update (test data only).
+
+### 2026-09-30 — experiment: 100 dressed 2×4 stud scraps as packing stock
+
+- **Motivation:** Column-fill tests need a scrap pile whose cross-section matches real stud stock, so packing uses the lumber you can actually buy rather than nominal names or the earlier mixed-section files.
+- **Files:** `Documentation/TestData/stock_2x4_scraps.csv`
+- **Before → after:** No 2×4-specific stock file → 100 rows, `index;x;y;z` in inches, every piece `1.5 × 3.5` (dressed size) with lengths from 4″ to 92″ (leftovers from a 96″ stud, including repeated 14.5″ and 22.5″ blocking). Sorted shortest to longest. No full 96″ sticks.
+- **Result / observation:** Nominal 2×4 is 2″ × 4″; surfaced dry studs are 1½″ × 3½″, and an 8 ft stud is 96″ long (length is not dressed down). The CSV uses the dressed section so the box matches physical stock. All pieces fit a 24″ × 24″ × 96″ column on the length axis.
+- **Follow-ups:** Pack `stock_2x4_scraps.csv` into the 24×24×96 column. Component-Reference does not need an update (test data only).
+
 ### 2026-09-25 — feature: Clearance slider on every joint cutter
 
 - **Motivation:** Loose keys were cut to the same size as the pocket, so a key had no fitting gap. Shop clearance only needs a few thousandths of an inch.
