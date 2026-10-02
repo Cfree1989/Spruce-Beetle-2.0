@@ -109,6 +109,7 @@ It must be a Grasshopper **Box**. A Brep is not enough: **Bounding Box** first, 
    | --- | --- |
    | CSV to Offcut → **Offcut Data** | **Offcut Data (`OcD`)** |
    | Box | **Box (`B`)** |
+   | Value list (optional) | **Orientation (`Or`)** |
 
 3. Outputs:
 
@@ -121,7 +122,9 @@ It must be a Grasshopper **Box**. A Brep is not enough: **Bounding Box** first, 
 4. Zoom the Rhino viewport to **0,0,0**. You should see a 2'×2'×8' volume filled with smaller boxes.
 5. **Bake** Packed Offcuts when you want them in the document.
 
-Pieces may be **rotated**. Anything that does not fit is **left out** of `Oc` (packing has no unused Offcut list). To see which numbered scraps were used, wire packed `Oc` and the original CSV stock into **Used Offcuts** (`UsedOc`).
+**Orientation** (`Or`) chooses how pieces may turn. Leave it unwired, or pick `Unlimited`, for the original packer: each piece may turn any way, so one column can mix flat boards and upright sticks. `Longest Z` stands every piece on its longest side. `Shortest Z` stacks every piece on its thickness. The other two sides may still turn 90° in plan. A stud longer than 24″ cannot lie flat in this column, so `Shortest Z` leaves it out; `Longest Z` is the mode that stands it up.
+
+Anything that does not fit is **left out** of `Oc` (packing has no unused Offcut list). To see which numbered scraps were used, wire packed `Oc` and the original CSV stock into **Used Offcuts** (`UsedOc`).
 
 If the fill looks tiny: the Box is still 2×2×8 (inches) instead of 24×24×96.
 
@@ -179,5 +182,8 @@ Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1)
 | Fewer parts / bigger blocks | Delete small rows; keep larger cubes and 16–24" slabs |
 | See unused stock | Used Offcuts: packed `Oc` + CSV `OcD` → `Un` leftover numbers |
 | Different column size | Change the Box domains; keep CSV units in inches |
+| All longest sides vertical | Orientation `Longest Z` |
+| All thicknesses vertical | Orientation `Shortest Z` |
+| Mixed upright and flat | Orientation `Unlimited` (default) |
 
 Edit `stock_column_in.csv` with any editor. Keep `index;x;y;z` and `;`. Every x and y should be **≤ 24**, every z **≤ 96**, or that piece cannot go in (unless rotation swaps axes — a 6×6×96 stick can stand as a full-height corner).

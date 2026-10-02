@@ -46,6 +46,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-02 — feature: Dowel Column places pieces on a chosen number of vertical dowels
+
+- **Motivation:** The column box should be a boundary. A chosen number of vertical dowels is what each piece has to hit, so placement can follow a dowel line instead of filling the box with EB-AFIT.
+- **Files:** `Packing/DowelColumn.cs`, `Packing/DowelColumn_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Packing only filled a box with EB-AFIT and never looked at a line. New component **Dowel Column** (`DowelCol`, GUID `C4A91E72-6B38-4F05-9D14-2E7B8A0C5F61`, PackBin icon). Inputs: offcuts, box, dowel count `N` (default 3), optional points, lap `L` (default 1). `N = 1` puts one dowel at the section center. `N ≥ 2` puts dowels on a regular polygon at 75% of the inscribed radius, first vertex toward −Y. Points inside the section replace that layout; `N` above 32 is capped. Each piece must contain `min(2, N)` dowels. Solids stay inside the supplied box. The six axis assignments are tried; the larger footprint wins when several poses sit at the same height. Pieces that share a dowel and overlap in plan overlap in Z by the lap (that band is shared volume). Pieces that only meet on a face may sit at the same height. A piece that cannot cover the dowels is unused.
+- **Result / observation:** Checked the placer outside Grasshopper. In a 24×24×96 column with lap 1: three 10×10×20 blocks on one center dowel all placed, lying 10″ tall at Z = 0, 9, 18. Two 10×10×50 blocks on that dowel: one placed, because 50+50−1 = 99″ exceeds 96″. Three 16×3.5×8 studs on the 3-dowel polygon placed and lapped by 1″; the second stud reached the third dowel; a 2×2×8 did not span a pair. A 30×10×10 on one dowel stood with the 30″ side on Z, because 30″ does not fit in the 24″ plan. MSBuild Debug succeeded (only the pre-existing `CS0472` warnings). `.gha` wrote to `bin/Debug/net48/SpruceBeetle.gha`. The Grasshopper viewport was not opened.
+- **Follow-ups:** Reload Grasshopper and run `stock_2x4_scraps.csv` with `N = 1` and `N = 3` in a 24×24×96 box. Component-Reference is updated.
+
+### 2026-10-02 — feature: orientation lock on Bin Packing
+
+- **Motivation:** Column fills were mixing upright sticks and flat boards in one pack. Both layouts are useful; they should not share a column unless the user asks for free rotation.
+- **Files:** `Packing/BinPackingCS_GH.cs`, `Packing/EB_AFIT_AxisLock.cs`, `Documentation/Component-Reference.md`, `Documentation/Column-Fill-2x2x8.md`
+- **Before → after:** PackBin had no rotation control. EB-AFIT tried all 6 item orientations and all 6 container orientations. New input `Or`: `Unlimited` (default, same NuGet packer), `Longest Z` (longest side on world Z), `Shortest Z` (thickness on world Z). The other two sides may still swap in plan. Pieces that do not fit the locked pose are omitted. On a 24×24×96 column a stud longer than 24″ cannot lie flat, so `Shortest Z` skips it.
+- **Result / observation:** The NuGet class has no rotation flag and its loops are private, so the locked modes are a local MIT copy of EB-AFIT (`EB_AFIT_AxisLock`) limited to container variants 1–2. `Unlimited` still calls `CromulentBisgetti.ContainerPacking` 1.0.0. A checked pack of 1.5×3.5×16, 1.5×3.5×48, and 10×10×4 into 24×24×96 put the locked side on library height (world Z) for both locks, and left the 48″ stick unpacked under `Shortest Z`.
+- **Follow-ups:** Close Rhino and rebuild. The Debug compile succeeded, but `bin/Debug/net48/SpruceBeetle.gha` was locked by Rhino 8 so the running plugin does not have `Or` yet. Then pack a column with each value and confirm the viewport. Component-Reference is updated.
+
 ### 2026-10-01 — experiment: drop scraps shorter than 8 inches
 
 - **Motivation:** Pieces under 8″ are hard to hold on the table, so the scrap piles should only include stock that can be fixtured.

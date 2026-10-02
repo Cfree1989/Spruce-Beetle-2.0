@@ -32,7 +32,9 @@
 using System;
 using System.Collections.Generic;
 using GH_IO.Serialization;
+using Grasshopper;
 using Grasshopper.Kernel;
+using Grasshopper.Kernel.Special;
 using Rhino.Geometry;
 using CromulentBisgetti.ContainerPacking.Algorithms;
 using CromulentBisgetti.ContainerPacking.Entities;
@@ -43,8 +45,10 @@ namespace SpruceBeetle.Packing
 {
     public class BinPackingCS_GH : GH_Component
     {
+        IGH_Param orientationParam = null;
+
         public BinPackingCS_GH()
-          : base("Bin Packing EB-AFIT", "PackBin", "The EB-AFIT algorithm supports full item rotation and has excellent runtime performance and container utilization",
+          : base("Bin Packing EB-AFIT", "PackBin", "Packs Offcuts into a box with EB-AFIT. Orientation is Unlimited, Longest Z, or Shortest Z.",
               "Spruce Beetle", "   Packing")
         {
             ApplyDisplayNames();
@@ -56,6 +60,9 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Offcut Data", "OcD", "List of dimensions of all the Offcuts", GH_ParamAccess.list);
             pManager.AddBoxParameter("Box", "B", "Box container to fill with Offcuts", GH_ParamAccess.item);
+            pManager.AddTextParameter("Orientation", "Or", "Unlimited (any rotation), Longest Z, or Shortest Z (thickness on Z). The other two sides may still swap in plan.", GH_ParamAccess.item, "Unlimited");
+            pManager[2].Optional = true;
+            orientationParam = pManager[2];
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -82,10 +89,12 @@ namespace SpruceBeetle.Packing
             // variables to reference the input parameters to
             List<Offcut> offcutData = new List<Offcut>();
             Box boundingBox = new Box();
+            string orientation = "Unlimited";
 
             // access input parameters
             if(!DA.GetDataList(0, offcutData)) return;
             if (!DA.GetData(1, ref boundingBox)) return;
+            DA.GetData(2, ref orientation);
 
             // Container at World XY from the origin, using axis *lengths* (T1 is wrong when a domain starts below 0).
             Box originBox = new Box(Plane.WorldXY,
@@ -97,7 +106,7 @@ namespace SpruceBeetle.Packing
                 Sometimes, we have to do it.    */
             originBox.ToBrep().Faces.SplitKinkyFaces(0.0001);
 
-            List<Offcut> packedOffcuts = PackOffcuts(boundingBox, offcutData);
+            List<Offcut> packedOffcuts = PackOffcuts(boundingBox, offcutData, orientation);
 
             var packedBreps = new List<Brep>(packedOffcuts.Count);
             var packedGH = new List<Offcut_GH>(packedOffcuts.Count);
@@ -116,7 +125,7 @@ namespace SpruceBeetle.Packing
         //------------------------------------------------------------
         // PackOffcuts
         //------------------------------------------------------------
-        protected List<Offcut> PackOffcuts(Box boundingBox, List<Offcut> offcutData)
+        protected List<Offcut> PackOffcuts(Box boundingBox, List<Offcut> offcutData, string orientation)
         {
             // box dimensions
             double xB = boundingBox.X.Length;
@@ -151,17 +160,32 @@ namespace SpruceBeetle.Packing
                 packItems.Add(new Item(i, x, y, z, 1));
             }
 
-            // create a list of Algorithms and specify Algorithm
-            List<int> algorithm = new List<int>
+            bool longestOnZ;
+            string mode = ResolveOrientation(orientation, out longestOnZ);
+            List<Item> packedItems;
+
+            if (mode == "Unlimited")
             {
-                (int)AlgorithmType.EB_AFIT
-            };
+                // create a list of Algorithms and specify Algorithm
+                List<int> algorithm = new List<int>
+                {
+                    (int)AlgorithmType.EB_AFIT
+                };
 
-            // call bin packing method
-            List<ContainerPackingResult> results = PackingService.Pack(containers, packItems, algorithm);
+                // call bin packing method
+                List<ContainerPackingResult> results = PackingService.Pack(containers, packItems, algorithm);
 
-            var pkdItems = results[0].AlgorithmPackingResults;
-            var packedItems = pkdItems[0].PackedItems;
+                var pkdItems = results[0].AlgorithmPackingResults;
+                packedItems = pkdItems[0].PackedItems;
+            }
+            else
+            {
+                AlgorithmPackingResult locked = new EB_AFIT_AxisLock(longestOnZ).Run(containers[0], packItems);
+                packedItems = locked.PackedItems ?? new List<Item>();
+            }
+
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
+                $"{packedItems.Count} of {offcutData.Count} offcut(s) packed ({mode}).");
 
             var packedOffcuts = new List<Offcut>();
 
@@ -227,6 +251,90 @@ namespace SpruceBeetle.Packing
         }
 
 
+        protected override void BeforeSolveInstance()
+        {
+            if (orientationParam == null)
+                return;
+
+            GH_ValueList list = null;
+            foreach (var source in orientationParam.Sources)
+            {
+                if (source is GH_ValueList vl)
+                {
+                    list = vl;
+                    break;
+                }
+            }
+
+            if (list == null)
+            {
+                if (orientationParam.Sources.Count > 0)
+                    return;
+                if (Instances.ActiveCanvas?.Document == null)
+                    return;
+
+                list = new GH_ValueList();
+                list.CreateAttributes();
+                list.Attributes.Pivot = new System.Drawing.PointF(Attributes.Pivot.X - 220, Attributes.Pivot.Y + 42);
+                Instances.ActiveCanvas.Document.AddObject(list, false);
+                orientationParam.AddSource(list);
+            }
+
+            SyncOrientationList(list);
+            orientationParam.CollectData();
+        }
+
+
+        private static void SyncOrientationList(GH_ValueList list)
+        {
+            string[] wanted = { "Unlimited", "Longest Z", "Shortest Z" };
+            if (list.ListItems.Count == wanted.Length)
+            {
+                bool same = true;
+                for (int i = 0; i < wanted.Length; i++)
+                {
+                    if (!string.Equals(list.ListItems[i].Name, wanted[i], StringComparison.Ordinal))
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+                if (same)
+                    return;
+            }
+
+            list.ListItems.Clear();
+            foreach (string mode in wanted)
+                list.ListItems.Add(new GH_ValueListItem(mode, $"\"{mode}\""));
+        }
+
+
+        private string ResolveOrientation(string orientation, out bool longestOnZ)
+        {
+            string key = (orientation ?? string.Empty).Trim();
+            if (string.Equals(key, "Longest Z", StringComparison.OrdinalIgnoreCase))
+            {
+                longestOnZ = true;
+                return "Longest Z";
+            }
+
+            if (string.Equals(key, "Shortest Z", StringComparison.OrdinalIgnoreCase))
+            {
+                longestOnZ = false;
+                return "Shortest Z";
+            }
+
+            longestOnZ = false;
+            if (key.Length > 0 && !string.Equals(key, "Unlimited", StringComparison.OrdinalIgnoreCase))
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    $"Unknown orientation '{key}'; using Unlimited.");
+            }
+
+            return "Unlimited";
+        }
+
+
         public override bool Read(GH_IReader reader)
         {
             bool ok = base.Read(reader);
@@ -246,6 +354,7 @@ namespace SpruceBeetle.Packing
         {
             Name = "Bin Packing EB-AFIT";
             NickName = "PackBin";
+            Description = "Packs Offcuts into a box with EB-AFIT. Orientation is Unlimited, Longest Z, or Shortest Z.";
         }
 
 

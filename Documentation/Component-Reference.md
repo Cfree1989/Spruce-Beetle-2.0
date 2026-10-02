@@ -472,20 +472,31 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box, list face contacts, then cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
+Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**, or place them on vertical dowels with **Dowel Column**. Then list face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
-**What it does:** Packs Offcut **stock boxes** (X, Y, Z) into a 3D container using the EB-AFIT algorithm (full rotation of items). Builds closed Breps at packed locations in a box aligned to World XY from the origin, using the input box’s size. Also outputs packed **Offcut** objects (`Oc`) with Index, rotated size, geometry, and Z-end planes.
+**What it does:** Packs Offcut **stock boxes** (X, Y, Z) into a 3D container using the EB-AFIT algorithm. Builds closed Breps at packed locations in a box aligned to World XY from the origin, using the input box’s size. Also outputs packed **Offcut** objects (`Oc`) with Index, rotated size, geometry, and Z-end planes.
 
-Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged). Reopen after rebuilding and the title becomes **PackBin**.
+**Orientation** (`Or`) chooses which side is vertical for the whole column:
+
+| Mode | What is on Z |
+| --- | --- |
+| `Unlimited` | Any side. Each piece can take any of the 6 rotations, so one column can mix flat boards and upright sticks. This is the previous behavior and the default. |
+| `Longest Z` | Every packed piece has its longest side on Z. |
+| `Shortest Z` | Every packed piece has its shortest side (thickness) on Z. |
+
+The other two sides may still turn 90° in plan. Pieces that do not fit in the chosen pose are omitted. On a 24 × 24 × 96 column, `Shortest Z` leaves out a stud longer than 24″, because that length would have to lie in the plan. `Longest Z` stands those studs up. A component remark reports how many offcuts packed and which mode ran.
+
+Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged). Reopen after rebuilding and the title becomes **PackBin**. An unwired `Or` pin uses `Unlimited`.
 
 **Inputs**
 
-| Name | Nick | Type | Access | Description |
-| --- | --- | --- | --- | --- |
-| Offcut Data | OcD | Offcut | List | Pieces to pack (`X`, `Y`, `Z`). |
-| Box | B | Box | Item | Container size (X/Y/Z intervals). Position of the input box is ignored; packing is generated at the origin. |
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcut Data | OcD | Offcut | List | — | Pieces to pack (`X`, `Y`, `Z`). |
+| Box | B | Box | Item | — | Container size (X/Y/Z intervals). Position of the input box is ignored; packing is generated at the origin. |
+| Orientation | Or | Text | Item | `Unlimited` | `Unlimited`, `Longest Z`, or `Shortest Z`. A value list is added when the pin is unwired. |
 
 **Outputs**
 
@@ -494,6 +505,45 @@ Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged
 | Packed Offcuts | POc | Brep | List | Solids that fit. Items that did not fit are omitted. |
 | Container | C | Brep | Item | Origin-aligned box of the same size (viewport-hidden). |
 | Offcuts | Oc | Offcut | List | Packed pieces (Index, rotated size, geometry, Z-end planes). Feed Packed Contacts. |
+
+---
+
+### Dowel Column (`DowelCol`)
+
+**What it does:** Places Offcut stock inside a column so the dowels are the requirement and the box is only the boundary. Each dowel is a vertical line through the full height of the box. Solids are built in the box you supply.
+
+**Dowel count** (`N`, default `3`):
+
+- `1` puts a single dowel at the center of the section. Every placed piece contains that line. The piece can still spin around it.
+- `2` or more spreads the dowels on a regular polygon, at 75% of the radius of the circle inscribed in the section, so the vertices sit in from the faces. The first vertex is toward −Y and the rest run counter-clockwise, which lays one side of a triangle on a constant Y. Each placed piece contains **at least two** dowels.
+
+**Dowel Points** (`P`) replaces that layout. Each point inside the section is one dowel. The point's height is ignored; the line runs the full column. Points outside the section are skipped. If every point is outside, the component falls back to `N`.
+
+Pieces stay axis-aligned with the box. The six ways of assigning the stock's X, Y, and Z onto plan X, plan Y, and height are tried. A pair fits when those plan sides cover the pair's X separation and Y separation. A 2×4 can span two dowels that share an X or a Y and sit within its length; it cannot span a diagonal pair whose separations are both larger than 3½″. When several poses would sit at the same height and contain the same dowels, the larger footprint is used, so a stick lies flat when its length fits in the section. A stick longer than the section stands up. Larger pieces are tried first. Anything that cannot cover the required dowels, or cannot lap inside the remaining height, is returned on `UOc`.
+
+Pieces that share a dowel and overlap in plan overlap in height by **Lap** (`L`, default `1`). That band is shared volume. Pieces that only meet on a face may sit at the same height. A remark reports how many pieces placed, how many dowels, and whether they came from the count or from points. `N` above 32 is capped.
+
+GUID `C4A91E72-6B38-4F05-9D14-2E7B8A0C5F61`. Icon is the Bin Packing icon.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcut Data | OcD | Offcut | List | — | Pieces to place (`X`, `Y`, `Z`). |
+| Box | B | Box | Item | — | Column boundary. Wood and dowels stay inside this box. |
+| Dowel Count | N | Integer | Item | `3` | Vertical dowels. `1` is the center. Ignored when points inside the section are connected. |
+| Dowel Points | P | Point | List | — | Optional. One vertical dowel per point inside the section. |
+| Lap | L | Number | Item | `1` | Shared height on a dowel. That band is shared volume. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Placed Offcuts | POc | Brep | List | Solids inside the column, in placement order. |
+| Offcuts | Oc | Offcut | List | Same pieces as Offcuts (index, rotated size, geometry, end planes). |
+| Dowels | Ln | Curve | List | Vertical dowel lines. |
+| Unused Offcuts | UOc | Offcut | List | Stock that was not placed, in input order. |
+| Dowel Index | D | Integer | Tree | Branch `i` lists the dowel indices inside placed piece `i`. |
 
 ---
 
