@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-05 — fix: locked packing no longer bridges holes
+
+- **Motivation:** Longest Z / Shortest Z kept a single vertical side, but EB-AFIT still packed in flat courses. A board could sit across a shorter neighbor and leave a shelf of air underneath. The ragged top of each stack is a separate issue and is left as-is.
+- **Files:** `Packing/AxisLockPacker.cs`, `Packing/BinPackingCS_GH.cs`, `Packing/EB_AFIT_AxisLock.cs` (removed), `Documentation/Component-Reference.md`, `Documentation/Column-Fill-2x2x8.md`
+- **Before → after:** Locked modes called the filtered EB-AFIT copy. They now place each piece at the lowest plan position where its whole bottom touches the floor or the tops of pieces already there. A piece that would have to bridge a hole is omitted. `Unlimited` still uses the NuGet packer. On a 24×24×96 box, shelf air under packed boards (not the open top) went to 0: `stock_short_scraps.csv` Longest Z stayed at 100 pieces and the column height dropped from 39″ to 20″; `stock_column_in.csv` Longest Z went from 21 pieces to 26; `stock_2x4_scraps.csv` Longest Z was already solid (100 pieces) and stayed there. Shortest Z on mixed sections omits more pieces instead of bridging (`stock_short_scraps.csv` 100→88, `stock_column_in.csv` 33→16).
+- **Result / observation:** The shelves were a layer-packer artifact. Refusing a placement unless the footprint is fully supported removes them. Uneven stack tops remain, because a short board beside a long one is open above.
+- **Follow-ups:** Close Rhino and rebuild. This Debug compile succeeded, but `bin/Debug/net48/SpruceBeetle.gha` was locked by Rhino 8, so the running plugin does not have the tighter placement yet. Then re-pack the column in Longest Z. Component-Reference is updated.
+
 ### 2026-10-02 — feature: Dowel Column places pieces on a chosen number of vertical dowels
 
 - **Motivation:** The column box should be a boundary. A chosen number of vertical dowels is what each piece has to hit, so placement can follow a dowel line instead of filling the box with EB-AFIT.

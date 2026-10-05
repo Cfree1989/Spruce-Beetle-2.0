@@ -60,7 +60,7 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Offcut Data", "OcD", "List of dimensions of all the Offcuts", GH_ParamAccess.list);
             pManager.AddBoxParameter("Box", "B", "Box container to fill with Offcuts", GH_ParamAccess.item);
-            pManager.AddTextParameter("Orientation", "Or", "Unlimited (any rotation), Longest Z, or Shortest Z (thickness on Z). The other two sides may still swap in plan.", GH_ParamAccess.item, "Unlimited");
+            pManager.AddTextParameter("Orientation", "Or", "Unlimited (any rotation), Longest Z, or Shortest Z (thickness on Z). Locked modes sit each piece on the floor or a complete platform, so a piece does not bridge a hole. The other two sides may still swap in plan.", GH_ParamAccess.item, "Unlimited");
             pManager[2].Optional = true;
             orientationParam = pManager[2];
 
@@ -180,8 +180,7 @@ namespace SpruceBeetle.Packing
             }
             else
             {
-                AlgorithmPackingResult locked = new EB_AFIT_AxisLock(longestOnZ).Run(containers[0], packItems);
-                packedItems = locked.PackedItems ?? new List<Item>();
+                packedItems = AxisLockPacker.Pack(containers[0], packItems, longestOnZ);
             }
 
             AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,

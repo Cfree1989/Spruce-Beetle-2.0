@@ -122,7 +122,7 @@ It must be a Grasshopper **Box**. A Brep is not enough: **Bounding Box** first, 
 4. Zoom the Rhino viewport to **0,0,0**. You should see a 2'×2'×8' volume filled with smaller boxes.
 5. **Bake** Packed Offcuts when you want them in the document.
 
-**Orientation** (`Or`) chooses how pieces may turn. Leave it unwired, or pick `Unlimited`, for the original packer: each piece may turn any way, so one column can mix flat boards and upright sticks. `Longest Z` stands every piece on its longest side. `Shortest Z` stacks every piece on its thickness. The other two sides may still turn 90° in plan. A stud longer than 24″ cannot lie flat in this column, so `Shortest Z` leaves it out; `Longest Z` is the mode that stands it up.
+**Orientation** (`Or`) chooses how pieces may turn. Leave it unwired, or pick `Unlimited`, for the original packer: each piece may turn any way, so one column can mix flat boards and upright sticks. `Longest Z` stands every piece on its longest side. `Shortest Z` stacks every piece on its thickness. The other two sides may still turn 90° in plan. In those two locked modes each piece sits on the floor or on a complete platform, so a board does not span a hole; a piece that cannot sit that way is left out. Neighboring stacks can still end at different heights. A stud longer than 24″ cannot lie flat in this column, so `Shortest Z` leaves it out; `Longest Z` is the mode that stands it up.
 
 Anything that does not fit is **left out** of `Oc` (packing has no unused Offcut list). To see which numbered scraps were used, wire packed `Oc` and the original CSV stock into **Used Offcuts** (`UsedOc`).
 

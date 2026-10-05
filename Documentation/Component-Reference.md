@@ -486,7 +486,7 @@ Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**, or place the
 | `Longest Z` | Every packed piece has its longest side on Z. |
 | `Shortest Z` | Every packed piece has its shortest side (thickness) on Z. |
 
-The other two sides may still turn 90° in plan. Pieces that do not fit in the chosen pose are omitted. On a 24 × 24 × 96 column, `Shortest Z` leaves out a stud longer than 24″, because that length would have to lie in the plan. `Longest Z` stands those studs up. A component remark reports how many offcuts packed and which mode ran.
+The other two sides may still turn 90° in plan. In `Longest Z` and `Shortest Z`, every piece sits on the floor or on a complete platform, so a board does not bridge a hole. A piece that cannot sit that way is omitted. Stacks can still end at different heights. On a 24 × 24 × 96 column, `Shortest Z` leaves out a stud longer than 24″, because that length would have to lie in the plan. `Longest Z` stands those studs up. A component remark reports how many offcuts packed and which mode ran.
 
 Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged). Reopen after rebuilding and the title becomes **PackBin**. An unwired `Or` pin uses `Unlimited`.
 
