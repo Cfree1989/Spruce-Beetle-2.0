@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
@@ -36,10 +37,33 @@ namespace SpruceBeetle.Packing
     public class DowelColumn_GH : GH_Component
     {
         public DowelColumn_GH()
-          : base("Dowel Column", "DowelCol",
-              "Places Offcuts inside a column so each piece contains vertical dowels. The box is only a boundary. N is the dowel count (1 sits on the center; 2 or more sit on an inset polygon). Each piece must contain at least two dowels, or the single dowel when N is 1. Pieces that share a dowel lap in Z.",
+          : base("Legacy Dowel Placer", "DowelPlace",
+              "Unused. Places offcuts onto full-height vertical dowels. The packing-tab Dowel Column ranks horizontal dowels through an existing pack instead.",
               "Spruce Beetle", "   Packing")
         {
+            ApplyDisplayNames();
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            ApplyDisplayNames();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            ApplyDisplayNames();
+            base.AddedToDocument(document);
+        }
+
+
+        void ApplyDisplayNames()
+        {
+            Name = "Legacy Dowel Placer";
+            NickName = "DowelPlace";
         }
 
 
@@ -338,7 +362,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        public override GH_Exposure Exposure => GH_Exposure.primary;
+        public override GH_Exposure Exposure => GH_Exposure.hidden;
 
         protected override System.Drawing.Bitmap Icon => Properties.Resources._24x24_BinPackingCS;
 

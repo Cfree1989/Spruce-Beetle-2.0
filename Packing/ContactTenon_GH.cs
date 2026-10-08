@@ -614,7 +614,7 @@ namespace SpruceBeetle.Packing
 
             foreach (IGH_Param param in Params.Output)
             {
-                if (param is Param_Plane)
+                if (param is Param_Plane || param is Param_Line || param is Param_Curve)
                     continue;
                 if (param is IGH_BakeAwareObject baker)
                     baker.BakeGeometry(doc, att, obj_ids);

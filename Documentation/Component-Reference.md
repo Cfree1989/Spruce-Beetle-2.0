@@ -472,7 +472,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**, or place them on vertical dowels with **Dowel Column**. Then list face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
+Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**. **Dowel Column** then ranks horizontal dowels through that pack. List face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
@@ -510,40 +510,41 @@ Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged
 
 ### Dowel Column (`DowelCol`)
 
-**What it does:** Places Offcut stock inside a column so the dowels are the requirement and the box is only the boundary. Each dowel is a vertical line through the full height of the box. Solids are built in the box you supply.
+**What it does:** After Bin Packing, ranks cylindrical dowels through the packed offcuts. Wire Bin Packing `Oc` straight into this component. It does not read Packed Contacts, and it does not place the wood.
 
-**Dowel count** (`N`, default `3`):
+Every dowel is horizontal: its axis is along X or along Y, square to world Z. A vertical hole is never proposed. The hole is a plunge through the widest face. On the router that face lies on the bed and the spindle drills down through it. In the column those wide faces are vertical, so the dowel runs sideways through the thickness. A piece whose widest face is horizontal (thickness on Z) is skipped. A square section may use a horizontal tie. A hole into a narrower edge or end is not a full run through the column.
 
-- `1` puts a single dowel at the center of the section. Every placed piece contains that line. The piece can still spin around it.
-- `2` or more spreads the dowels on a regular polygon, at 75% of the radius of the circle inscribed in the section, so the vertices sit in from the faces. The first vertex is toward −Y and the rest run counter-clockwise, which lays one side of a triangle on a constant Y. Each placed piece contains **at least two** dowels.
+`N` is spent on both directions. The best line is kept first, then the best line on the other axis, and so on. A dowel does not have to cross the whole column. After those lines, a piece that still has no dowel can get a shorter one: it runs through that piece, along its wide face, and stops at the far short side of the first piece it meets that already has a dowel. It does not continue past that piece.
 
-**Dowel Points** (`P`) replaces that layout. Each point inside the section is one dowel. The point's height is ignored; the line runs the full column. Points outside the section are skipped. If every point is outside, the component falls back to `N`.
+A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + 2 * Cl`. The preview cylinder is the dowel at `Dia`. The axis curve is preview only and is not baked.
 
-Pieces stay axis-aligned with the box. The six ways of assigning the stock's X, Y, and Z onto plan X, plan Y, and height are tried. A pair fits when those plan sides cover the pair's X separation and Y separation. A 2×4 can span two dowels that share an X or a Y and sit within its length; it cannot span a diagonal pair whose separations are both larger than 3½″. When several poses would sit at the same height and contain the same dowels, the larger footprint is used, so a stick lies flat when its length fits in the section. A stick longer than the section stands up. Larger pieces are tried first. Anything that cannot cover the required dowels, or cannot lap inside the remaining height, is returned on `UOc`.
+A pair that sits inside a longer line is not listed again. A pair whose footprint extends past the other pieces is a separate, lower-ranked line. A second line is skipped when its hole would come closer than one hole-diameter to a hole already kept. A remark reports how many lines were ranked, how many are shown, how many were skipped for that clash, and how many stop on a short side.
 
-Pieces that share a dowel and overlap in plan overlap in height by **Lap** (`L`, default `1`). That band is shared volume. Pieces that only meet on a face may sit at the same height. A remark reports how many pieces placed, how many dowels, and whether they came from the count or from points. `N` above 32 is capped.
-
-GUID `C4A91E72-6B38-4F05-9D14-2E7B8A0C5F61`. Icon is the Bin Packing icon.
+GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 
 **Inputs**
 
 | Name | Nick | Type | Access | Default | Description |
 | --- | --- | --- | --- | --- | --- |
-| Offcut Data | OcD | Offcut | List | — | Pieces to place (`X`, `Y`, `Z`). |
-| Box | B | Box | Item | — | Column boundary. Wood and dowels stay inside this box. |
-| Dowel Count | N | Integer | Item | `3` | Vertical dowels. `1` is the center. Ignored when points inside the section are connected. |
-| Dowel Points | P | Point | List | — | Optional. One vertical dowel per point inside the section. |
-| Lap | L | Number | Item | `1` | Shared height on a dowel. That band is shared volume. |
+| Packed Offcuts | Oc | Offcut | List | — | Packed pieces from Bin Packing. |
+| Count | N | Integer | Item | `4` | How many dowels to keep. Higher piece counts come first. |
+| Diameter | Dia | Number | Item | `0.5` | Dowel diameter. The only size inputs are this and clearance. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side. The hole is `Dia + 2 * Cl`. No slider is added. |
 
 **Outputs**
 
 | Name | Nick | Type | Access | Description |
 | --- | --- | --- | --- | --- |
-| Placed Offcuts | POc | Brep | List | Solids inside the column, in placement order. |
-| Offcuts | Oc | Offcut | List | Same pieces as Offcuts (index, rotated size, geometry, end planes). |
-| Dowels | Ln | Curve | List | Vertical dowel lines. |
-| Unused Offcuts | UOc | Offcut | List | Stock that was not placed, in input order. |
-| Dowel Index | D | Integer | Tree | Branch `i` lists the dowel indices inside placed piece `i`. |
+| Dowels | D | Brep | List | Cylinders at `Dia`. Length is the run through the pieces, including empty spans. |
+| Lines | Ln | Curve | List | Dowel axes, in the same order. Preview only; Bake on this component skips these curves. |
+| Score | S | Integer | List | How many pieces each dowel pierces. |
+| Pieces | Pi | Integer | Tree | Branch `i` lists the packed indices dowel `i` passes through, in order along the dowel. |
+
+Does not cut the holes into the offcuts.
+
+### Legacy Dowel Placer (`DowelPlace`)
+
+Hidden. The earlier placer that stood pieces on full-height vertical dowels. GUID `C4A91E72-6B38-4F05-9D14-2E7B8A0C5F61` is unchanged, so a canvas that already contains it still opens, under this name. It is not on the packing tab. Use **Dowel Column** for dowels through a packed stack.
 
 ---
 
@@ -664,7 +665,7 @@ Typical split: Contact Tenon on `Z` beds, Contact Spline on `XY` stitches. The s
 | Joint Volume | JV | Number | List | Volume of each `J` solid. |
 | Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview only; Bake on this component skips planes. |
 | Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Contact Spline with a smaller `JY`; use this component's `Oc` as that second `Oc`. |
-| Direction | Dir | Line | List | Drive-in line per key, open edge toward the closed stop. Same length as the key. |
+| Direction | Dir | Line | List | Drive-in line per key, open edge toward the closed stop. Same length as the key. Preview only; Bake skips these lines. |
 
 ---
 
@@ -703,7 +704,7 @@ Skip when the seam misses the skin, the key does not fit (`JX × TC ≤ seam −
 | Joint Volume | JV | Number | List | Volume of each `J` solid. |
 | Skipped | Sk | Plane | List | Planes of contacts that were not cut. Preview only; Bake on this component skips planes. |
 | Skipped Contacts | SkC | PackedContact | List | Same skips as `C` objects. Wire to a second Outside Key with a smaller `JX` / `JY`; use this component's `Oc` as that second `Oc`. |
-| Direction | Dir | Line | List | Drive-in line per key, from outside the face inward. |
+| Direction | Dir | Line | List | Drive-in line per key, from outside the face inward. Preview only; Bake skips these lines. |
 
 ---
 

@@ -53,7 +53,7 @@ namespace SpruceBeetle.Packing
             pManager.AddNumberParameter("Joint Volume", "JV", "Volume of each key solid", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts that were not cut. Preview only; baking this component skips planes", GH_ParamAccess.list);
             pManager.AddGenericParameter("Skipped Contacts", "SkC", "The same skipped contacts, for a second Outside Key with a smaller JX / JY", GH_ParamAccess.list);
-            pManager.AddLineParameter("Direction", "Dir", "Drive-in line per key, from outside the face inward", GH_ParamAccess.list);
+            pManager.AddLineParameter("Direction", "Dir", "Drive-in line per key, from outside the face inward. Preview only; baking this component skips these lines", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -539,7 +539,7 @@ namespace SpruceBeetle.Packing
 
             foreach (IGH_Param param in Params.Output)
             {
-                if (param is Param_Plane)
+                if (param is Param_Plane || param is Param_Line || param is Param_Curve)
                     continue;
                 if (param is IGH_BakeAwareObject baker)
                     baker.BakeGeometry(doc, att, obj_ids);

@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,30 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-10-08 — fix: bake skips joint and dowel axis lines; dowels run both ways and can stop on a short side
+
+- **Motivation:** Baking a joint was writing the drive line into the document along with the solids. On the column, every kept dowel was the same direction and ran the full chain, so a side stack with no dowel of its own stayed loose.
+- **Files:** `Packing/ContactTenon_GH.cs`, `Packing/ContactSpline_GH.cs`, `Packing/OutsideKey_GH.cs`, `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`, `Documentation/Packing-Joints.md`
+- **Before → after:** Component Bake skipped planes and still baked `Dir` on Contact Spline and Outside Key, and `Ln` on Dowel Column. Those lines and curves are preview only now. Contact Tenon has no axis curve; its bake skips lines too, so a later curve output would not land in the document. Dowel count `N` is spent across both horizontal axes: the best line, then the best line on the other axis, and so on. After that, a piece with no dowel gets a shorter rod through its wide face that stops at the far short side of the first already-doweled piece it meets, and does not continue through the rest of the column.
+- **Result / observation:** Box checks outside Grasshopper: the earlier cases still pass. `N = 2` on an X run of 3 and a Y run of 2 keeps one dowel each way. A loose piece against the short side of a pinned pair gets one extra dowel from the outer face of the loose piece to the far short side of the pinned piece, and a further piece beyond that short side is not included. Debug compile succeeded (only the pre-existing `CS0472` warnings). Copy to `bin/` was blocked because Rhino 8 (PID 29124) holds `SpruceBeetle.gha`. The built assembly is in `obj/Debug/net48/`.
+- **Follow-ups:** Close Rhino and rebuild so the copy lands in `bin/`. Bake Contact Spline, Outside Key, and Dowel Column: solids should appear, axis lines should not. On the column, the undoweled side should grow a dowel that stops on the short side of a piece that already has one.
+
+### 2026-10-08 — fix: Dowel Column does not add a clearance slider
+
+- **Motivation:** Clearance stays an input, but the canvas should not grow a slider every time Dowel Column is placed.
+- **Files:** `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** `BeforeSolveInstance` called `ClearanceSlider.Ensure`, which dropped a `0.001`–`0.01` slider onto an unwired `Cl` pin. That call is gone. `Cl` still defaults to `0.005`, and a negative value is still raised to 0. A slider already wired on a canvas stays until it is deleted.
+- **Result / observation:** Other joint components still auto-add their clearance sliders. This change is only Dowel Column. Debug compile succeeded (only the pre-existing `CS0472` warnings). Copy to `bin/` was blocked because Rhino 8 (PID 29124) holds `SpruceBeetle.gha`. The built assembly is in `obj/Debug/net48/`.
+- **Follow-ups:** Close Rhino and rebuild so the copy lands in `bin/`. Delete any clearance slider already connected to Dowel Column if the pin should sit at the default.
+
+### 2026-10-08 — feature: Dowel Column ranks horizontal dowels through a packed stack
+
+- **Motivation:** The column is packed first. Dowels are then cylindrical rods perpendicular to world Z, plunged through the widest face so a 3-axis router can drill them with that face on the bed. The earlier full-height vertical placer is not the working path.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Packing/DowelColumn_GH.cs`, `Documentation/Component-Reference.md`, `Documentation/Packing-Joints.md`
+- **Before → after:** **Dowel Column** (`DowelCol`, GUID `C4A91E72-6B38-4F05-9D14-2E7B8A0C5F61`) placed stock onto full-height vertical rods and ignored an existing pack. That component is now hidden and retitled **Legacy Dowel Placer** (`DowelPlace`); its GUID is unchanged. The packing tab's **Dowel Column** is a new component (GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`, Find Intersections icon). Inputs: packed `Oc`, count `N` (default 4), diameter `Dia` (default 0.5), clearance `Cl` (default 0.005, same slider as Contact Tenon). A dowel axis is X or Y only, and only when that axis is normal to the widest face. Pieces do not have to touch; the cylinder includes empty spans and ends on the outer faces. The hole used for fit and spacing is `Dia + 2 * Cl`. The preview cylinder is `Dia`. Lines are ranked by how many pieces they pierce. `N` keeps that many, one per footprint, and skips a lower line whose hole would come closer than one hole-diameter to a kept hole. Outputs are cylinders, axes, scores, and a tree of packed indices. It does not cut the offcuts.
+- **Result / observation:** Box checks outside Grasshopper passed: three boards stacked on their thickness give one horizontal dowel of score 3; a gap between the second and third stays on that rod and the span includes the air; the same boards stacked flat on Z give no dowel; a hole larger than the face, including `Dia + 2 * Cl`, is dropped; two separate stacks with `N = 1` return one line; two pieces whose thicknesses point different ways do not share a dowel; a stud touched on the narrow edge gets none, and the same stud touched on the 3.5 × 20 face gets one dowel through the 1.5 thickness; four pieces on one footprint are one line of score 4; a pair that overhangs that footprint is a second, lower-ranked line; an X dowel and a Y dowel closer than one hole-diameter keep only the higher line. MSBuild Debug succeeded (only the pre-existing `CS0472` warnings). `.gha` wrote to `bin/Debug/net48/SpruceBeetle.gha`. The Grasshopper viewport was not opened.
+- **Follow-ups:** Reload Grasshopper. Wire Bin Packing `Oc` into Dowel Column on a Longest Z column and confirm the cylinders are horizontal through the wide faces. Component-Reference is updated. Cutting the holes into the offcuts is a later pass.
 
 ### 2026-10-05 — fix: locked packing no longer bridges holes
 

@@ -22,10 +22,13 @@ Shared source: **Bin Packing EB-AFIT** (`PackBin`) output `Oc` — packed Offcut
 
 ```text
 Bin Packing EB-AFIT  →  Oc
+        ├─ Dowel Column     (horizontal cylinders through the widest vertical faces)
         └─ Packed Contacts → Select Contacts ┬→ Contact Tenon   (captured blind key)
                                              ├→ Contact Spline  (edge-open key, after stack)
                                              └→ Outside Key     (face key on the column skin)
 ```
+
+**Dowel Column** (`DowelCol`) reads packed `Oc` directly. It does not go through Select Contacts. Each dowel is a cylinder perpendicular to world Z, plunged through the widest face, and it may cross an empty span between pieces. Diameter and clearance are the only size inputs. The full-height vertical placer is hidden as **Legacy Dowel Placer** and is not this path.
 
 | Path | What it joins | Where the joint sits | Cutter |
 | --- | --- | --- | --- |
@@ -165,7 +168,7 @@ Column test history: OffsetTowardSeam (before 2026-09-19) cut 23 / skipped 65. C
 | Out `JV` | Joint volumes | Volume of each `J` solid |
 | Out `Sk` | Skipped planes | Preview only; not baked with the component |
 | Out `SkC` | Skipped contacts | Wire into a second Contact Spline `C` with a smaller `JY`. Second pass `Oc` is the first pass `Oc` |
-| Out `Dir` | Drive-in lines | Mouth toward the closed stop |
+| Out `Dir` | Drive-in lines | Mouth toward the closed stop. Preview only; component Bake skips these lines |
 
 Geometry rules:
 
@@ -200,7 +203,7 @@ Geometry rules:
 | Out `JV` | Joint volumes | Volume of each `J` solid |
 | Out `Sk` | Skipped planes | Preview only; not baked with the component |
 | Out `SkC` | Skipped contacts | Wire into a second Outside Key `C` with a smaller `JX` / `JY`. Second pass `Oc` is the first pass `Oc` |
-| Out `Dir` | Drive-in lines | From just outside the face inward |
+| Out `Dir` | Drive-in lines | From just outside the face inward. Preview only; component Bake skips these lines |
 
 Geometry rules:
 
