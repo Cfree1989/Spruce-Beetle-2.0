@@ -46,6 +46,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-09 — fix: dowel stick-out only on an open end
+
+- **Motivation:** A half-diameter stub past the last board was entering the next board through its narrow edge.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Both ends of every rod extended half a diameter past the outer faces. An end now extends only when that stub misses every other board. If the stub would enter another board, including through a narrow edge, that end stays flush with the face.
+- **Result / observation:** Box check passed. A rod from X = 0 to 2 with a narrow-edge board starting at X = 2 keeps the X = 0 end extended and the X = 2 end flush.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. An open end should stick out by half a diameter. An end aimed at another board should stay flush.
+
+### 2026-10-09 — fix: dowels stick out half a diameter past the end boards
+
+- **Motivation:** The rods stopped flush with the outer faces, so the ends disappeared into the wood.
+- **Files:** `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Cylinder and axis ran from the outer face of the first board to the outer face of the last. Each end now continues half a dowel diameter past those faces. Which boards a rod pierces is unchanged.
+- **Result / observation:** Placement checks were not re-run; the extension is only on the built curve and cylinder.
+- **Follow-ups:** Rebuild once Rhino releases the `.gha`. The ends should show past the first and last board.
+
 ### 2026-10-09 — fix: extra dowels attach every board the first lines miss
 
 - **Motivation:** A dowel should run through as many boards as it can, and every board that can share one should end up on a rod.

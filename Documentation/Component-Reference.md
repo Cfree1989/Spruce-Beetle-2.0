@@ -516,7 +516,7 @@ Every dowel is horizontal: its axis is along X or along Y, square to world Z. A 
 
 `N` is spent on both directions. The best line is kept first, then the best line on the other axis, and so on. After those `N` lines, any board still off a dowel gets one. That extra rod is the line through the most boards that are still loose, and it is skipped when it would hit a dowel already kept. A dowel does not have to cross the whole column. A line steps to the nearest height that enters one more board, and only when every board it already crosses still contains the hole. It does not jump to a lower height just because that height threads more boards. `E` is the wood left between the dowel and a board edge, in dowel diameters. At `1` the center sits `Dia / 2 + E × Dia` inside every board it crosses. After those lines, a piece that still has no dowel can get a shorter one. It runs through that piece's wide face and stops at the far face of the first already-doweled piece whose thickness lies on the same axis. It does not cross a board's width, and it does not continue past that piece.
 
-A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + 2 * Cl`. The preview cylinder is the dowel at `Dia`. The axis curve is preview only and is not baked.
+A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + 2 * Cl`. The cylinder is the dowel at `Dia`. An end in open air sticks out by half a diameter past the outer board. An end whose stick-out would enter another board, including through that board's narrow edge, stays flush with the face. The axis curve matches the cylinder and is preview only; it is not baked.
 
 A pair that sits inside a longer line is not listed again. A pair whose footprint extends past the other pieces is a separate, lower-ranked line. A second line is skipped when its hole would come closer than one hole-diameter to a hole already kept. A remark reports how many lines were ranked, how many are shown, how many were skipped for that clash, and how many stop on the far face of a piece that already has a dowel.
 
@@ -536,7 +536,7 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 
 | Name | Nick | Type | Access | Description |
 | --- | --- | --- | --- | --- |
-| Dowels | D | Brep | List | Cylinders at `Dia`. Length is the run through the pieces, including empty spans. |
+| Dowels | D | Brep | List | Cylinders at `Dia`. An open end sticks out by half a diameter. An end that would enter another board, including through a narrow edge, stays flush with the face. |
 | Lines | Ln | Curve | List | Dowel axes, in the same order. Preview only; Bake on this component skips these curves. |
 | Score | S | Integer | List | How many pieces each dowel pierces. |
 | Pieces | Pi | Integer | Tree | Branch `i` lists the packed indices dowel `i` passes through, in order along the dowel. |

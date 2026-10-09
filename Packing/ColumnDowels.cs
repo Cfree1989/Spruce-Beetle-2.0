@@ -424,6 +424,7 @@ namespace SpruceBeetle.Packing
             CheckDropToNextBoard(fails);
             CheckEdge(fails);
             CheckCover(fails);
+            CheckStickOut(fails);
             return fails;
         }
 
@@ -716,6 +717,63 @@ namespace SpruceBeetle.Packing
             x1 = line.U;
             y1 = line.A1;
             z1 = line.V;
+        }
+
+
+        internal static bool EndIsOpen(IList<Box> boxes, Dowel line, bool atStart, double past, double radius)
+        {
+            if (line == null || past <= Tolerance)
+                return false;
+
+            var members = new HashSet<int>(line.Pieces);
+            double lo = atStart ? line.A0 - past : line.A1;
+            double hi = atStart ? line.A0 : line.A1 + past;
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                if (members.Contains(i))
+                    continue;
+
+                Box box = boxes[i];
+                double s0 = Start(box, line.Axis);
+                double s1 = End(box, line.Axis);
+                double o0 = Math.Max(lo, s0);
+                double o1 = Math.Min(hi, s1);
+                if (o1 - o0 <= Tolerance)
+                    continue;
+                if (CircleHitsSection(line, box, radius))
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        static bool CircleHitsSection(Dowel line, Box box, double radius)
+        {
+            double u0;
+            double u1;
+            double v0;
+            double v1;
+            if (line.Axis == 0)
+            {
+                u0 = box.Y0;
+                u1 = box.Y1;
+                v0 = box.Z0;
+                v1 = box.Z1;
+            }
+            else
+            {
+                u0 = box.X0;
+                u1 = box.X1;
+                v0 = box.Z0;
+                v1 = box.Z1;
+            }
+
+            double cu = line.U < u0 ? u0 : (line.U > u1 ? u1 : line.U);
+            double cv = line.V < v0 ? v0 : (line.V > v1 ? v1 : line.V);
+            double du = line.U - cu;
+            double dv = line.V - cv;
+            return du * du + dv * dv <= radius * radius + Tolerance;
         }
 
 
@@ -1415,6 +1473,28 @@ namespace SpruceBeetle.Packing
                 all = all && seen[i];
             Expect(fails, "cover", rank.Chosen.Count == 3 && rank.Covered == 2 && all,
                 "N = 1 still runs a dowel through every separate pair");
+        }
+
+
+        static void CheckStickOut(List<string> fails)
+        {
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 4),
+                Slab(1, 2, 0, 4, 0, 4),
+                Slab(2, 8, 1.25, 2.75, 0, 8)
+            };
+            var line = new Dowel
+            {
+                Axis = 0,
+                A0 = 0,
+                A1 = 2,
+                U = 2,
+                V = 2,
+                Pieces = new[] { 0, 1 }
+            };
+            Expect(fails, "stick", EndIsOpen(boxes, line, true, 0.25, 0.25), "the open end sticks out");
+            Expect(fails, "stick", !EndIsOpen(boxes, line, false, 0.25, 0.25), "the end against a narrow edge stays flush");
         }
 
 

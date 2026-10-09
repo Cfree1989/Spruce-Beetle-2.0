@@ -61,7 +61,7 @@ namespace SpruceBeetle.Packing
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddBrepParameter("Dowels", "D", "Dowel cylinders at Dia, from the outer face of the first piece to the outer face of the last.", GH_ParamAccess.list);
+            pManager.AddBrepParameter("Dowels", "D", "Dowel cylinders at Dia. An open end sticks out by half a diameter. An end that would enter another board stays flush.", GH_ParamAccess.list);
             pManager.AddCurveParameter("Lines", "Ln", "Dowel axes. Horizontal, along X or along Y. Preview only; baking this component skips these curves", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Score", "S", "How many pieces each dowel pierces.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Pieces", "Pi", "Branch i lists the packed indices dowel i passes through, in order along the dowel.", GH_ParamAccess.tree);
@@ -140,6 +140,16 @@ namespace SpruceBeetle.Packing
                 ColumnDowels.Ends(line, out double x0, out double y0, out double z0, out double x1, out double y1, out double z1);
                 var start = new Point3d(x0, y0, z0);
                 var end = new Point3d(x1, y1, z1);
+                Vector3d stick = end - start;
+                if (stick.Unitize())
+                {
+                    double past = diameter * 0.5;
+                    if (ColumnDowels.EndIsOpen(boxes, line, true, past, past))
+                        start -= stick * past;
+                    if (ColumnDowels.EndIsOpen(boxes, line, false, past, past))
+                        end += stick * past;
+                }
+
                 if (!TryCylinder(start, end, diameter, out Brep solid))
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Dowel {i} could not be built.");
