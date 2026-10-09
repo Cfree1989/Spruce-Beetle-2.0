@@ -52,7 +52,7 @@ Related guides already in the repo:
 - **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
 - **Before → after:** Each line stayed at the center of its own patch, so a band above a slightly shorter board never entered that board. The half-area ranking from the previous entry was reverted; it would have sent the rod to the middle of the tall patch. A line now shifts to the nearest height that adds a board, and only when every board already on the line still contains the hole.
 - **Result / observation:** Box checks passed. Two boards to Z = 20 and one to Z = 16: the line centered at Z = 18 moves to Z = 15.75 and picks up the shorter board. The line at the center of the full overlap stays at Z = 8.
-- **Follow-ups:** Run the box checks. Close Rhino and rebuild. The top dowel should drop a few inches into the next board; the lower dowels should stay.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. The top dowel should drop a few inches into the next board; the lower dowels should stay.
 
 ### 2026-10-09 — fix: Dowel Column keeps the large shared overlap instead of a thin band above it
 
