@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-09 — fix: dowel clearance is a separate hole cutter
+
+- **Motivation:** Dowel Column only builds cylinders. The solid difference was using those cylinders, so the hole matched the dowel and `Cl` never reached the cut.
+- **Files:** `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Output `D` is the dowel at `Dia`, and that was the only solid. New output `H` is the same cylinder at `Dia + 2 * Cl`. The open-end test uses the hole radius, so the fatter cutter does not stick into a neighboring board.
+- **Result / observation:** No box check; this is only the Grasshopper solids. A difference of `D` is still a tight hole.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. Wire `H` into the solid difference. Keep `D` as the pin.
+
 ### 2026-10-09 — fix: dowel stick-out only on an open end
 
 - **Motivation:** A half-diameter stub past the last board was entering the next board through its narrow edge.

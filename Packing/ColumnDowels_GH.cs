@@ -51,7 +51,7 @@ namespace SpruceBeetle.Packing
             pManager.AddGenericParameter("Packed Offcuts", "Oc", "Offcuts from Bin Packing EB-AFIT", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Count", "N", "How many of the best lines to keep first. More lines are added after that so every board that can share a dowel is on one.", GH_ParamAccess.item, 4);
             pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus two clearances.", GH_ParamAccess.item, 0.5);
-            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. Default 0.005. The hole is Dia plus two of these.", GH_ParamAccess.item, ClearanceSlider.Default);
+            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. The Holes output is Dia plus two of these. Solid-difference Holes, not Dowels.", GH_ParamAccess.item, ClearanceSlider.Default);
             pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -65,6 +65,7 @@ namespace SpruceBeetle.Packing
             pManager.AddCurveParameter("Lines", "Ln", "Dowel axes. Horizontal, along X or along Y. Preview only; baking this component skips these curves", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Score", "S", "How many pieces each dowel pierces.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Pieces", "Pi", "Branch i lists the packed indices dowel i passes through, in order along the dowel.", GH_ParamAccess.tree);
+            pManager.AddBrepParameter("Holes", "H", "Cylinders at Dia + 2 * Cl, same length as the dowels. Solid-difference these from the packed breps.", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -130,6 +131,7 @@ namespace SpruceBeetle.Packing
 
             ColumnDowels.Rank rank = ColumnDowels.Select(boxes, count, diameter, clearance, edge);
             var dowels = new List<Brep>(rank.Chosen.Count);
+            var holes = new List<Brep>(rank.Chosen.Count);
             var lines = new List<Curve>(rank.Chosen.Count);
             var scores = new List<int>(rank.Chosen.Count);
             var pieces = new DataTree<int>();
@@ -141,22 +143,25 @@ namespace SpruceBeetle.Packing
                 var start = new Point3d(x0, y0, z0);
                 var end = new Point3d(x1, y1, z1);
                 Vector3d stick = end - start;
+                double past = diameter * 0.5;
+                double holeRadius = diameter * 0.5 + clearance;
                 if (stick.Unitize())
                 {
-                    double past = diameter * 0.5;
-                    if (ColumnDowels.EndIsOpen(boxes, line, true, past, past))
+                    if (ColumnDowels.EndIsOpen(boxes, line, true, past, holeRadius))
                         start -= stick * past;
-                    if (ColumnDowels.EndIsOpen(boxes, line, false, past, past))
+                    if (ColumnDowels.EndIsOpen(boxes, line, false, past, holeRadius))
                         end += stick * past;
                 }
 
-                if (!TryCylinder(start, end, diameter, out Brep solid))
+                if (!TryCylinder(start, end, diameter, out Brep solid)
+                    || !TryCylinder(start, end, diameter + 2.0 * clearance, out Brep hole))
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Dowel {i} could not be built.");
                     continue;
                 }
 
                 dowels.Add(solid);
+                holes.Add(hole);
                 lines.Add(new LineCurve(start, end));
                 scores.Add(line.Score);
 
@@ -184,6 +189,7 @@ namespace SpruceBeetle.Packing
             DA.SetDataList(1, lines);
             DA.SetDataList(2, scores);
             DA.SetDataTree(3, pieces);
+            DA.SetDataList(4, holes);
         }
 
 

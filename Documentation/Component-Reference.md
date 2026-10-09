@@ -529,7 +529,7 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Packed Offcuts | Oc | Offcut | List | — | Packed pieces from Bin Packing. |
 | Count | N | Integer | Item | `4` | How many of the best lines to keep first. More lines are added after that so every board that can share a dowel is on one. |
 | Diameter | Dia | Number | Item | `0.5` | Dowel diameter. |
-| Clearance | Cl | Number | Item | `0.005` | Gap on each side. The hole is `Dia + 2 * Cl`. No slider is added. |
+| Clearance | Cl | Number | Item | `0.005` | Gap on each side. `Holes` is `Dia + 2 * Cl`. Solid-difference `Holes`, not `Dowels`. |
 | Edge | E | Number | Item | `1` | Minimum wood between the dowel and a board edge, in dowel diameters. `1` leaves a full diameter of wood outside the dowel. |
 
 **Outputs**
@@ -540,8 +540,9 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Lines | Ln | Curve | List | Dowel axes, in the same order. Preview only; Bake on this component skips these curves. |
 | Score | S | Integer | List | How many pieces each dowel pierces. |
 | Pieces | Pi | Integer | Tree | Branch `i` lists the packed indices dowel `i` passes through, in order along the dowel. |
+| Holes | H | Brep | List | Cylinders at `Dia + 2 * Cl`, same ends as the dowels. Solid-difference these from the packed breps. |
 
-Does not cut the holes into the offcuts.
+`Dowels` stays at `Dia`. Clearance is only on `Holes`, so a solid difference of `Dowels` cuts a hole the same size as the pin.
 
 ### Legacy Dowel Placer (`DowelPlace`)
 
