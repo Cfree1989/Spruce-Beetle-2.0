@@ -50,6 +50,8 @@ namespace SpruceBeetle.Packing
             public double A1;
             public double U;
             public double V;
+            public double Area;
+            public double PatchU0, PatchV0, PatchU1, PatchV1;
             public int Score;
             public int[] Pieces;
         }
@@ -76,6 +78,8 @@ namespace SpruceBeetle.Packing
             var yLines = new List<Dowel>();
             Collect(boxes, 0, hole, xLines);
             Collect(boxes, 1, hole, yLines);
+            NudgeDown(boxes, hole, xLines);
+            NudgeDown(boxes, hole, yLines);
             xLines.Sort(Compare);
             yLines.Sort(Compare);
 
@@ -206,6 +210,8 @@ namespace SpruceBeetle.Packing
             {
                 if (!pinned[i] || i == looseIndex)
                     continue;
+                if (!HasAxis(boxes[i], axis))
+                    continue;
 
                 Rect stopFoot = Footprint(boxes[i], axis);
                 if (!OverlapCenter(looseFoot, stopFoot, hole, out double u, out double v))
@@ -322,6 +328,7 @@ namespace SpruceBeetle.Packing
             CheckCollision(fails);
             CheckBothWays(fails);
             CheckShortStop(fails);
+            CheckDropToNextBoard(fails);
             return fails;
         }
 
@@ -396,7 +403,7 @@ namespace SpruceBeetle.Packing
                     List<int> cover = covers[r, c];
                     if (cover == null || cover.Count < 2 || !seen.Add(key))
                         continue;
-                    if (!TryCenter(keys, key, us, vs, hole, out double u, out double v))
+                    if (!TryCenter(keys, key, us, vs, hole, out double u, out double v, out double area, out double pu0, out double pv0, out double pu1, out double pv1))
                         continue;
 
                     var pieces = new int[cover.Count];
@@ -439,6 +446,11 @@ namespace SpruceBeetle.Packing
                         A1 = a1,
                         U = u,
                         V = v,
+                        Area = area,
+                        PatchU0 = pu0,
+                        PatchV0 = pv0,
+                        PatchU1 = pu1,
+                        PatchV1 = pv1,
                         Score = pieces.Length,
                         Pieces = pieces
                     });
@@ -447,13 +459,21 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static bool TryCenter(string[,] keys, string key, double[] us, double[] vs, double hole, out double u, out double v)
+        static bool TryCenter(
+            string[,] keys, string key, double[] us, double[] vs, double hole,
+            out double u, out double v, out double area,
+            out double patchU0, out double patchV0, out double patchU1, out double patchV1)
         {
             int nv = vs.Length - 1;
             int nu = us.Length - 1;
             double bestArea = -1;
             u = 0;
             v = 0;
+            area = 0;
+            patchU0 = 0;
+            patchV0 = 0;
+            patchU1 = 0;
+            patchV1 = 0;
             bool found = false;
             var open = new bool[nu];
 
@@ -490,12 +510,16 @@ namespace SpruceBeetle.Packing
                         double dv = v1 - v0;
                         if (du + Tolerance >= hole && dv + Tolerance >= hole)
                         {
-                            double area = du * dv;
-                            if (area > bestArea)
+                            double areaRect = du * dv;
+                            if (areaRect > bestArea)
                             {
-                                bestArea = area;
+                                bestArea = areaRect;
                                 u = (u0 + u1) * 0.5;
                                 v = (v0 + v1) * 0.5;
+                                patchU0 = u0;
+                                patchV0 = v0;
+                                patchU1 = u1;
+                                patchV1 = v1;
                                 found = true;
                             }
                         }
@@ -505,6 +529,7 @@ namespace SpruceBeetle.Packing
                 }
             }
 
+            area = found ? bestArea : 0;
             return found;
         }
 
@@ -691,6 +716,9 @@ namespace SpruceBeetle.Packing
             int byScore = b.Score.CompareTo(a.Score);
             if (byScore != 0)
                 return byScore;
+            int byArea = b.Area.CompareTo(a.Area);
+            if (byArea != 0)
+                return byArea;
             int byAxis = a.Axis.CompareTo(b.Axis);
             if (byAxis != 0)
                 return byAxis;
@@ -701,6 +729,128 @@ namespace SpruceBeetle.Packing
             if (byU != 0)
                 return byU;
             return a.V.CompareTo(b.V);
+        }
+
+
+        static void NudgeDown(IList<Box> boxes, double hole, List<Dowel> lines)
+        {
+            for (int i = 0; i < lines.Count; i++)
+                NudgeOne(boxes, hole, lines[i]);
+        }
+
+
+        static void NudgeOne(IList<Box> boxes, double hole, Dowel line)
+        {
+            double margin = hole * 0.5;
+            var required = new HashSet<int>(line.Pieces);
+            double bestV = line.V;
+            int bestCount = line.Score;
+            double bestDist = 0;
+            List<int> bestHit = null;
+
+            var candidates = new List<double> { line.V };
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                if (!HasAxis(boxes[i], line.Axis))
+                    continue;
+                Rect foot = Footprint(boxes[i], line.Axis);
+                candidates.Add(foot.V0 + margin);
+                candidates.Add(foot.V1 - margin);
+            }
+
+            for (int c = 0; c < candidates.Count; c++)
+            {
+                double v = candidates[c];
+                if (!AllHold(boxes, line, v, hole, required))
+                    continue;
+
+                var hit = PiecesAt(boxes, line.Axis, line.U, v, hole);
+                if (hit.Count < 2)
+                    continue;
+
+                double dist = Math.Abs(v - line.V);
+                bool better = hit.Count > bestCount
+                    || (hit.Count == bestCount && dist + Tolerance < bestDist);
+                if (!better)
+                    continue;
+                if (!TryRetarget(boxes, line, hit, v, out double a0, out double a1))
+                    continue;
+
+                bestV = v;
+                bestCount = hit.Count;
+                bestDist = dist;
+                bestHit = hit;
+                line.A0 = a0;
+                line.A1 = a1;
+            }
+
+            if (bestHit == null)
+                return;
+
+            line.V = bestV;
+            line.Score = bestCount;
+            line.Pieces = bestHit.ToArray();
+        }
+
+
+        static bool AllHold(IList<Box> boxes, Dowel line, double v, double hole, HashSet<int> required)
+        {
+            foreach (int index in required)
+            {
+                if (!HasAxis(boxes[index], line.Axis))
+                    return false;
+                if (!Holds(Footprint(boxes[index], line.Axis), line.U, v, hole))
+                    return false;
+            }
+
+            return true;
+        }
+
+
+        static List<int> PiecesAt(IList<Box> boxes, int axis, double u, double v, double hole)
+        {
+            var hit = new List<int>();
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                if (!HasAxis(boxes[i], axis))
+                    continue;
+                if (Holds(Footprint(boxes[i], axis), u, v, hole))
+                    hit.Add(i);
+            }
+
+            return hit;
+        }
+
+
+        static bool TryRetarget(IList<Box> boxes, Dowel line, List<int> hit, double v, out double a0, out double a1)
+        {
+            a0 = double.PositiveInfinity;
+            a1 = double.NegativeInfinity;
+            for (int i = 0; i < hit.Count; i++)
+            {
+                double s0 = Start(boxes[hit[i]], line.Axis);
+                double s1 = End(boxes[hit[i]], line.Axis);
+                if (s0 < a0)
+                    a0 = s0;
+                if (s1 > a1)
+                    a1 = s1;
+            }
+
+            if (a1 - a0 <= Tolerance)
+                return false;
+
+            var members = new HashSet<int>(hit);
+            if (Blocked(boxes, line.Axis, a0, a1, line.U, v, members))
+                return false;
+
+            hit.Sort((p, q) =>
+            {
+                int byStart = Start(boxes[p], line.Axis).CompareTo(Start(boxes[q], line.Axis));
+                if (byStart != 0)
+                    return byStart;
+                return p.CompareTo(q);
+            });
+            return true;
         }
 
 
@@ -1042,29 +1192,83 @@ namespace SpruceBeetle.Packing
 
         static void CheckShortStop(List<string> fails)
         {
-            var boxes = new List<Box>
+            // A loose piece against the 4" side of a 1 x 4 x 8 stud used to bore that 4" width.
+            // That hole enters the narrow edge. It is not a dowel.
+            var edge = new List<Box>
             {
                 Slab(0, 1, 0, 4, 0, 8),
                 Slab(1, 2, 0, 4, 0, 8),
                 Slab(1.1, 1.9, 4, 4.6, 6, 8),
                 Slab(1, 2, -2, 0, 0, 8)
             };
+            Rank edgeRank = Select(edge, 1, 0.5, 0);
+            Expect(fails, "short-stop", edgeRank.TieIns == 0, "a tie does not cross the 4 inch side");
+
+            // C overlaps only the Y overhang of B. Both are 1" thick along X.
+            // W is 18" wide along X and 1.5" thick along Y. N = 1 keeps A+B; C may tie through the thickness.
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 8),
+                Slab(1, 2, 0, 6, 0, 8),
+                Slab(1, 2, 4, 8, 0, 8),
+                Slab(2, 20, 4, 5.5, 0, 36)
+            };
             Rank rank = Select(boxes, 1, 0.5, 0);
             Dowel tie = null;
+            bool wideBored = false;
             for (int i = 0; i < rank.Chosen.Count; i++)
             {
-                if (rank.Chosen[i].Axis == 1)
-                    tie = rank.Chosen[i];
+                Dowel line = rank.Chosen[i];
+                if (line.Axis == 0 && line.Pieces.Length == 2)
+                    tie = line;
+                for (int p = 0; p < line.Pieces.Length; p++)
+                {
+                    if (line.Pieces[p] == 3)
+                        wideBored = true;
+                }
             }
 
-            Expect(fails, "short-stop", rank.TieIns == 1 && tie != null, "the loose piece gets a tie-in");
-            if (tie == null)
-                return;
+            Expect(fails, "thickness-tie", rank.TieIns == 1 && tie != null, "the loose piece ties through the thickness");
+            if (tie != null)
+            {
+                Expect(fails, "thickness-tie", tie.Pieces[0] == 1 && tie.Pieces[1] == 2,
+                    "the dowel is the loose piece plus the pinned piece it meets");
+                Expect(fails, "thickness-tie", Near(tie.A0, 1) && Near(tie.A1, 2),
+                    "it crosses the 1 inch thickness and does not run the width");
+            }
 
-            Expect(fails, "short-stop", tie.Pieces.Length == 2 && tie.Pieces[0] == 1 && tie.Pieces[1] == 2,
-                "the dowel is the loose piece plus the pinned piece it meets");
-            Expect(fails, "short-stop", Near(tie.A0, 0) && Near(tie.A1, 4.6),
-                "it stops at the far short side of that piece and does not continue through the column");
+            Expect(fails, "wide-board", !wideBored, "the wide board is not drilled across its width");
+        }
+
+
+        static void CheckDropToNextBoard(List<string> fails)
+        {
+            // Two boards run to Z = 20. A third stops at Z = 16. The band above that
+            // board is centered at Z = 18. Dropping to Z = 15.75 enters the third board.
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 20),
+                Slab(1, 2, 0, 4, 0, 20),
+                Slab(0, 2, 0, 4, 0, 16)
+            };
+            Rank rank = Select(boxes, 4, 0.5, 0);
+            bool dropped = false;
+            bool stuckHigh = false;
+            bool stillCentered = false;
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                Dowel line = rank.Chosen[i];
+                if (line.V > 16)
+                    stuckHigh = true;
+                if (Near(line.V, 15.75) && line.Score == 3)
+                    dropped = true;
+                if (Near(line.V, 8) && line.Score == 3)
+                    stillCentered = true;
+            }
+
+            Expect(fails, "drop", dropped, "the high line drops just inside the next board");
+            Expect(fails, "drop", !stuckHigh, "nothing stays in the band above that board");
+            Expect(fails, "drop", stillCentered, "the center of the full overlap stays put");
         }
 
 

@@ -40,7 +40,7 @@ namespace SpruceBeetle.Packing
     {
         public ColumnDowels_GH()
           : base("Dowel Column", "DowelCol",
-              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces.",
+              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces. A line drops just far enough to enter another board when the boards it already crosses still contain the hole.",
               "Spruce Beetle", "   Packing")
         {
         }
@@ -147,7 +147,7 @@ namespace SpruceBeetle.Packing
             }
 
             string tieNote = rank.TieIns > 0
-                ? $" {rank.TieIns} stop at a short side of a piece that already has a dowel."
+                ? $" {rank.TieIns} stop at the far face of a piece that already has a dowel."
                 : "";
             AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
                 $"{rank.Ranked} line(s) ranked, showing {dowels.Count}. Skipped {rank.Collided} that hit a chosen dowel.{tieNote}");

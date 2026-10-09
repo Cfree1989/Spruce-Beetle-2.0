@@ -46,6 +46,30 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-09 — fix: a high dowel drops just far enough to enter the next board
+
+- **Motivation:** The top rod in the column sits a few inches above one more board. It should drop into that board and keep piercing the boards it already crosses. Moving it to the center of the whole overlap was the wrong distance.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Each line stayed at the center of its own patch, so a band above a slightly shorter board never entered that board. The half-area ranking from the previous entry was reverted; it would have sent the rod to the middle of the tall patch. A line now shifts to the nearest height that adds a board, and only when every board already on the line still contains the hole.
+- **Result / observation:** Box checks passed. Two boards to Z = 20 and one to Z = 16: the line centered at Z = 18 moves to Z = 15.75 and picks up the shorter board. The line at the center of the full overlap stays at Z = 8.
+- **Follow-ups:** Run the box checks. Close Rhino and rebuild. The top dowel should drop a few inches into the next board; the lower dowels should stay.
+
+### 2026-10-09 — fix: Dowel Column keeps the large shared overlap instead of a thin band above it
+
+- **Motivation:** The rod was landing above the overlap of the stacked parts. A thin band there threaded more pieces, so it outranked the tall patch the parts actually share.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Lines were ordered by piece count. The center of a thin band above the stack won when that band included extra scraps. The largest shared patch now wins when the other patch is less than half its area and sits in the same cross-section. A tie-in into that thin band is skipped too. The rod is the center of the large patch.
+- **Result / observation:** Box checks passed, including a stack whose thin top band threads 6 pieces and whose tall overlap threads 4. The kept dowel is at the center of the tall overlap (Z = 8), and nothing is left in the band above it.
+- **Follow-ups:** Close Rhino and rebuild so the copy lands in `bin/`. On the column, the dowel above the orange overlap should move to the center of that overlap.
+
+### 2026-10-09 — fix: a tie-in dowel no longer bores across a board's width
+
+- **Motivation:** Column dowels are drilled through the wide face. A leftover piece was still allowed to enter an already-doweled board on the narrow edge and run the full width, so a wide board got a hole from short edge to short edge.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** After the ranked lines, a loose piece could tie into a pinned neighbor along that neighbor's middle dimension and stop at the far side. A 1×4×8 stud was bored through the 4″ side. A wide board was bored through its width. The pinned piece now has to be thin on the same axis as the loose piece. The hole in it is the thickness, and a wide board on the other axis is left out.
+- **Result / observation:** Box checks passed. The old 4″ edge tie is gone. A loose 1″ piece against the overhang of a pinned 1″ piece gets a 1″ tie. An 18″-wide board beside them is not on any dowel. Debug compile succeeded (only the pre-existing `CS0472` warnings). Copy to `bin/` was blocked because Rhino 8 (PID 42916) holds `SpruceBeetle.gha`. The built assembly is in `obj/Debug/net48/`.
+- **Follow-ups:** Close Rhino and rebuild so the copy lands in `bin/`. On the column, the long rod through the wide board's short edge should disappear.
+
 ### 2026-10-08 — fix: bake skips joint and dowel axis lines; dowels run both ways and can stop on a short side
 
 - **Motivation:** Baking a joint was writing the drive line into the document along with the solids. On the column, every kept dowel was the same direction and ran the full chain, so a side stack with no dowel of its own stayed loose.
