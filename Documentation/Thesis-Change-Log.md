@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-09 — fix: extra dowels attach every board the first lines miss
+
+- **Motivation:** A dowel should run through as many boards as it can, and every board that can share one should end up on a rod.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** `N` stopped the list. Boards outside those lines stayed loose unless a short tie-in could reach a neighbor through its thickness. After the `N` lines, the line through the most still-loose boards is added, then the next, until no such line fits. A line that would hit a kept dowel is skipped. Tie-ins still catch a board that cannot share a full line.
+- **Result / observation:** Box checks passed. `N = 1` on three separate pairs keeps the first pair, then adds a dowel through each of the other two, so all six boards are on a rod. A loose board that shares a thickness with a neighbor is attached by that shared line instead of a short tie. The wide board still gets no dowel across its width.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. Boards the first `N` lines miss should each land on another rod, the one through the most boards still loose.
+
 ### 2026-10-09 — fix: dowels stay a set distance off the board edge, and the top rod only steps to the next board
 
 - **Motivation:** After the height nudge, the top rod left the top of the column, and the rods that remained sat flush with a board edge. The rod should stay one dowel diameter off every edge, and that distance should be an input. The top rod should only move far enough to enter one more board.

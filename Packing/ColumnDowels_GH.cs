@@ -40,7 +40,7 @@ namespace SpruceBeetle.Packing
     {
         public ColumnDowels_GH()
           : base("Dowel Column", "DowelCol",
-              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces. A line steps to the nearest height that enters another board. Edge keeps that much wood, in dowel diameters, between the dowel and a board edge.",
+              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces. Further lines are added so every board that can share a dowel is on one, and each of those lines is the one through the most boards still loose. A line steps to the nearest height that enters another board. Edge keeps that much wood, in dowel diameters, between the dowel and a board edge.",
               "Spruce Beetle", "   Packing")
         {
         }
@@ -49,7 +49,7 @@ namespace SpruceBeetle.Packing
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Packed Offcuts", "Oc", "Offcuts from Bin Packing EB-AFIT", GH_ParamAccess.list);
-            pManager.AddIntegerParameter("Count", "N", "How many dowels to keep. Lines that pierce more pieces come first.", GH_ParamAccess.item, 4);
+            pManager.AddIntegerParameter("Count", "N", "How many of the best lines to keep first. More lines are added after that so every board that can share a dowel is on one.", GH_ParamAccess.item, 4);
             pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus two clearances.", GH_ParamAccess.item, 0.5);
             pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. Default 0.005. The hole is Dia plus two of these.", GH_ParamAccess.item, ClearanceSlider.Default);
             pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
@@ -158,8 +158,11 @@ namespace SpruceBeetle.Packing
             string tieNote = rank.TieIns > 0
                 ? $" {rank.TieIns} stop at the far face of a piece that already has a dowel."
                 : "";
+            string coverNote = rank.Covered > 0
+                ? $" {rank.Covered} more attach boards the first {count} lines missed."
+                : "";
             AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
-                $"{rank.Ranked} line(s) ranked, showing {dowels.Count}. Skipped {rank.Collided} that hit a chosen dowel.{tieNote}");
+                $"{rank.Ranked} line(s) ranked, showing {dowels.Count}. Skipped {rank.Collided} that hit a chosen dowel.{coverNote}{tieNote}");
 
             if (boxes.Count > 0 && rank.Ranked == 0)
             {

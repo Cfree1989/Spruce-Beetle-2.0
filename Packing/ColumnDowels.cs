@@ -62,6 +62,7 @@ namespace SpruceBeetle.Packing
             public int Ranked;
             public int Collided;
             public int TieIns;
+            public int Covered;
         }
 
 
@@ -91,6 +92,7 @@ namespace SpruceBeetle.Packing
                 return rank;
 
             TakeBothWays(xLines, yLines, count, hole, rank);
+            CoverLoose(xLines, yLines, hole, rank);
             AddTieIns(boxes, hole, inset, rank);
             return rank;
         }
@@ -128,6 +130,93 @@ namespace SpruceBeetle.Packing
                 stalls = took ? 0 : stalls + 1;
                 axis = 1 - axis;
             }
+        }
+
+
+        static void CoverLoose(List<Dowel> xLines, List<Dowel> yLines, double hole, Rank rank)
+        {
+            int boardCount = 0;
+            for (int i = 0; i < xLines.Count; i++)
+                boardCount = BoardCount(xLines[i], boardCount);
+            for (int i = 0; i < yLines.Count; i++)
+                boardCount = BoardCount(yLines[i], boardCount);
+            if (boardCount == 0)
+                return;
+
+            var pinned = new bool[boardCount];
+            Pin(rank, pinned);
+
+            var pool = new List<Dowel>(xLines.Count + yLines.Count);
+            pool.AddRange(xLines);
+            pool.AddRange(yLines);
+            while (true)
+            {
+                Dowel best = null;
+                int bestLoose = 0;
+                for (int i = 0; i < pool.Count; i++)
+                {
+                    Dowel line = pool[i];
+                    if (rank.Chosen.Contains(line) || Collides(line, rank.Chosen, hole))
+                        continue;
+
+                    int loose = LooseCount(line, pinned);
+                    if (loose < 1)
+                        continue;
+                    if (best == null || loose > bestLoose || (loose == bestLoose && Compare(line, best) < 0))
+                    {
+                        best = line;
+                        bestLoose = loose;
+                    }
+                }
+
+                if (best == null)
+                    break;
+
+                rank.Chosen.Add(best);
+                rank.Covered++;
+                for (int p = 0; p < best.Pieces.Length; p++)
+                    pinned[best.Pieces[p]] = true;
+            }
+        }
+
+
+        static int BoardCount(Dowel line, int boardCount)
+        {
+            for (int p = 0; p < line.Pieces.Length; p++)
+            {
+                if (line.Pieces[p] + 1 > boardCount)
+                    boardCount = line.Pieces[p] + 1;
+            }
+
+            return boardCount;
+        }
+
+
+        static void Pin(Rank rank, bool[] pinned)
+        {
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                int[] pieces = rank.Chosen[i].Pieces;
+                for (int p = 0; p < pieces.Length; p++)
+                {
+                    if (pieces[p] >= 0 && pieces[p] < pinned.Length)
+                        pinned[pieces[p]] = true;
+                }
+            }
+        }
+
+
+        static int LooseCount(Dowel line, bool[] pinned)
+        {
+            int loose = 0;
+            for (int p = 0; p < line.Pieces.Length; p++)
+            {
+                int index = line.Pieces[p];
+                if (index >= 0 && index < pinned.Length && !pinned[index])
+                    loose++;
+            }
+
+            return loose;
         }
 
 
@@ -334,6 +423,7 @@ namespace SpruceBeetle.Packing
             CheckShortStop(fails);
             CheckDropToNextBoard(fails);
             CheckEdge(fails);
+            CheckCover(fails);
             return fails;
         }
 
@@ -1081,10 +1171,11 @@ namespace SpruceBeetle.Packing
             };
             Rank one = Select(boxes, 1, 0.5, 0);
             Rank both = Select(boxes, 2, 0.5, 0);
-            Expect(fails, "stacks", one.Ranked == 2 && one.Chosen.Count == 1, "N = 1 returns one of two lines");
+            Expect(fails, "stacks", one.Ranked == 2 && one.Chosen.Count == 2 && one.Covered == 1,
+                "N = 1 keeps one line, then another dowel attaches the other stack");
             Expect(fails, "stacks", both.Chosen.Count == 2, "N = 2 returns both");
-            if (one.Chosen.Count == 1)
-                Expect(fails, "stacks", one.Chosen[0].Pieces[0] == 0, "tie keeps the lower footprint");
+            if (one.Chosen.Count > 0)
+                Expect(fails, "stacks", one.Chosen[0].Pieces[0] == 0, "the first line is the lower footprint");
         }
 
 
@@ -1208,7 +1299,8 @@ namespace SpruceBeetle.Packing
             Expect(fails, "short-stop", edgeRank.TieIns == 0, "a tie does not cross the 4 inch side");
 
             // C overlaps only the Y overhang of B. Both are 1" thick along X.
-            // W is 18" wide along X and 1.5" thick along Y. N = 1 keeps A+B; C may tie through the thickness.
+            // N = 1 keeps A+B. C is still loose, so another dowel runs through B and C.
+            // W is 18" wide along X and 1.5" thick along Y, and stays off every dowel.
             var boxes = new List<Box>
             {
                 Slab(0, 1, 0, 4, 0, 8),
@@ -1217,13 +1309,13 @@ namespace SpruceBeetle.Packing
                 Slab(2, 20, 4, 5.5, 0, 36)
             };
             Rank rank = Select(boxes, 1, 0.5, 0);
-            Dowel tie = null;
+            Dowel cover = null;
             bool wideBored = false;
             for (int i = 0; i < rank.Chosen.Count; i++)
             {
                 Dowel line = rank.Chosen[i];
-                if (line.Axis == 0 && line.Pieces.Length == 2)
-                    tie = line;
+                if (line.Axis == 0 && line.Pieces.Length == 2 && line.Pieces[0] == 1 && line.Pieces[1] == 2)
+                    cover = line;
                 for (int p = 0; p < line.Pieces.Length; p++)
                 {
                     if (line.Pieces[p] == 3)
@@ -1231,12 +1323,11 @@ namespace SpruceBeetle.Packing
                 }
             }
 
-            Expect(fails, "thickness-tie", rank.TieIns == 1 && tie != null, "the loose piece ties through the thickness");
-            if (tie != null)
+            Expect(fails, "thickness-tie", rank.Covered == 1 && rank.TieIns == 0 && cover != null,
+                "the loose piece is attached by a dowel through the boards it shares, not a short tie");
+            if (cover != null)
             {
-                Expect(fails, "thickness-tie", tie.Pieces[0] == 1 && tie.Pieces[1] == 2,
-                    "the dowel is the loose piece plus the pinned piece it meets");
-                Expect(fails, "thickness-tie", Near(tie.A0, 1) && Near(tie.A1, 2),
+                Expect(fails, "thickness-tie", Near(cover.A0, 1) && Near(cover.A1, 2),
                     "it crosses the 1 inch thickness and does not run the width");
             }
 
@@ -1296,6 +1387,34 @@ namespace SpruceBeetle.Packing
             Rank clear = Select(boxes, 4, 0.5, 0, 1);
             Expect(fails, "edge", flush.Chosen.Count == 1, "a 1 inch face holds a 0.5 dowel when the edge gap is 0");
             Expect(fails, "edge", clear.Ranked == 0, "one diameter of wood outside the dowel does not fit in a 1 inch face");
+        }
+
+
+        static void CheckCover(List<string> fails)
+        {
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 4),
+                Slab(1, 2, 0, 4, 0, 4),
+                Slab(0, 1, 10, 14, 0, 4),
+                Slab(1, 2, 10, 14, 0, 4),
+                Slab(0, 1, 20, 24, 0, 4),
+                Slab(1, 2, 20, 24, 0, 4)
+            };
+            Rank rank = Select(boxes, 1, 0.5, 0);
+            var seen = new bool[boxes.Count];
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                int[] pieces = rank.Chosen[i].Pieces;
+                for (int p = 0; p < pieces.Length; p++)
+                    seen[pieces[p]] = true;
+            }
+
+            bool all = true;
+            for (int i = 0; i < seen.Length; i++)
+                all = all && seen[i];
+            Expect(fails, "cover", rank.Chosen.Count == 3 && rank.Covered == 2 && all,
+                "N = 1 still runs a dowel through every separate pair");
         }
 
 
