@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-09 — fix: dowels stay a set distance off the board edge, and the top rod only steps to the next board
+
+- **Motivation:** After the height nudge, the top rod left the top of the column, and the rods that remained sat flush with a board edge. The rod should stay one dowel diameter off every edge, and that distance should be an input. The top rod should only move far enough to enter one more board.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** A line moved to the height that pierced the most boards, which pulled the top rod down onto a lower edge. The hole only had to fit, so the cylinder could touch the board edge. New input `E` (default `1`) is the wood outside the dowel, in dowel diameters. The center stays `Dia / 2 + E × Dia` inside every board. A line now steps only to the nearest height that adds a board.
+- **Result / observation:** Box checks passed. With `E = 0`, the high line still drops from Z = 18 to Z = 15.75. With `E = 1` and a 0.5 dowel it drops to Z = 15.25, one diameter of wood inside the next board. A 1 inch face holds a 0.5 dowel at `E = 0` and drops it at `E = 1`.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. New input is `E`, default `1`. A rod should remain near the top, one diameter below the next board's top, and the lower rods should sit off the edges.
+
 ### 2026-10-09 — fix: a high dowel drops just far enough to enter the next board
 
 - **Motivation:** The top rod in the column sits a few inches above one more board. It should drop into that board and keep piercing the boards it already crosses. Moving it to the center of the whole overlap was the wrong distance.

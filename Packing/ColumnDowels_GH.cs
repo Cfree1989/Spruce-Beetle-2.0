@@ -40,7 +40,7 @@ namespace SpruceBeetle.Packing
     {
         public ColumnDowels_GH()
           : base("Dowel Column", "DowelCol",
-              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces. A line drops just far enough to enter another board when the boards it already crosses still contain the hole.",
+              "Ranks horizontal dowels through a packed column. Each dowel is a cylinder perpendicular to world Z, through the widest face, and may cross empty spans. N keeps the lines that pierce the most pieces. A line steps to the nearest height that enters another board. Edge keeps that much wood, in dowel diameters, between the dowel and a board edge.",
               "Spruce Beetle", "   Packing")
         {
         }
@@ -52,6 +52,7 @@ namespace SpruceBeetle.Packing
             pManager.AddIntegerParameter("Count", "N", "How many dowels to keep. Lines that pierce more pieces come first.", GH_ParamAccess.item, 4);
             pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus two clearances.", GH_ParamAccess.item, 0.5);
             pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. Default 0.005. The hole is Dia plus two of these.", GH_ParamAccess.item, ClearanceSlider.Default);
+            pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -76,12 +77,14 @@ namespace SpruceBeetle.Packing
             int count = 4;
             double diameter = 0.5;
             double clearance = ClearanceSlider.Default;
+            double edge = 1.0;
 
             if (!DA.GetDataList(0, packed))
                 return;
             DA.GetData(1, ref count);
             DA.GetData(2, ref diameter);
             DA.GetData(3, ref clearance);
+            DA.GetData(4, ref edge);
 
             packed.RemoveAll(item => item == null);
             clearance = ClearanceSlider.Read(this, clearance);
@@ -119,7 +122,13 @@ namespace SpruceBeetle.Packing
                     $"{missing} offcut(s) had no solid and were skipped.");
             }
 
-            ColumnDowels.Rank rank = ColumnDowels.Select(boxes, count, diameter, clearance);
+            if (edge < 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Edge was below 0, so it was raised to 0.");
+                edge = 0;
+            }
+
+            ColumnDowels.Rank rank = ColumnDowels.Select(boxes, count, diameter, clearance, edge);
             var dowels = new List<Brep>(rank.Chosen.Count);
             var lines = new List<Curve>(rank.Chosen.Count);
             var scores = new List<int>(rank.Chosen.Count);

@@ -65,21 +65,24 @@ namespace SpruceBeetle.Packing
         }
 
 
-        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance)
+        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance, double edge = 0)
         {
             var rank = new Rank();
             if (boxes == null || boxes.Count == 0 || diameter <= Tolerance)
                 return rank;
             if (clearance < 0)
                 clearance = 0;
+            if (edge < 0)
+                edge = 0;
 
             double hole = diameter + 2.0 * clearance;
+            double inset = hole * 0.5 + edge * diameter;
             var xLines = new List<Dowel>();
             var yLines = new List<Dowel>();
-            Collect(boxes, 0, hole, xLines);
-            Collect(boxes, 1, hole, yLines);
-            NudgeDown(boxes, hole, xLines);
-            NudgeDown(boxes, hole, yLines);
+            Collect(boxes, 0, inset, xLines);
+            Collect(boxes, 1, inset, yLines);
+            NudgeDown(boxes, inset, xLines);
+            NudgeDown(boxes, inset, yLines);
             xLines.Sort(Compare);
             yLines.Sort(Compare);
 
@@ -88,7 +91,7 @@ namespace SpruceBeetle.Packing
                 return rank;
 
             TakeBothWays(xLines, yLines, count, hole, rank);
-            AddTieIns(boxes, hole, rank);
+            AddTieIns(boxes, hole, inset, rank);
             return rank;
         }
 
@@ -128,7 +131,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static void AddTieIns(IList<Box> boxes, double hole, Rank rank)
+        static void AddTieIns(IList<Box> boxes, double hole, double inset, Rank rank)
         {
             var pinned = new bool[boxes.Count];
             for (int i = 0; i < rank.Chosen.Count; i++)
@@ -142,7 +145,7 @@ namespace SpruceBeetle.Packing
             {
                 if (pinned[i])
                     continue;
-                if (!TryTieIn(boxes, i, pinned, hole, rank.Chosen, out Dowel tie))
+                if (!TryTieIn(boxes, i, pinned, hole, inset, rank.Chosen, out Dowel tie))
                     continue;
 
                 rank.Chosen.Add(tie);
@@ -154,7 +157,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static bool TryTieIn(IList<Box> boxes, int looseIndex, bool[] pinned, double hole, List<Dowel> chosen, out Dowel tie)
+        static bool TryTieIn(IList<Box> boxes, int looseIndex, bool[] pinned, double hole, double inset, List<Dowel> chosen, out Dowel tie)
         {
             tie = null;
             Box loose = boxes[looseIndex];
@@ -166,7 +169,7 @@ namespace SpruceBeetle.Packing
             {
                 if (!HasAxis(loose, axis))
                     continue;
-                if (!TryTieOnAxis(boxes, looseIndex, axis, pinned, hole, chosen, out Dowel candidate, out bool shortSide, out double gap))
+                if (!TryTieOnAxis(boxes, looseIndex, axis, pinned, hole, inset, chosen, out Dowel candidate, out bool shortSide, out double gap))
                     continue;
                 if (best != null && bestShort && !shortSide)
                     continue;
@@ -189,6 +192,7 @@ namespace SpruceBeetle.Packing
             int axis,
             bool[] pinned,
             double hole,
+            double inset,
             List<Dowel> chosen,
             out Dowel tie,
             out bool shortSide,
@@ -214,7 +218,7 @@ namespace SpruceBeetle.Packing
                     continue;
 
                 Rect stopFoot = Footprint(boxes[i], axis);
-                if (!OverlapCenter(looseFoot, stopFoot, hole, out double u, out double v))
+                if (!OverlapCenter(looseFoot, stopFoot, inset, out double u, out double v))
                     continue;
 
                 double faceGap = AxisGap(loose, boxes[i], axis);
@@ -248,7 +252,7 @@ namespace SpruceBeetle.Packing
                     continue;
 
                 Rect foot = Footprint(boxes[i], axis);
-                if (!Holds(foot, centerU, centerV, hole))
+                if (!Holds(foot, centerU, centerV, inset))
                     continue;
 
                 double mid = Mid(boxes[i], axis);
@@ -329,11 +333,12 @@ namespace SpruceBeetle.Packing
             CheckBothWays(fails);
             CheckShortStop(fails);
             CheckDropToNextBoard(fails);
+            CheckEdge(fails);
             return fails;
         }
 
 
-        static void Collect(IList<Box> boxes, int axis, double hole, List<Dowel> into)
+        static void Collect(IList<Box> boxes, int axis, double inset, List<Dowel> into)
         {
             var ids = new List<int>();
             for (int i = 0; i < boxes.Count; i++)
@@ -403,7 +408,7 @@ namespace SpruceBeetle.Packing
                     List<int> cover = covers[r, c];
                     if (cover == null || cover.Count < 2 || !seen.Add(key))
                         continue;
-                    if (!TryCenter(keys, key, us, vs, hole, out double u, out double v, out double area, out double pu0, out double pv0, out double pu1, out double pv1))
+                    if (!TryCenter(keys, key, us, vs, inset, out double u, out double v, out double area, out double pu0, out double pv0, out double pu1, out double pv1))
                         continue;
 
                     var pieces = new int[cover.Count];
@@ -460,7 +465,7 @@ namespace SpruceBeetle.Packing
 
 
         static bool TryCenter(
-            string[,] keys, string key, double[] us, double[] vs, double hole,
+            string[,] keys, string key, double[] us, double[] vs, double inset,
             out double u, out double v, out double area,
             out double patchU0, out double patchV0, out double patchU1, out double patchV1)
         {
@@ -508,7 +513,7 @@ namespace SpruceBeetle.Packing
                         double v1 = vs[r1 + 1];
                         double du = u1 - u0;
                         double dv = v1 - v0;
-                        if (du + Tolerance >= hole && dv + Tolerance >= hole)
+                        if (du + Tolerance >= inset * 2 && dv + Tolerance >= inset * 2)
                         {
                             double areaRect = du * dv;
                             if (areaRect > bestArea)
@@ -732,46 +737,45 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static void NudgeDown(IList<Box> boxes, double hole, List<Dowel> lines)
+        static void NudgeDown(IList<Box> boxes, double inset, List<Dowel> lines)
         {
             for (int i = 0; i < lines.Count; i++)
-                NudgeOne(boxes, hole, lines[i]);
+                NudgeOne(boxes, inset, lines[i]);
         }
 
 
-        static void NudgeOne(IList<Box> boxes, double hole, Dowel line)
+        static void NudgeOne(IList<Box> boxes, double inset, Dowel line)
         {
-            double margin = hole * 0.5;
             var required = new HashSet<int>(line.Pieces);
             double bestV = line.V;
             int bestCount = line.Score;
-            double bestDist = 0;
+            double bestDist = double.PositiveInfinity;
             List<int> bestHit = null;
 
-            var candidates = new List<double> { line.V };
+            var candidates = new List<double>();
             for (int i = 0; i < boxes.Count; i++)
             {
                 if (!HasAxis(boxes[i], line.Axis))
                     continue;
                 Rect foot = Footprint(boxes[i], line.Axis);
-                candidates.Add(foot.V0 + margin);
-                candidates.Add(foot.V1 - margin);
+                candidates.Add(foot.V0 + inset);
+                candidates.Add(foot.V1 - inset);
             }
 
             for (int c = 0; c < candidates.Count; c++)
             {
                 double v = candidates[c];
-                if (!AllHold(boxes, line, v, hole, required))
+                if (!AllHold(boxes, line, v, inset, required))
                     continue;
 
-                var hit = PiecesAt(boxes, line.Axis, line.U, v, hole);
-                if (hit.Count < 2)
+                var hit = PiecesAt(boxes, line.Axis, line.U, v, inset);
+                if (hit.Count <= line.Score)
                     continue;
 
                 double dist = Math.Abs(v - line.V);
-                bool better = hit.Count > bestCount
-                    || (hit.Count == bestCount && dist + Tolerance < bestDist);
-                if (!better)
+                bool nearer = dist + Tolerance < bestDist;
+                bool sameStepMore = Math.Abs(dist - bestDist) <= Tolerance && hit.Count > bestCount;
+                if (!nearer && !sameStepMore)
                     continue;
                 if (!TryRetarget(boxes, line, hit, v, out double a0, out double a1))
                     continue;
@@ -793,13 +797,13 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static bool AllHold(IList<Box> boxes, Dowel line, double v, double hole, HashSet<int> required)
+        static bool AllHold(IList<Box> boxes, Dowel line, double v, double inset, HashSet<int> required)
         {
             foreach (int index in required)
             {
                 if (!HasAxis(boxes[index], line.Axis))
                     return false;
-                if (!Holds(Footprint(boxes[index], line.Axis), line.U, v, hole))
+                if (!Holds(Footprint(boxes[index], line.Axis), line.U, v, inset))
                     return false;
             }
 
@@ -807,14 +811,14 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static List<int> PiecesAt(IList<Box> boxes, int axis, double u, double v, double hole)
+        static List<int> PiecesAt(IList<Box> boxes, int axis, double u, double v, double inset)
         {
             var hit = new List<int>();
             for (int i = 0; i < boxes.Count; i++)
             {
                 if (!HasAxis(boxes[i], axis))
                     continue;
-                if (Holds(Footprint(boxes[i], axis), u, v, hole))
+                if (Holds(Footprint(boxes[i], axis), u, v, inset))
                     hit.Add(i);
             }
 
@@ -927,7 +931,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static bool OverlapCenter(Rect a, Rect b, double hole, out double u, out double v)
+        static bool OverlapCenter(Rect a, Rect b, double inset, out double u, out double v)
         {
             u = 0;
             v = 0;
@@ -935,7 +939,7 @@ namespace SpruceBeetle.Packing
             double u1 = Math.Min(a.U1, b.U1);
             double v0 = Math.Max(a.V0, b.V0);
             double v1 = Math.Min(a.V1, b.V1);
-            if (u1 - u0 + Tolerance < hole || v1 - v0 + Tolerance < hole)
+            if (u1 - u0 + Tolerance < inset * 2 || v1 - v0 + Tolerance < inset * 2)
                 return false;
 
             u = (u0 + u1) * 0.5;
@@ -944,13 +948,12 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static bool Holds(Rect rect, double u, double v, double hole)
+        static bool Holds(Rect rect, double u, double v, double inset)
         {
-            double margin = hole * 0.5;
-            return u >= rect.U0 + margin - Tolerance
-                && u <= rect.U1 - margin + Tolerance
-                && v >= rect.V0 + margin - Tolerance
-                && v <= rect.V1 - margin + Tolerance;
+            return u >= rect.U0 + inset - Tolerance
+                && u <= rect.U1 - inset + Tolerance
+                && v >= rect.V0 + inset - Tolerance
+                && v <= rect.V1 - inset + Tolerance;
         }
 
 
@@ -1269,6 +1272,30 @@ namespace SpruceBeetle.Packing
             Expect(fails, "drop", dropped, "the high line drops just inside the next board");
             Expect(fails, "drop", !stuckHigh, "nothing stays in the band above that board");
             Expect(fails, "drop", stillCentered, "the center of the full overlap stays put");
+
+            Rank inset = Select(boxes, 4, 0.5, 0, 1);
+            bool keptOffEdge = false;
+            for (int i = 0; i < inset.Chosen.Count; i++)
+            {
+                if (Near(inset.Chosen[i].V, 15.25) && inset.Chosen[i].Score == 3)
+                    keptOffEdge = true;
+            }
+
+            Expect(fails, "drop", keptOffEdge, "one dowel diameter of wood stays outside the dowel");
+        }
+
+
+        static void CheckEdge(List<string> fails)
+        {
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 1),
+                Slab(1, 2, 0, 4, 0, 1)
+            };
+            Rank flush = Select(boxes, 4, 0.5, 0, 0);
+            Rank clear = Select(boxes, 4, 0.5, 0, 1);
+            Expect(fails, "edge", flush.Chosen.Count == 1, "a 1 inch face holds a 0.5 dowel when the edge gap is 0");
+            Expect(fails, "edge", clear.Ranked == 0, "one diameter of wood outside the dowel does not fit in a 1 inch face");
         }
 
 

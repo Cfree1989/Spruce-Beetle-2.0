@@ -514,7 +514,7 @@ Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged
 
 Every dowel is horizontal: its axis is along X or along Y, square to world Z. A vertical hole is never proposed. The hole is a plunge through the widest face. On the router that face lies on the bed and the spindle drills down through it. In the column those wide faces are vertical, so the dowel runs sideways through the thickness. A piece whose widest face is horizontal (thickness on Z) is skipped. A square section may use a horizontal tie. A hole into a narrower edge or end is not a full run through the column.
 
-`N` is spent on both directions. The best line is kept first, then the best line on the other axis, and so on. A dowel does not have to cross the whole column. A line that sits just above another board drops far enough to enter that board when every board it already crosses still contains the hole. After those lines, a piece that still has no dowel can get a shorter one. It runs through that piece's wide face and stops at the far face of the first already-doweled piece whose thickness lies on the same axis. It does not cross a board's width, and it does not continue past that piece.
+`N` is spent on both directions. The best line is kept first, then the best line on the other axis, and so on. A dowel does not have to cross the whole column. A line steps to the nearest height that enters one more board, and only when every board it already crosses still contains the hole. It does not jump to a lower height just because that height threads more boards. `E` is the wood left between the dowel and a board edge, in dowel diameters. At `1` the center sits `Dia / 2 + E × Dia` inside every board it crosses. After those lines, a piece that still has no dowel can get a shorter one. It runs through that piece's wide face and stops at the far face of the first already-doweled piece whose thickness lies on the same axis. It does not cross a board's width, and it does not continue past that piece.
 
 A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + 2 * Cl`. The preview cylinder is the dowel at `Dia`. The axis curve is preview only and is not baked.
 
@@ -528,8 +528,9 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | --- | --- | --- | --- | --- | --- |
 | Packed Offcuts | Oc | Offcut | List | — | Packed pieces from Bin Packing. |
 | Count | N | Integer | Item | `4` | How many dowels to keep. Higher piece counts come first. |
-| Diameter | Dia | Number | Item | `0.5` | Dowel diameter. The only size inputs are this and clearance. |
+| Diameter | Dia | Number | Item | `0.5` | Dowel diameter. |
 | Clearance | Cl | Number | Item | `0.005` | Gap on each side. The hole is `Dia + 2 * Cl`. No slider is added. |
+| Edge | E | Number | Item | `1` | Minimum wood between the dowel and a board edge, in dowel diameters. `1` leaves a full diameter of wood outside the dowel. |
 
 **Outputs**
 
