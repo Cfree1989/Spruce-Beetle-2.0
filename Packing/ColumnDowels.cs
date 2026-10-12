@@ -66,7 +66,15 @@ namespace SpruceBeetle.Packing
         }
 
 
-        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance, double edge = 0)
+        internal struct Pair
+        {
+            public int A;
+            public int B;
+            public int Axis;
+        }
+
+
+        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance, double edge = 0, IList<Pair> pairs = null)
         {
             var rank = new Rank();
             if (boxes == null || boxes.Count == 0 || diameter <= Tolerance)
@@ -84,6 +92,19 @@ namespace SpruceBeetle.Packing
             Collect(boxes, 1, inset, yLines);
             NudgeDown(boxes, inset, xLines);
             NudgeDown(boxes, inset, yLines);
+            HashSet<int> only = null;
+            if (pairs != null && pairs.Count > 0)
+            {
+                xLines.RemoveAll(line => !Serves(line, pairs));
+                yLines.RemoveAll(line => !Serves(line, pairs));
+                only = new HashSet<int>();
+                for (int i = 0; i < pairs.Count; i++)
+                {
+                    only.Add(pairs[i].A);
+                    only.Add(pairs[i].B);
+                }
+            }
+
             xLines.Sort(Compare);
             yLines.Sort(Compare);
 
@@ -93,7 +114,7 @@ namespace SpruceBeetle.Packing
 
             TakeBothWays(xLines, yLines, count, hole, rank);
             CoverLoose(xLines, yLines, hole, rank);
-            AddTieIns(boxes, hole, inset, rank);
+            AddTieIns(boxes, hole, inset, rank, only);
             return rank;
         }
 
@@ -220,7 +241,21 @@ namespace SpruceBeetle.Packing
         }
 
 
-        static void AddTieIns(IList<Box> boxes, double hole, double inset, Rank rank)
+        static bool Serves(Dowel line, IList<Pair> pairs)
+        {
+            var set = new HashSet<int>(line.Pieces);
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                Pair pair = pairs[i];
+                if (pair.Axis == line.Axis && set.Contains(pair.A) && set.Contains(pair.B))
+                    return true;
+            }
+
+            return false;
+        }
+
+
+        static void AddTieIns(IList<Box> boxes, double hole, double inset, Rank rank, HashSet<int> only)
         {
             var pinned = new bool[boxes.Count];
             for (int i = 0; i < rank.Chosen.Count; i++)
@@ -233,6 +268,8 @@ namespace SpruceBeetle.Packing
             for (int i = 0; i < boxes.Count; i++)
             {
                 if (pinned[i])
+                    continue;
+                if (only != null && !only.Contains(i))
                     continue;
                 if (!TryTieIn(boxes, i, pinned, hole, inset, rank.Chosen, out Dowel tie))
                     continue;
@@ -425,6 +462,7 @@ namespace SpruceBeetle.Packing
             CheckEdge(fails);
             CheckCover(fails);
             CheckStickOut(fails);
+            CheckPairFilter(fails);
             return fails;
         }
 
@@ -1473,6 +1511,30 @@ namespace SpruceBeetle.Packing
                 all = all && seen[i];
             Expect(fails, "cover", rank.Chosen.Count == 3 && rank.Covered == 2 && all,
                 "N = 1 still runs a dowel through every separate pair");
+        }
+
+
+        static void CheckPairFilter(List<string> fails)
+        {
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 4),
+                Slab(1, 2, 0, 4, 0, 4),
+                Slab(0, 1, 20, 24, 0, 4),
+                Slab(1, 2, 20, 24, 0, 4)
+            };
+            var pairs = new List<Pair> { new Pair { A = 2, B = 3, Axis = 0 } };
+            Rank rank = Select(boxes, 4, 0.5, 0, 0, pairs);
+            var seen = new bool[boxes.Count];
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                int[] pieces = rank.Chosen[i].Pieces;
+                for (int p = 0; p < pieces.Length; p++)
+                    seen[pieces[p]] = true;
+            }
+
+            Expect(fails, "pairs", seen[2] && seen[3] && !seen[0] && !seen[1],
+                "only the supplied contact is joined");
         }
 
 

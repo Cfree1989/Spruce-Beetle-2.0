@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-12 — feature: Dowel Column passes unjoined contacts to a smaller dowel
+
+- **Motivation:** A diameter that does not fit a pair should hand that pair to another Dowel Column, the same way Contact Tenon hands skipped contacts to a smaller tenon.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Dowel Column had no contact input or skip output. Optional `C` takes Packed Contacts, or `SkC` from a previous Dowel Column. When `C` is wired, only those pairs are joined. Pairs this diameter does not join come out as `Sk` (planes, preview only) and `SkC`. Wire `SkC` to a second Dowel Column `C` with a smaller `Dia` and the same Offcuts. Vertical contacts are ignored.
+- **Result / observation:** Box check passed. Two separate stacks with only the second pair supplied dowel that pair and leave the first stack alone.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. Wire Packed Contacts into the first Dowel Column `C`, then `SkC` into a second Dowel Column with a smaller `Dia` and the same offcuts.
+
 ### 2026-10-09 — fix: dowel clearance is a separate hole cutter
 
 - **Motivation:** Dowel Column only builds cylinders. The solid difference was using those cylinders, so the hole matched the dowel and `Cl` never reached the cut.

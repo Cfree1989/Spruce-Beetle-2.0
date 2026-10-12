@@ -53,6 +53,8 @@ namespace SpruceBeetle.Packing
             pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus two clearances.", GH_ParamAccess.item, 0.5);
             pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. The Holes output is Dia plus two of these. Solid-difference Holes, not Dowels.", GH_ParamAccess.item, ClearanceSlider.Default);
             pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
+            pManager.AddGenericParameter("Contacts", "C", "Face contacts from Packed Contacts, or Skipped Contacts from another Dowel Column. Optional. When wired, only those pairs are joined.", GH_ParamAccess.list);
+            pManager[5].Optional = true;
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -66,6 +68,8 @@ namespace SpruceBeetle.Packing
             pManager.AddIntegerParameter("Score", "S", "How many pieces each dowel pierces.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Pieces", "Pi", "Branch i lists the packed indices dowel i passes through, in order along the dowel.", GH_ParamAccess.tree);
             pManager.AddBrepParameter("Holes", "H", "Cylinders at Dia + 2 * Cl, same length as the dowels. Solid-difference these from the packed breps.", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts this diameter did not join. Preview only; baking this component skips planes", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Skipped Contacts", "SkC", "Those same contacts. Wire to a second Dowel Column with a smaller Dia, and the same Offcuts.", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -79,6 +83,7 @@ namespace SpruceBeetle.Packing
             double diameter = 0.5;
             double clearance = ClearanceSlider.Default;
             double edge = 1.0;
+            var contactObjs = new List<object>();
 
             if (!DA.GetDataList(0, packed))
                 return;
@@ -86,6 +91,7 @@ namespace SpruceBeetle.Packing
             DA.GetData(2, ref diameter);
             DA.GetData(3, ref clearance);
             DA.GetData(4, ref edge);
+            DA.GetDataList(5, contactObjs);
 
             packed.RemoveAll(item => item == null);
             clearance = ClearanceSlider.Read(this, clearance);
@@ -129,7 +135,27 @@ namespace SpruceBeetle.Packing
                 edge = 0;
             }
 
-            ColumnDowels.Rank rank = ColumnDowels.Select(boxes, count, diameter, clearance, edge);
+            var contacts = new List<PackedContact>();
+            var pairs = new List<ColumnDowels.Pair>();
+            int ignoredZ = 0;
+            for (int i = 0; i < contactObjs.Count; i++)
+            {
+                PackedContact contact = PackedContact_GH.Parse(contactObjs[i]);
+                if (contact == null)
+                    continue;
+                int axis = contact.Axis == ContactAxis.X ? 0 : contact.Axis == ContactAxis.Y ? 1 : -1;
+                if (axis < 0)
+                {
+                    ignoredZ++;
+                    continue;
+                }
+
+                contacts.Add(contact);
+                pairs.Add(new ColumnDowels.Pair { A = contact.IndexA, B = contact.IndexB, Axis = axis });
+            }
+
+            ColumnDowels.Rank rank = ColumnDowels.Select(
+                boxes, count, diameter, clearance, edge, pairs.Count > 0 ? pairs : null);
             var dowels = new List<Brep>(rank.Chosen.Count);
             var holes = new List<Brep>(rank.Chosen.Count);
             var lines = new List<Curve>(rank.Chosen.Count);
@@ -190,6 +216,58 @@ namespace SpruceBeetle.Packing
             DA.SetDataList(2, scores);
             DA.SetDataTree(3, pieces);
             DA.SetDataList(4, holes);
+
+            var skippedPlanes = new List<Plane>();
+            var skippedContacts = new List<PackedContact_GH>();
+            for (int i = 0; i < contacts.Count; i++)
+            {
+                PackedContact contact = contacts[i];
+                if (Joined(rank, contact.IndexA, contact.IndexB, pairs[i].Axis))
+                    continue;
+                skippedPlanes.Add(contact.Plane);
+                skippedContacts.Add(new PackedContact_GH(contact.Duplicate()));
+            }
+
+            if (contacts.Count == 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
+                    "Wire Contacts to send pairs this diameter missed to a smaller dowel.");
+            }
+            else
+            {
+                string zNote = ignoredZ > 0 ? $" {ignoredZ} vertical contact(s) are not dowel pairs." : "";
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
+                    $"{skippedContacts.Count} contact(s) skipped.{zNote}");
+            }
+
+            DA.SetDataList(5, skippedPlanes);
+            DA.SetDataList(6, skippedContacts);
+        }
+
+
+        static bool Joined(ColumnDowels.Rank rank, int a, int b, int axis)
+        {
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                ColumnDowels.Dowel line = rank.Chosen[i];
+                if (line.Axis != axis)
+                    continue;
+                bool hasA = false;
+                bool hasB = false;
+                int[] pieces = line.Pieces;
+                for (int p = 0; p < pieces.Length; p++)
+                {
+                    if (pieces[p] == a)
+                        hasA = true;
+                    if (pieces[p] == b)
+                        hasB = true;
+                }
+
+                if (hasA && hasB)
+                    return true;
+            }
+
+            return false;
         }
 
 

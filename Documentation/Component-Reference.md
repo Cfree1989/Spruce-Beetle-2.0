@@ -531,6 +531,7 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Diameter | Dia | Number | Item | `0.5` | Dowel diameter. |
 | Clearance | Cl | Number | Item | `0.005` | Gap on each side. `Holes` is `Dia + 2 * Cl`. Solid-difference `Holes`, not `Dowels`. |
 | Edge | E | Number | Item | `1` | Minimum wood between the dowel and a board edge, in dowel diameters. `1` leaves a full diameter of wood outside the dowel. |
+| Contacts | C | PackedContact | List | — | Optional. From Packed Contacts, or from another Dowel Column's `SkC`. When wired, only those pairs are joined. |
 
 **Outputs**
 
@@ -541,8 +542,10 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Score | S | Integer | List | How many pieces each dowel pierces. |
 | Pieces | Pi | Integer | Tree | Branch `i` lists the packed indices dowel `i` passes through, in order along the dowel. |
 | Holes | H | Brep | List | Cylinders at `Dia + 2 * Cl`, same ends as the dowels. Solid-difference these from the packed breps. |
+| Skipped | Sk | Plane | List | Planes of contacts this diameter did not join. Preview only; Bake skips planes. |
+| Skipped Contacts | SkC | PackedContact | List | Same skips as contact objects. Wire to a second Dowel Column `C` with a smaller `Dia`, and the same Offcuts into `Oc`. |
 
-`Dowels` stays at `Dia`. Clearance is only on `Holes`, so a solid difference of `Dowels` cuts a hole the same size as the pin.
+`Dowels` stays at `Dia`. Clearance is only on `Holes`, so a solid difference of `Dowels` cuts a hole the same size as the pin. Vertical (`Z`) contacts are not dowel pairs and are left off `SkC`.
 
 ### Legacy Dowel Placer (`DowelPlace`)
 
