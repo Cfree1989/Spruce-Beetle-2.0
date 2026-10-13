@@ -46,6 +46,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-13 — feature: Dowel Column repeats a rod along Z at a spacing
+
+- **Motivation:** A tall board was getting one rod at the center of its patch and another from a different patch near the top. The same sideways center should be able to carry more rods at a chosen spacing.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Each kept rod was a single height. New input `S` (default `0`, appended after `Contacts` so existing wires stay put) adds rods at that center ± `S`, `2S`, and so on. A station is skipped when the hole does not fit or the centerline is closer than one hole diameter to a rod already kept. These repeats do not consume `N`. `0` adds none.
+- **Result / observation:** Box checks passed. Three boards from Z = 0 to 72 with `S = 24` keep rods at 12, 36, and 60. `S = 35.8` leaves only the center rod; the stations fall inside the edge gap.
+- **Follow-ups:** Debug rebuild copied `SpruceBeetle.gha` to `bin/Debug/net48/`. Reload Grasshopper. On a tall column, set `S` and confirm extra rods share the sideways center of an existing rod.
+
 ### 2026-10-12 — feature: Dowel Column passes unjoined contacts to a smaller dowel
 
 - **Motivation:** A diameter that does not fit a pair should hand that pair to another Dowel Column, the same way Contact Tenon hands skipped contacts to a smaller tenon.

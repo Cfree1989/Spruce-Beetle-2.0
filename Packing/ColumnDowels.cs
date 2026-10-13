@@ -74,7 +74,7 @@ namespace SpruceBeetle.Packing
         }
 
 
-        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance, double edge = 0, IList<Pair> pairs = null)
+        internal static Rank Select(IList<Box> boxes, int count, double diameter, double clearance, double edge = 0, IList<Pair> pairs = null, double spacing = 0)
         {
             var rank = new Rank();
             if (boxes == null || boxes.Count == 0 || diameter <= Tolerance)
@@ -83,6 +83,8 @@ namespace SpruceBeetle.Packing
                 clearance = 0;
             if (edge < 0)
                 edge = 0;
+            if (spacing < 0)
+                spacing = 0;
 
             double hole = diameter + 2.0 * clearance;
             double inset = hole * 0.5 + edge * diameter;
@@ -115,6 +117,7 @@ namespace SpruceBeetle.Packing
             TakeBothWays(xLines, yLines, count, hole, rank);
             CoverLoose(xLines, yLines, hole, rank);
             AddTieIns(boxes, hole, inset, rank, only);
+            SpaceAlongZ(boxes, spacing, inset, hole, rank);
             return rank;
         }
 
@@ -463,6 +466,7 @@ namespace SpruceBeetle.Packing
             CheckCover(fails);
             CheckStickOut(fails);
             CheckPairFilter(fails);
+            CheckSpacing(fails);
             return fails;
         }
 
@@ -920,6 +924,68 @@ namespace SpruceBeetle.Packing
             if (byU != 0)
                 return byU;
             return a.V.CompareTo(b.V);
+        }
+
+
+        static void SpaceAlongZ(IList<Box> boxes, double spacing, double inset, double hole, Rank rank)
+        {
+            if (spacing <= Tolerance || rank.Chosen.Count == 0)
+                return;
+
+            double z0 = double.PositiveInfinity;
+            double z1 = double.NegativeInfinity;
+            for (int i = 0; i < boxes.Count; i++)
+            {
+                if (boxes[i].Z0 < z0)
+                    z0 = boxes[i].Z0;
+                if (boxes[i].Z1 > z1)
+                    z1 = boxes[i].Z1;
+            }
+
+            var seeds = new List<Dowel>(rank.Chosen);
+            for (int s = 0; s < seeds.Count; s++)
+            {
+                Dowel seed = seeds[s];
+                for (int n = 1; ; n++)
+                {
+                    double up = seed.V + n * spacing;
+                    double down = seed.V - n * spacing;
+                    bool upInside = up < z1 - Tolerance;
+                    bool downInside = down > z0 + Tolerance;
+                    if (!upInside && !downInside)
+                        break;
+                    if (upInside)
+                        TryStation(boxes, seed, up, inset, hole, rank);
+                    if (downInside)
+                        TryStation(boxes, seed, down, inset, hole, rank);
+                }
+            }
+        }
+
+
+        static void TryStation(IList<Box> boxes, Dowel seed, double v, double inset, double hole, Rank rank)
+        {
+            List<int> hit = PiecesAt(boxes, seed.Axis, seed.U, v, inset);
+            if (hit.Count < 2)
+                return;
+
+            var station = new Dowel
+            {
+                Axis = seed.Axis,
+                U = seed.U,
+                V = v
+            };
+            if (!TryRetarget(boxes, station, hit, v, out double a0, out double a1))
+                return;
+
+            station.A0 = a0;
+            station.A1 = a1;
+            station.Score = hit.Count;
+            station.Pieces = hit.ToArray();
+            if (Collides(station, rank.Chosen, hole))
+                return;
+
+            rank.Chosen.Add(station);
         }
 
 
@@ -1557,6 +1623,36 @@ namespace SpruceBeetle.Packing
             };
             Expect(fails, "stick", EndIsOpen(boxes, line, true, 0.25, 0.25), "the open end sticks out");
             Expect(fails, "stick", !EndIsOpen(boxes, line, false, 0.25, 0.25), "the end against a narrow edge stays flush");
+        }
+
+
+        static void CheckSpacing(List<string> fails)
+        {
+            var boxes = new List<Box>
+            {
+                Slab(0, 1, 0, 4, 0, 72),
+                Slab(1, 2, 0, 4, 0, 72),
+                Slab(2, 3, 0, 4, 0, 72)
+            };
+            Rank rank = Select(boxes, 1, 0.5, 0, 0, null, 24);
+            Expect(fails, "spacing", HasV(rank, 12) && HasV(rank, 36) && HasV(rank, 60) && rank.Chosen.Count == 3,
+                "spacing 24 on a 72 inch stack keeps 12, 36, and 60");
+
+            Rank edge = Select(boxes, 1, 0.5, 0, 0, null, 35.8);
+            Expect(fails, "spacing", HasV(edge, 36) && edge.Chosen.Count == 1,
+                "a station inside the edge gap is absent");
+        }
+
+
+        static bool HasV(Rank rank, double v)
+        {
+            for (int i = 0; i < rank.Chosen.Count; i++)
+            {
+                if (Near(rank.Chosen[i].V, v))
+                    return true;
+            }
+
+            return false;
         }
 
 

@@ -55,6 +55,7 @@ namespace SpruceBeetle.Packing
             pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
             pManager.AddGenericParameter("Contacts", "C", "Face contacts from Packed Contacts, or Skipped Contacts from another Dowel Column. Optional. When wired, only those pairs are joined.", GH_ParamAccess.list);
             pManager[5].Optional = true;
+            pManager.AddNumberParameter("Spacing", "S", "Center-to-center distance along Z. Extra rods use the same sideways center. 0 adds none. A station that does not fit is skipped.", GH_ParamAccess.item, 0.0);
 
             for (int i = 0; i < pManager.ParamCount; i++)
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
@@ -83,6 +84,7 @@ namespace SpruceBeetle.Packing
             double diameter = 0.5;
             double clearance = ClearanceSlider.Default;
             double edge = 1.0;
+            double spacing = 0.0;
             var contactObjs = new List<object>();
 
             if (!DA.GetDataList(0, packed))
@@ -92,6 +94,7 @@ namespace SpruceBeetle.Packing
             DA.GetData(3, ref clearance);
             DA.GetData(4, ref edge);
             DA.GetDataList(5, contactObjs);
+            DA.GetData(6, ref spacing);
 
             packed.RemoveAll(item => item == null);
             clearance = ClearanceSlider.Read(this, clearance);
@@ -155,7 +158,7 @@ namespace SpruceBeetle.Packing
             }
 
             ColumnDowels.Rank rank = ColumnDowels.Select(
-                boxes, count, diameter, clearance, edge, pairs.Count > 0 ? pairs : null);
+                boxes, count, diameter, clearance, edge, pairs.Count > 0 ? pairs : null, spacing);
             var dowels = new List<Brep>(rank.Chosen.Count);
             var holes = new List<Brep>(rank.Chosen.Count);
             var lines = new List<Curve>(rank.Chosen.Count);
