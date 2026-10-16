@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). **Stagger Column** and **Spine Column** are alternate packers for that box: stagger neighboring ends, or stand 1–4 long scraps on the floor first. Bin Packing EB-AFIT stays the comparison. Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,22 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-10-16 — feature: Stagger Column and Spine Column packers
+
+- **Motivation:** Similar scrap lengths end on one plane, so a packed column splits into bands that only meet end to end.
+- **Files:** `Packing/AxisLockPacker.cs`, `Packing/PackedOffcuts.cs`, `Packing/BinPackingCS_GH.cs`, `Packing/StaggerColumn_GH.cs`, `Packing/SpineColumn_GH.cs`, `Documentation/Component-Reference.md`, `Documentation/Column-Fill-2x2x8.md`
+- **Before → after:** Longest-first locked packing put the longest remaining scrap at the lowest supported height, so equal lengths shared a top. **Stagger Column** (`StaggerCol`, GUID `6F2A9C14-8B37-4E51-A6D0-3C91F7E24B58`) still fills that lowest height, and there takes the longest scrap whose top misses every side neighbor by at least `St` (default 4). When none can, it takes the largest gap, then the longest. **Spine Column** (`SpineCol`, GUID `2D8E5B70-1A64-4C93-9F28-6E0B4A7D15C3`) stands `N` scraps on the floor first (default 2, clamped to 1–4), spread to opposite corners, then fills the rest longest-first. A spine should reach 3/4 of the column height. Shorter scraps are used when the pile has fewer, with a warning that lists those lengths. Both lock the longest side on Z, still refuse a piece that would bridge a hole, and output `POc`, `C`, and `Oc`. The item-to-Offcut solid loop moved into `PackedOffcuts`; Bin Packing’s own placement is unchanged.
+- **Result / observation:** On a 6×2×80 row, longest-first placed 40 beside 40 beside 20. Stagger placed 40, 20, 40 and reported 0 side joints within 4. On an 8×2×96 row, three 24s and one 48: the 48 stands on the floor and its top is 24 past the neighbor. Spine `N = 1` places that 48 first and warns that 48 is short of 72. Spine `N = 2` puts the 48 at the origin and the next scrap at the opposite corner. Two equal 24s still pack, and the remark says the ends could not stagger. MSBuild Debug succeeded (only the pre-existing `CS0472` warnings). The Grasshopper viewport was not opened.
+- **Follow-ups:** Reload Grasshopper. Wire the same CSV into PackBin, Stagger Column, and Spine Column. Component-Reference and the column-fill tweak table are updated.
+
+### 2026-10-16 — docs: 250 varied parts and 250 lengths of 1.5×3.5 stock
+
+- **Motivation:** Cut lists for CSV to Offcut: boards that stay at least 3″ wide and at most 3″ thick, plus a separate pile of dressed 2×4 (1.5″ × 3.5″) with a different length on every row.
+- **Files:** `Documentation/TestData/parts_varied_250.csv`, `Documentation/TestData/stock_3.5x1.5_lengths_250.csv`
+- **Before → after:** Those two files did not exist. Both use `index;x;y;z` in inches, no header, same layout as the other test CSVs. Parts: x is thickness (0.75″–3″), y is width (3″–11.75″), z is length (12″–93″); all 250 size triples are unique. Stock: every row is `1.5;3.5` (x = thickness, y = width, matching `stock_2x4_scraps.csv`) with a unique z from 8″ through 96″.
+- **Result / observation:** Checked in Python: 250 part rows, none under 3″ wide, none over 3″ thick; 250 stock rows, 250 distinct lengths, longest is 96″.
+- **Follow-ups:** Component-Reference does not need an update (test data only). Reload is not required; point CSV to Offcut at either path.
 
 ### 2026-10-13 — feature: Dowel Column repeats a rod along Z at a spacing
 

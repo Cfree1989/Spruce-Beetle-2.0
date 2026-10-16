@@ -185,5 +185,9 @@ Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1)
 | All longest sides vertical | Orientation `Longest Z` |
 | All thicknesses vertical | Orientation `Shortest Z` |
 | Mixed upright and flat | Orientation `Unlimited` (default) |
+| Neighboring ends step past each other | **Stagger Column** (`StaggerCol`). `St` is the minimum end offset, default 4 |
+| A few long scraps run up the column | **Spine Column** (`SpineCol`). `N` is 1–4, default 2. A spine is at least 3/4 of the column height when the pile has one |
+
+**Stagger Column** and **Spine Column** take the same offcuts and box. Both stand every scrap on its longest side. Stagger Column chooses the next length so a side neighbor does not end on the same plane. Spine Column puts the long scraps on the floor at opposite corners first, then fills longest-first. Bin Packing EB-AFIT is unchanged. Both output `Oc` for Packed Contacts and Dowel Column.
 
 Edit `stock_column_in.csv` with any editor. Keep `index;x;y;z` and `;`. Every x and y should be **≤ 24**, every z **≤ 96**, or that piece cannot go in (unless rotation swaps axes — a 6×6×96 stick can stand as a full-height corner).

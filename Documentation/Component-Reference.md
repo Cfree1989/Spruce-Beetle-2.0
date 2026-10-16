@@ -472,7 +472,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**. **Dowel Column** then ranks horizontal dowels through that pack. List face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
+Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**. **Stagger Column** and **Spine Column** pack the same box with the longest side vertical, so neighboring ends do not all land on one plane. **Dowel Column** then ranks horizontal dowels through that pack. List face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
@@ -508,9 +508,57 @@ Old canvases may still show nickname `PackBinC#`; same component (GUID unchanged
 
 ---
 
+### Stagger Column (`StaggerCol`)
+
+**What it does:** Packs the same offcuts and box as Bin Packing, with every longest side on Z. At the lowest height where a scrap can sit on the floor or on a complete platform, it takes the longest scrap whose top misses every side neighbor’s top by at least `St` (default 4 inches). A side neighbor is a placed piece that touches this one on a vertical face and overlaps it in height. When every candidate would land on that seam, it takes the one with the largest gap, then the longest. Each scrap keeps the length it arrived with. If every scrap has the same length, the ends stay aligned and a remark says so. Another remark counts side joints whose tops still fall within `St`. A piece that would bridge a hole is left out. The other two sides may still turn 90° in plan.
+
+Outputs match Bin Packing (`POc`, `C`, `Oc`). Feed `Oc` to Packed Contacts or Dowel Column. Bin Packing itself is unchanged.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcut Data | OcD | Offcut | List | — | Pieces to pack (`X`, `Y`, `Z`). |
+| Box | B | Box | Item | — | Container size. Position is ignored; packing is generated at the origin. |
+| Stagger | St | Number | Item | `4` | Minimum distance between this top and a side neighbor’s top. Below 0 is treated as 0. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Packed Offcuts | POc | Brep | List | Solids that fit. Items that did not fit are omitted. |
+| Container | C | Brep | Item | Origin-aligned box of the same size (viewport-hidden). |
+| Offcuts | Oc | Offcut | List | Packed pieces (Index, rotated size, geometry, Z-end planes). |
+
+---
+
+### Spine Column (`SpineCol`)
+
+**What it does:** Packs with the longest side on Z. First it stands `N` scraps on the floor (default 2, clamped to 1–4) and spreads them to opposite corners. A spine is a scrap at least 3/4 of the column height (72 inches in a 96 inch column). When the pile has fewer than `N` scraps that long, the next-longest scraps are stood up instead, and a warning lists those shorter lengths. Scraps that do not fit on the floor are skipped for the spine pass. The rest of the column is then filled longest-first, each piece on the floor or on a complete platform, so nothing bridges a hole. The short bands can still form; each spine’s side face crosses those planes. The other two sides may still turn 90° in plan.
+
+A remark lists how many spines were placed and their lengths. Outputs match Bin Packing. Feed `Oc` to Packed Contacts or Dowel Column.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcut Data | OcD | Offcut | List | — | Pieces to pack (`X`, `Y`, `Z`). |
+| Box | B | Box | Item | — | Container size. Position is ignored; packing is generated at the origin. |
+| Spines | N | Integer | Item | `2` | How many long scraps to stand on the floor first. Clamped to 1–4. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Packed Offcuts | POc | Brep | List | Solids that fit. Items that did not fit are omitted. |
+| Container | C | Brep | Item | Origin-aligned box of the same size (viewport-hidden). |
+| Offcuts | Oc | Offcut | List | Packed pieces (Index, rotated size, geometry, Z-end planes). |
+
+---
+
 ### Dowel Column (`DowelCol`)
 
-**What it does:** After Bin Packing, ranks cylindrical dowels through the packed offcuts. Wire Bin Packing `Oc` straight into this component. It does not read Packed Contacts, and it does not place the wood.
+**What it does:** After a column is packed, ranks cylindrical dowels through the packed offcuts. Wire `Oc` from Bin Packing, Stagger Column, or Spine Column straight into this component. It does not read Packed Contacts, and it does not place the wood.
 
 Every dowel is horizontal: its axis is along X or along Y, square to world Z. A vertical hole is never proposed. The hole is a plunge through the widest face. On the router that face lies on the bed and the spindle drills down through it. In the column those wide faces are vertical, so the dowel runs sideways through the thickness. A piece whose widest face is horizontal (thickness on Z) is skipped. A square section may use a horizontal tie. A hole into a narrower edge or end is not a full run through the column.
 
