@@ -46,6 +46,30 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-26 — docs: Weekday boxes wider than weekend boxes
+
+- **Motivation:** Handwriting happens on work days. Equal seven-column boxes made Monday–Friday narrower than they need to be.
+- **Files:** `Thesis-Planning/Printable-Calendar.html`, `Thesis-Planning/Printable-Calendar.pdf`
+- **Before → after:** Sunday through Saturday shared the row equally, and a month with six weeks had shorter boxes than a month with five. Monday–Friday are now the same width and the same height on every page. Saturday and Sunday are narrower. Each week row is 1.14 inches tall.
+- **Result / observation:** PDF is still letter landscape, 8 pages. Checked after reprint.
+- **Follow-ups:** Component-Reference does not need an update.
+
+### 2026-10-26 — docs: Printable calendar switched to landscape
+
+- **Motivation:** The month grid was portrait. Landscape gives a wider box to write in.
+- **Files:** `Thesis-Planning/Printable-Calendar.html`, `Thesis-Planning/Printable-Calendar.pdf`, `Thesis-Planning/README.md`
+- **Before → after:** Each page was letter portrait (8.5 by 11 inches). Each page is now letter landscape (11 by 8.5 inches). The dates in the boxes are unchanged.
+- **Result / observation:** The reprinted PDF MediaBox is 792 by 612 points, which is letter landscape, and it is still 8 pages.
+- **Follow-ups:** Component-Reference does not need an update.
+
+### 2026-10-26 — docs: Printable monthly calendar for handwriting
+
+- **Motivation:** The date list and the Outlook file are not a page you can print and write on.
+- **Files:** `Thesis-Planning/Printable-Calendar.html`, `Thesis-Planning/Printable-Calendar.pdf`, `Thesis-Planning/README.md`, `Thesis-Planning/Calendar.md`
+- **Before → after:** No printable grid. Added eight letter-size months, October 2026 through May 2027, with LSU A&M employee holidays and the thesis deadlines in the day boxes. The rest of each box is blank.
+- **Result / observation:** Checked October, December, January, and March in the browser. October 26 is Monday. December 24–25 and 28–31 are winter holiday. January 21–22 hold the add and forms deadlines. March 1 is Monday, March 25 is the upload, and March 26 is Good Friday. The PDF is 8 pages.
+- **Follow-ups:** Component-Reference does not need an update.
+
 ### 2026-10-26 — docs: Outlook calendar file keeps employee holidays and thesis deadlines
 
 - **Motivation:** The import file also carried student breaks. Those days do not change the employee work schedule.

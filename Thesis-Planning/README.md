@@ -8,6 +8,7 @@ Checked against LSU’s published calendars on October 26, 2026. Department dead
 | --- | --- |
 | [Calendar.md](Calendar.md) | Deadlines, LSU A&M employee holidays, and student breaks from now through commencement. |
 | [Spring-2027-Thesis.ics](Spring-2027-Thesis.ics) | Employee holidays and thesis deadlines only, for Outlook. File → Open & Export → Import/Export → Import an iCalendar (.ics). |
+| [Printable-Calendar.pdf](Printable-Calendar.pdf) | The same dates on a landscape monthly grid, one month per page, for printing and handwriting. |
 | [Proposal/](Proposal/) | Project proposal and any other planning drafts. |
 | [Submissions/](Submissions/) | Confirmation emails and copies of forms after you submit them. |
 

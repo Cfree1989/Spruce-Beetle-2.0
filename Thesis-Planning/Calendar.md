@@ -8,7 +8,7 @@ Prepared October 26, 2026, for a master’s thesis defended and uploaded in Spri
 
 PM-5 allows the president to add a holiday if the governor declares one. That happened for January 2, 2026. Recheck PM-5 before you leave for winter closure. If your appointment is on a campus other than LSU A&M, use that campus’s table in the same memo. Some of those tables take Memorial Day and skip Mardi Gras.
 
-Import [Spring-2027-Thesis.ics](Spring-2027-Thesis.ics) into Outlook for the employee holidays and the thesis deadlines. Student breaks stay in this write-up only. The month-by-month list below is the one to read.
+Import [Spring-2027-Thesis.ics](Spring-2027-Thesis.ics) into Outlook for the employee holidays and the thesis deadlines. [Printable-Calendar.pdf](Printable-Calendar.pdf) is the same dates on a blank monthly grid you can print and write on. Student breaks stay in this write-up only. The month-by-month list below is the one to read.
 
 ## Hard deadlines
 

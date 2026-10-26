@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spring 2027 thesis calendar</title>
+<style>
+  @page { size: letter landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #d9d9d9;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #000;
+  }
+  .sheet {
+    width: 11in;
+    height: 8.5in;
+    margin: 0 auto 0.3in;
+    padding: 0.32in 0.4in 0.24in;
+    background: #fff;
+    page-break-after: always;
+    break-after: page;
+  }
+  .sheet:last-child { page-break-after: auto; break-after: auto; }
+  h1 {
+    margin: 0 0 0.08in;
+    text-align: center;
+    font-size: 20pt;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  table {
+    width: 100%;
+    height: auto;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  col.weekend, th.weekend { width: 7%; }
+  col.weekday, th.weekday { width: 17.2%; }
+  th, td { border: 1px solid #000; }
+  th {
+    height: 0.32in;
+    font-size: 11pt;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+  }
+  tbody tr { height: 1.14in; }
+  td { vertical-align: top; background: #fff; }
+  td.holiday { background: #f0f0f0; }
+  .num {
+    padding: 5px 0 0;
+    text-align: center;
+    font-size: 12pt;
+    line-height: 1;
+  }
+  .note {
+    margin: 3px 5px 0;
+    text-align: center;
+    font-size: 9pt;
+    line-height: 1.15;
+    font-weight: 700;
+  }
+  .foot {
+    margin: 0.06in 0 0;
+    font-size: 8pt;
+    line-height: 1;
+  }
+  @media print {
+    body { background: #fff; }
+    .sheet { margin: 0; }
+  }
+</style>
+</head>
+<body>
+<section class="sheet"><h1>October 2026</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td></tr><tr><td><div class="num">4</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td><td><div class="num">7</div></td><td><div class="num">8</div></td><td><div class="num">9</div></td><td><div class="num">10</div></td></tr><tr><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td><td><div class="num">14</div></td><td><div class="num">15</div></td><td><div class="num">16</div></td><td><div class="num">17</div></td></tr><tr><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td><td><div class="num">21</div></td><td><div class="num">22</div></td><td><div class="num">23</div></td><td><div class="num">24</div></td></tr><tr><td><div class="num">25</div></td><td class="deadline"><div class="num">26</div><div class="note">Spring registration opens</div></td><td><div class="num">27</div></td><td><div class="num">28</div></td><td><div class="num">29</div></td><td><div class="num">30</div></td><td><div class="num">31</div></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>November 2026</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td><td><div class="num">4</div></td><td><div class="num">5</div></td><td class="deadline"><div class="num">6</div><div class="note">Drop / resign, 4:30 p.m.</div></td><td><div class="num">7</div></td></tr><tr><td><div class="num">8</div></td><td><div class="num">9</div></td><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td><td><div class="num">14</div></td></tr><tr><td><div class="num">15</div></td><td><div class="num">16</div></td><td><div class="num">17</div></td><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td><td><div class="num">21</div></td></tr><tr><td><div class="num">22</div></td><td><div class="num">23</div></td><td><div class="num">24</div></td><td><div class="num">25</div></td><td class="holiday"><div class="num">26</div><div class="note">Thanksgiving</div></td><td class="holiday"><div class="num">27</div><div class="note">Thanksgiving</div></td><td><div class="num">28</div></td></tr><tr><td><div class="num">29</div></td><td><div class="num">30</div></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>December 2026</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td></td><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td><td><div class="num">4</div></td><td><div class="num">5</div></td></tr><tr><td><div class="num">6</div></td><td><div class="num">7</div></td><td><div class="num">8</div></td><td><div class="num">9</div></td><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td></tr><tr><td><div class="num">13</div></td><td><div class="num">14</div></td><td><div class="num">15</div></td><td><div class="num">16</div></td><td><div class="num">17</div></td><td><div class="num">18</div></td><td><div class="num">19</div></td></tr><tr><td><div class="num">20</div></td><td><div class="num">21</div></td><td><div class="num">22</div></td><td><div class="num">23</div></td><td class="holiday"><div class="num">24</div><div class="note">Winter holiday</div></td><td class="holiday"><div class="num">25</div><div class="note">Winter holiday</div></td><td><div class="num">26</div></td></tr><tr><td><div class="num">27</div></td><td class="holiday"><div class="num">28</div><div class="note">Winter holiday</div></td><td class="holiday"><div class="num">29</div><div class="note">Winter holiday</div></td><td class="holiday"><div class="num">30</div><div class="note">Winter holiday</div></td><td class="holiday"><div class="num">31</div><div class="note">Winter holiday</div></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>January 2027</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td class="holiday"><div class="num">1</div><div class="note">Winter holiday</div></td><td><div class="num">2</div></td></tr><tr><td><div class="num">3</div></td><td class="deadline"><div class="num">4</div><div class="note">Offices reopen</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td><td><div class="num">7</div></td><td><div class="num">8</div></td><td><div class="num">9</div></td></tr><tr><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td><td><div class="num">14</div></td><td><div class="num">15</div></td><td><div class="num">16</div></td></tr><tr><td><div class="num">17</div></td><td class="holiday"><div class="num">18</div><div class="note">MLK Day</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td><td class="deadline"><div class="num">21</div><div class="note">Add thesis hours, 4:30 p.m.</div></td><td class="deadline"><div class="num">22</div><div class="note">Degree and defense forms, 4:30 p.m.</div></td><td><div class="num">23</div></td></tr><tr><td><div class="num">24</div></td><td><div class="num">25</div></td><td><div class="num">26</div></td><td><div class="num">27</div></td><td><div class="num">28</div></td><td><div class="num">29</div></td><td><div class="num">30</div></td></tr><tr><td><div class="num">31</div></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>February 2027</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td><td><div class="num">4</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td></tr><tr><td><div class="num">7</div></td><td><div class="num">8</div></td><td class="holiday"><div class="num">9</div><div class="note">Mardi Gras</div></td><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td></tr><tr><td><div class="num">14</div></td><td><div class="num">15</div></td><td><div class="num">16</div></td><td><div class="num">17</div></td><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td></tr><tr><td><div class="num">21</div></td><td><div class="num">22</div></td><td><div class="num">23</div></td><td><div class="num">24</div></td><td><div class="num">25</div></td><td><div class="num">26</div></td><td><div class="num">27</div></td></tr><tr><td><div class="num">28</div></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>March 2027</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td><td><div class="num">4</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td></tr><tr><td><div class="num">7</div></td><td><div class="num">8</div></td><td><div class="num">9</div></td><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td></tr><tr><td><div class="num">14</div></td><td><div class="num">15</div></td><td><div class="num">16</div></td><td><div class="num">17</div></td><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td></tr><tr><td><div class="num">21</div></td><td><div class="num">22</div></td><td><div class="num">23</div></td><td><div class="num">24</div></td><td class="deadline"><div class="num">25</div><div class="note">Thesis upload, 4:30 p.m.</div></td><td class="holiday"><div class="num">26</div><div class="note">Good Friday</div></td><td><div class="num">27</div></td></tr><tr><td><div class="num">28</div></td><td><div class="num">29</div></td><td><div class="num">30</div></td><td><div class="num">31</div></td><td></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>April 2027</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td><div class="num">1</div></td><td><div class="num">2</div></td><td><div class="num">3</div></td></tr><tr><td><div class="num">4</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td><td><div class="num">7</div></td><td><div class="num">8</div></td><td><div class="num">9</div></td><td><div class="num">10</div></td></tr><tr><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td><td><div class="num">14</div></td><td><div class="num">15</div></td><td class="deadline"><div class="num">16</div><div class="note">Editor corrections, 4:30 p.m.</div></td><td><div class="num">17</div></td></tr><tr><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td><td><div class="num">21</div></td><td><div class="num">22</div></td><td><div class="num">23</div></td><td><div class="num">24</div></td></tr><tr><td><div class="num">25</div></td><td><div class="num">26</div></td><td><div class="num">27</div></td><td><div class="num">28</div></td><td><div class="num">29</div></td><td><div class="num">30</div></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+<section class="sheet"><h1>May 2027</h1><table><colgroup><col class="weekend"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekday"><col class="weekend"></colgroup><thead><tr><th class="weekend">Sun</th><th class="weekday">Mon</th><th class="weekday">Tue</th><th class="weekday">Wed</th><th class="weekday">Thu</th><th class="weekday">Fri</th><th class="weekend">Sat</th></tr></thead><tbody><tr><td></td><td></td><td></td><td></td><td></td><td></td><td><div class="num">1</div></td></tr><tr><td><div class="num">2</div></td><td><div class="num">3</div></td><td><div class="num">4</div></td><td><div class="num">5</div></td><td><div class="num">6</div></td><td><div class="num">7</div></td><td><div class="num">8</div></td></tr><tr><td><div class="num">9</div></td><td><div class="num">10</div></td><td><div class="num">11</div></td><td><div class="num">12</div></td><td><div class="num">13</div></td><td class="deadline"><div class="num">14</div><div class="note">Commencement</div></td><td class="deadline"><div class="num">15</div><div class="note">Commencement</div></td></tr><tr><td><div class="num">16</div></td><td><div class="num">17</div></td><td><div class="num">18</div></td><td><div class="num">19</div></td><td><div class="num">20</div></td><td><div class="num">21</div></td><td><div class="num">22</div></td></tr><tr><td><div class="num">23</div></td><td><div class="num">24</div></td><td><div class="num">25</div></td><td><div class="num">26</div></td><td><div class="num">27</div></td><td><div class="num">28</div></td><td><div class="num">29</div></td></tr><tr><td><div class="num">30</div></td><td><div class="num">31</div></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table><p class="foot">LSU A&amp;M holidays and Spring 2027 thesis dates. Blank space is for notes.</p></section>
+</body>
+</html>
