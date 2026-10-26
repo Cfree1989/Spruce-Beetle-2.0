@@ -46,6 +46,30 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-26 — docs: Outlook calendar file keeps employee holidays and thesis deadlines
+
+- **Motivation:** The import file also carried student breaks. Those days do not change the employee work schedule.
+- **Files:** `Thesis-Planning/Spring-2027-Thesis.ics`, `Thesis-Planning/README.md`, `Thesis-Planning/Calendar.md`
+- **Before → after:** The `.ics` included student Thanksgiving, fall finals, the start of spring classes, the student Mardi Gras span, and spring break. Those events are removed. Employee closures and the Graduate School deadlines remain.
+- **Result / observation:** Re-import replaces same-UID events. Events that were deleted from the file stay on a calendar that was already imported; those have to be deleted by hand.
+- **Follow-ups:** Component-Reference does not need an update.
+
+### 2026-10-26 — docs: Committee step is the defense form, not a fall appointment form
+
+- **Motivation:** The planning checklist told the student to get committee approval in the fall without saying which form, if any, the Graduate School actually uses.
+- **Files:** `Thesis-Planning/Calendar.md`
+- **Before → after:** The checklist said to confirm the committee and finish outside-member approval this fall. It now says an email agreement is enough until the Request for Master’s Defense and Degree Audit, and a CV is added only for someone who is not LSU graduate faculty.
+- **Result / observation:** The current Graduate School forms list has no separate committee-appointment form. The defense-and-audit form is what names the committee. Department practice can still be earlier.
+- **Follow-ups:** Confirm with the graduate coordinator whether the department keeps its own committee sheet. Component-Reference does not need an update.
+
+### 2026-10-26 — docs: Spring 2027 thesis calendar and planning folder
+
+- **Motivation:** Graduation paperwork and the writing schedule have to sit on real days off. LSU A&M employee holidays are a different list from the student academic calendar.
+- **Files:** `Thesis-Planning/README.md`, `Thesis-Planning/Calendar.md`, `Thesis-Planning/Spring-2027-Thesis.ics`, `Thesis-Planning/Proposal/README.md`, `Thesis-Planning/Submissions/README.md`, `Documentation/README.md`
+- **Before → after:** The repo had no graduation calendar. It now has the Graduate School deadlines for a Spring 2027 thesis, the FY 2026–27 LSU A&M employee holidays (PM-5), and the student breaks that still count as work days, plus an Outlook import file and folders for the proposal and submission confirmations.
+- **Result / observation:** Application for Degree has been open since September 5, 2026. Hard dates are January 21 (add 8000), January 22 (degree application and defense request, 4:30 p.m.), March 25 (upload, 4:30 p.m.), and April 16 (editor corrections, 4:30 p.m.). Employee winter closure is December 24 through January 1, return January 4. Mardi Gras day off is Tuesday, February 9 only. Spring break (March 8–12) is a class holiday; PM-5 still schedules employees to work. Research and writing milestones are not assigned yet.
+- **Follow-ups:** Add the project proposal under `Thesis-Planning/Proposal/`. Confirm any earlier departmental deadline with the graduate coordinator. Build the research and writing schedule against the work-day windows in `Calendar.md`. Component-Reference does not need an update.
+
 ### 2026-10-16 — feature: Stagger Column and Spine Column packers
 
 - **Motivation:** Similar scrap lengths end on one plane, so a packed column splits into bands that only meet end to end.

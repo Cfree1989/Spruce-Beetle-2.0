@@ -1,0 +1,231 @@
+BEGIN:VCALENDAR
+PRODID:-//Spruce Beetle Thesis Planning//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Spring 2027 Thesis
+X-WR-TIMEZONE:America/Chicago
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+X-LIC-LOCATION:America/Chicago
+BEGIN:DAYLIGHT
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+TZNAME:CDT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+TZNAME:CST
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+UID:spring-scheduling-2026@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20261026
+DTEND;VALUE=DATE:20261027
+SUMMARY:Spring scheduling opens: register\, including 8000
+DESCRIPTION:Registrar: spring course scheduling opens. A thesis defense r
+ equires at least one hour of 8000. Last day to add is January 21\, 2027
+ \, 4:30 p.m. Application for Degree has been open since September 5\, 20
+ 26.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:fall-drop-2026@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;TZID=America/Chicago:20261106T083000
+DTEND;TZID=America/Chicago:20261106T163000
+SUMMARY:4:30 p.m. last day to drop fall courses or resign
+DESCRIPTION:Fall 2026 Graduate School calendar. Also the last day to requ
+ est a leave or withdrawal.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. last day to drop fall courses or resign
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:thanksgiving-2026@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20261126
+DTEND;VALUE=DATE:20261128
+SUMMARY:LSU closed: Thanksgiving
+DESCRIPTION:Paid employee holiday\, LSU A&M\, PM-5. Thursday and Friday.
+ Back Monday\, November 30.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:last-work-day-2026@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20261223
+DTEND;VALUE=DATE:20261224
+SUMMARY:Last work day before winter closure
+DESCRIPTION:Wednesday\, December 23 is a regular work day. Closure starts
+  Thursday\, December 24. Employees return Monday\, January 4.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Last work day before winter closure
+TRIGGER:-P7D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:winter-closure-2026@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20261224
+DTEND;VALUE=DATE:20270102
+SUMMARY:LSU closed: winter holiday
+DESCRIPTION:Paid holidays Dec 24\, 25\, 28\, 29\, 30\, 31\, and Jan 1 (PM
+ -5\, LSU A&M). Dec 26-27 and Jan 2-3 are weekends. Back Monday\, January
+  4. Degree and defense-request deadlines are January 21 and 22 at 4:30 p
+ .m.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:LSU closed: winter holiday
+TRIGGER:-P7D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:offices-reopen-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20270104
+DTEND;VALUE=DATE:20270105
+SUMMARY:LSU employees back
+DESCRIPTION:Winter closure ends. Fourteen work days remain before Friday\
+ , January 22. MLK Day is Monday\, January 18. Add deadline for 8000 hour
+ s: Thursday\, January 21\, 4:30 p.m.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:mlk-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20270118
+DTEND;VALUE=DATE:20270119
+SUMMARY:LSU closed: Martin Luther King Jr. Day
+DESCRIPTION:Paid employee holiday\, LSU A&M\, PM-5. Graduate School is cl
+ osed. Add 8000 by Thursday\, January 21\, 4:30 p.m. Application for Degr
+ ee and the defense request are due Friday\, January 22\, 4:30 p.m.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:add-8000-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;TZID=America/Chicago:20270121T083000
+DTEND;TZID=America/Chicago:20270121T163000
+SUMMARY:4:30 p.m. last day to add 8000 thesis hours
+DESCRIPTION:Last day to add courses\, including 8000 and 9000\, and to ch
+ ange sections. Also the last day to drop without a W. The degree applica
+ tion and defense request are due the next day.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. last day to add 8000 thesis hours
+TRIGGER:-P7D
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. last day to add 8000 thesis hours
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:degree-and-defense-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;TZID=America/Chicago:20270122T083000
+DTEND;TZID=America/Chicago:20270122T163000
+SUMMARY:4:30 p.m. Application for Degree and defense request
+DESCRIPTION:Both are due to the Graduate School by 4:30 p.m. The defense 
+ request also has to be in at least three weeks before the defense. A pre
+ vious Application for Degree that did not end in graduation has to be fi
+ led again. Forms: https://www.lsu.edu/graduateschool/students/grad_stude
+ nt_forms.php
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. Application for Degree and defense request
+TRIGGER:-P18D
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. Application for Degree and defense request
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:mardi-gras-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20270209
+DTEND;VALUE=DATE:20270210
+SUMMARY:LSU closed: Mardi Gras
+DESCRIPTION:Paid employee holiday\, LSU A&M\, PM-5. Tuesday\, February 9.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:thesis-upload-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;TZID=America/Chicago:20270325T083000
+DTEND;TZID=America/Chicago:20270325T163000
+SUMMARY:4:30 p.m. thesis upload deadline
+DESCRIPTION:Committee-approved thesis uploaded to the LSU Scholarly Repos
+ itory. Degree requirements have to be met. Friday\, March 26 is the Good
+  Friday employee holiday.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. thesis upload deadline
+TRIGGER:-P14D
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. thesis upload deadline
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:good-friday-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20270326
+DTEND;VALUE=DATE:20270327
+SUMMARY:LSU closed: Good Friday
+DESCRIPTION:Paid employee holiday\, LSU A&M\, PM-5. The thesis upload dea
+ dline is Thursday\, March 25 at 4:30 p.m. Offices reopen Monday\, March 
+ 29.
+TRANSP:OPAQUE
+END:VEVENT
+BEGIN:VEVENT
+UID:editor-corrections-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;TZID=America/Chicago:20270416T083000
+DTEND;TZID=America/Chicago:20270416T163000
+SUMMARY:4:30 p.m. editor corrections due
+DESCRIPTION:Final revisions requested by the Graduate School editor uploa
+ ded to the Scholarly Repository.
+TRANSP:OPAQUE
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. editor corrections due
+TRIGGER:-P7D
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:4:30 p.m. editor corrections due
+TRIGGER:-P1D
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:commencement-2027@spruce-beetle-thesis
+DTSTAMP:20261026T170000Z
+DTSTART;VALUE=DATE:20270514
+DTEND;VALUE=DATE:20270516
+SUMMARY:Spring commencement
+DESCRIPTION:Commencement activities Friday and Saturday.
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR
