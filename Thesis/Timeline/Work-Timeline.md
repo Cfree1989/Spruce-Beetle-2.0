@@ -15,7 +15,7 @@ Each screenshot below comes with the question or problem it was sent with, what 
 | Cursor chat history (27 chats) | Each screenshot's message, and the reply | Minute. Each message carries a timestamp. Chat IDs are given as `chat 1234abcd`. |
 | Screenshots in `images/` | What was on screen | Minute. Names with six digits (`2026-10-09_144224`) are the capture time. Names ending in `-pasted` are when the image was pasted into a chat, so the capture was at or before that time. |
 | Snapshot files (table below) | The whole model as it was at that save | Minute. Shows only what still existed then. |
-| OneDrive version history | The whole model at each synced save | Minute. Not pulled yet; see [Gaps](#gaps-to-fill). |
+| OneDrive version history | The whole file at each synced save | Minute. Listed for `Examples.gh` (71 versions); not yet for `Dowel Model.3dm`. |
 | Features visible on a column | The earliest day it could have been made | Day. A "not before" date only. |
 
 A screenshot shows that something existed at that time. It does not show when it was first made.
@@ -26,22 +26,150 @@ A screenshot shows that something existed at that time. It does not show when it
 
 All in `OneDrive - Louisiana State University\Personal\Masters\26 Fall\Spruce Beetle\` unless noted.
 
-| File | Last saved | Notes |
-| --- | --- | --- |
-| `Initial_Tests.3dmbak` | Sep 8, 10:08 PM | The save before `Initial_Tests.3dm`. |
-| `Initial_Tests.gh` | Sep 8, 10:20 PM | Packed Contacts and Contact Joints were tested here (change log, Sep 8). |
-| `Initial_Tests.3dm` | Sep 8, 10:20 PM | |
-| `Examples.3dmbak` | Sep 13, 9:55 PM | The save before `Examples.3dm`. |
-| `Examples.3dm` | Sep 14, 4:25 PM | |
-| `Packed Tenon joints.gh` | Sep 19, 3:11 PM | Same day as the Contact Tenon work. |
-| `Examples_autosave.gh` | Oct 2, 9:30 AM | Grasshopper autosave of `Examples.gh`, before that day's orientation lock and Dowel Column. |
-| `RhinoAutosave.3dm` | Oct 6, 10:46 AM | In `%LOCALAPPDATA%\McNeel\Rhinoceros\8.0\AutoSave\`. Rhino's autosave of whatever file was open then. |
-| `Dowel Model.3dmbak` | Oct 27, 4:17 PM | The save before the current `Dowel Model.3dm`. |
-| `Dowel Model.3dm` | Oct 28, 12:45 PM | Current working file. |
-| `Examples.gh` | Oct 28, 12:45 PM | Current working definition. |
-| Grasshopper autosave `f924a285-….gh` | Oct 28, 2:53 PM | In `%APPDATA%\Grasshopper\AutoSave\`. |
+Dates as of 3:30 PM on Oct 28. "Created" is the Windows creation date: when that file name first appeared on this computer. It survives later saves.
+
+| File | Created | Last saved | Notes |
+| --- | --- | --- | --- |
+| `Initial_Tests.gh` | Aug 28, 4:04 PM | Sep 8, 10:20 PM | Created minutes after the last Aug 28 screenshot, so the first column tests were saved here. Packed Contacts and Contact Joints were tested here on Sep 8. |
+| `Initial_Tests.3dm` | Aug 28, 4:05 PM | Sep 8, 10:20 PM | Rhino file for the same tests. |
+| `Initial_Tests.3dmbak` | Sep 8, 9:11 AM | Sep 8, 10:08 PM | The save before `Initial_Tests.3dm`. |
+| `Examples.gh` | Sep 9, 9:22 AM | Oct 28, 3:23 PM | Current working definition. 71 OneDrive versions, below. |
+| `Examples.3dm` | Sep 9, 10:40 AM | Sep 14, 4:25 PM | Created the same minute as `Examples.gh` version 4. One OneDrive version. |
+| `Examples.3dmbak` | Sep 9, 10:40 AM | Sep 13, 9:55 PM | The save before `Examples.3dm`. |
+| `Packed Tenon joints.gh` | Sep 20, 2:25 PM | Sep 19, 3:11 PM | Created after its last save, so it was copied or downloaded onto this computer on Sep 20. Two OneDrive versions, both Sep 19. |
+| `Examples_autosave.gh` | Oct 2, 9:30 AM | Oct 2, 9:30 AM | Grasshopper autosave of `Examples.gh`, before that day's orientation lock and Dowel Column. |
+| `RhinoAutosave.3dm` | | Oct 6, 10:46 AM | In `%LOCALAPPDATA%\McNeel\Rhinoceros\8.0\AutoSave\`. Rhino's autosave, 14 minutes before `Dowel Model.3dm` was created. |
+| `Dowel Model.3dm` | Oct 6, 11:00 AM | Oct 28, 3:23 PM | Current working file. Created the same minute as `Examples.gh` version 53. |
+| `Dowel Model.3dmbak` | Oct 6, 11:00 AM | Oct 28, 12:45 PM | The save before the current `Dowel Model.3dm`. |
+| Grasshopper autosave `f924a285-….gh` | | Oct 28, 2:53 PM | In `%APPDATA%\Grasshopper\AutoSave\`. |
+
+`Dowel Model.3dm` did not exist before 11:00 AM on Oct 6. Columns from earlier days were made in `Initial_Tests.3dm`, `Examples.3dm`, or a file saved over at that time; the Oct 6 autosave from 10:46 AM is the closest copy of what was open just before.
 
 Copy these somewhere read-only before opening them, so a save does not overwrite the date.
+
+### Other OneDrive version histories
+
+| File | Versions | Notes |
+| --- | --- | --- |
+| `Examples.3dm` | 1: Sep 14, 4:25 PM, 308 KB | Only the last save, although `Examples.3dmbak` shows it was also saved Sep 13. |
+| `Packed Tenon joints.gh` | 1: Sep 19, 2:48 PM, 35.6 KB; 2: Sep 19, 3:11 PM, 14.2 KB | Both during the Contact Tenon work. |
+| `Dowel Model.3dm` | not checked yet | |
+
+Rhino files may keep fewer versions than Grasshopper files. When Rhino saves with a backup, it renames the old file to `.3dmbak` and writes a new `.3dm`. OneDrive can then see a new file rather than a new version, and older versions may sit on the `.3dmbak` instead. Grasshopper writes over the same file, so `Examples.gh` kept every save. Check the history on both `Dowel Model.3dm` and `Dowel Model.3dmbak`.
+
+---
+
+## `Examples.gh` versions on OneDrive
+
+OneDrive kept 71 versions of `Examples.gh`, from 9:22 AM on Sep 9 to 3:23 PM on Oct 28. Version 71 is the current file: the local copy was saved at 3:23 PM and is the same 499 KB.
+Version 1 is from Sep 9, so earlier work is not in this file. The Aug 28 tests were saved as `Initial_Tests.gh` (created 4:04 PM that day). The Sep 2 Grasshopper window is titled "unnamed" in the screenshots.
+
+To see the definition as it was on a day, open **Version history** on `Examples.gh`, pick that day's last version, and download it to a separate folder.
+
+| Day | Versions | Saved | Size | Work that day |
+| --- | --- | --- | --- | --- |
+| Sep 9 | 1–12 | 9:22–11:56 AM | 11–24 KB | First saves of this file; test CSVs expanded to 100 offcuts |
+| Sep 10 | 13–20 | 10:07 AM – 12:37 PM | 26–30 KB | Packing-joints spec; more varied column stock |
+| Sep 13 | 21 | 9:55 PM | 44 KB | |
+| Sep 14 | 22–27 | 11:30 AM – 10:53 PM | 24–45 KB | Used Offcuts; Label Offcut Numbers |
+| Sep 19 | 28–34 | 11:59 AM – 4:57 PM | 35–52 KB | Contact Tenon |
+| Sep 23 | 35–39 | 2:06–3:41 PM | 24–40 KB | Contact Spline; square mouth; planes not baked |
+| Sep 25 | 40–43 | 1:59–3:23 PM | 39–42 KB | Outside Key; clearance sliders |
+| Sep 30 | 44 | 3:48 PM | 33 KB | 2×4 stud scrap experiments |
+| Oct 1 | 45 | 2:19 PM | 44 KB | Scraps under 8 in dropped |
+| Oct 2 | 46–50 | 9:39 AM – 1:48 PM | 43–45 KB | Orientation lock; first Dowel Column |
+| Oct 5 | 51–52 | 3:06–3:46 PM | 36–46 KB | Locked packing stops bridging holes |
+| Oct 6 | 53 | 11:00 AM | 39 KB | Solid Difference for live dowel holes; `Dowel Model.3dm` created this minute |
+| Oct 8 | 54–56 | 3:08–3:54 PM | 40 KB, then 492–493 KB | Ranked horizontal dowels; dowels both ways |
+| Oct 9 | 57–61 | 2:53–4:16 PM | 487–501 KB | Dowel placement fixes |
+| Oct 12 | 62–64 | 12:28–4:17 PM | 499–501 KB | Second, smaller Dowel Column |
+| Oct 13 | 65–67 | 3:36–4:29 PM | 504–507 KB | Rod spacing `S` |
+| Oct 16 | 68 | 2:54 PM | 504 KB | Stagger Column and Spine Column |
+| Oct 27 | 69 | 4:17 PM | 497 KB | Same minute as `Dowel Model.3dmbak` |
+| Oct 28 | 70–71 | 12:45 PM, 3:23 PM | 495–499 KB | Bond Column; 12:45 PM is the same minute as `Dowel Model.3dm` |
+
+**Oct 8 size jump.** The file grew from 40 KB (version 54, 3:08 PM) to 492 KB (version 55, 3:38 PM) and stayed near 500 KB afterward. Something large was added to the definition in that half hour, the same time as the "dowels only go one way" screenshot. Internalized geometry is a common cause. Opening versions 54 and 55 side by side would show what it was.
+
+**Rhino and Grasshopper saved together.** Versions 21 and 24 share their minute with `Examples.3dmbak` (Sep 13, 9:55 PM) and `Examples.3dm` (Sep 14, 4:25 PM). Versions 69 and 70 share their minute with `Dowel Model.3dmbak` and `Dowel Model.3dm`. The Rhino file's OneDrive history probably lines up with this list.
+
+<details>
+<summary>Every version, as listed in OneDrive</summary>
+
+| Version | Saved | Size |
+| --- | --- | --- |
+| 1 | Sep 9, 9:22 AM | 12.4 KB |
+| 2 | Sep 9, 9:36 AM | 11.3 KB |
+| 3 | Sep 9, 10:18 AM | 14.9 KB |
+| 4 | Sep 9, 10:40 AM | 18.3 KB |
+| 5 | Sep 9, 11:08 AM | 18.9 KB |
+| 6 | Sep 9, 11:16 AM | 16.6 KB |
+| 7 | Sep 9, 11:16 AM | 16.6 KB |
+| 8 | Sep 9, 11:17 AM | 16.9 KB |
+| 9 | Sep 9, 11:21 AM | 16.9 KB |
+| 10 | Sep 9, 11:39 AM | 19.5 KB |
+| 11 | Sep 9, 11:54 AM | 22.4 KB |
+| 12 | Sep 9, 11:56 AM | 23.9 KB |
+| 13 | Sep 10, 10:07 AM | 27.4 KB |
+| 14 | Sep 10, 10:28 AM | 29.2 KB |
+| 15 | Sep 10, 10:39 AM | 28.4 KB |
+| 16 | Sep 10, 11:51 AM | 28.3 KB |
+| 17 | Sep 10, 11:51 AM | 26.2 KB |
+| 18 | Sep 10, 12:20 PM | 26.7 KB |
+| 19 | Sep 10, 12:24 PM | 27.4 KB |
+| 20 | Sep 10, 12:37 PM | 29.7 KB |
+| 21 | Sep 13, 9:55 PM | 43.5 KB |
+| 22 | Sep 14, 11:30 AM | 23.6 KB |
+| 23 | Sep 14, 12:13 PM | 40.3 KB |
+| 24 | Sep 14, 4:25 PM | 45.1 KB |
+| 25 | Sep 14, 4:48 PM | 24.2 KB |
+| 26 | Sep 14, 10:35 PM | 43.4 KB |
+| 27 | Sep 14, 10:53 PM | 24.2 KB |
+| 28 | Sep 19, 11:59 AM | 46.6 KB |
+| 29 | Sep 19, 12:16 PM | 46.8 KB |
+| 30 | Sep 19, 12:29 PM | 50.2 KB |
+| 31 | Sep 19, 4:16 PM | 49.1 KB |
+| 32 | Sep 19, 4:28 PM | 51.9 KB |
+| 33 | Sep 19, 4:46 PM | 38.4 KB |
+| 34 | Sep 19, 4:57 PM | 35.1 KB |
+| 35 | Sep 23, 2:06 PM | 23.8 KB |
+| 36 | Sep 23, 2:36 PM | 31.9 KB |
+| 37 | Sep 23, 2:54 PM | 35.9 KB |
+| 38 | Sep 23, 3:39 PM | 40.4 KB |
+| 39 | Sep 23, 3:41 PM | 38.0 KB |
+| 40 | Sep 25, 1:59 PM | 41.5 KB |
+| 41 | Sep 25, 2:38 PM | 41.7 KB |
+| 42 | Sep 25, 2:56 PM | 38.8 KB |
+| 43 | Sep 25, 3:23 PM | 39.6 KB |
+| 44 | Sep 30, 3:48 PM | 33.2 KB |
+| 45 | Oct 1, 2:19 PM | 43.8 KB |
+| 46 | Oct 2, 9:39 AM | 44.6 KB |
+| 47 | Oct 2, 10:30 AM | 42.9 KB |
+| 48 | Oct 2, 10:30 AM | 42.9 KB |
+| 49 | Oct 2, 11:24 AM | 42.7 KB |
+| 50 | Oct 2, 1:48 PM | 44.8 KB |
+| 51 | Oct 5, 3:06 PM | 45.6 KB |
+| 52 | Oct 5, 3:46 PM | 35.7 KB |
+| 53 | Oct 6, 11:00 AM | 38.9 KB |
+| 54 | Oct 8, 3:08 PM | 40.3 KB |
+| 55 | Oct 8, 3:38 PM | 492 KB |
+| 56 | Oct 8, 3:54 PM | 493 KB |
+| 57 | Oct 9, 2:53 PM | 487 KB |
+| 58 | Oct 9, 3:47 PM | 498 KB |
+| 59 | Oct 9, 4:06 PM | 498 KB |
+| 60 | Oct 9, 4:11 PM | 500 KB |
+| 61 | Oct 9, 4:16 PM | 501 KB |
+| 62 | Oct 12, 12:28 PM | 499 KB |
+| 63 | Oct 12, 3:37 PM | 501 KB |
+| 64 | Oct 12, 4:17 PM | 501 KB |
+| 65 | Oct 13, 3:36 PM | 504 KB |
+| 66 | Oct 13, 4:07 PM | 507 KB |
+| 67 | Oct 13, 4:29 PM | 507 KB |
+| 68 | Oct 16, 2:54 PM | 504 KB |
+| 69 | Oct 27, 4:17 PM | 497 KB |
+| 70 | Oct 28, 12:45 PM | 495 KB |
+| 71 | Oct 28, 3:23 PM | 499 KB |
+
+</details>
 
 ---
 
@@ -290,6 +418,7 @@ A column cannot be older than the first plugin feature it uses.
 - **Shows:** Upright numbered boards (55, 79, 78, 85, 77) with short horizontal pins.
 - **Asked:** A simple way to make all these dowels cut the blocks in Grasshopper, and update when a dowel moves.
 - **Answer:** Solid Difference with the blocks grafted into `A` and the dowels flattened into `B`. Keep the dowels referenced, not baked or internalized, and make them closed solids that stick out past the faces. *(chat 9585e888)*
+- **Next:** `Dowel Model.3dm` was created at 11:00 AM, about 20 minutes later, the same minute as `Examples.gh` version 53.
 
 ### Oct 8 — Ranked horizontal dowels
 
@@ -444,7 +573,8 @@ Seven commits, 2:53–4:12 PM.
 
 ## Gaps to fill
 
-- **OneDrive version history.** Right-click `Dowel Model.3dm` and `Examples.gh` → **Version history**. Write down the dates that exist, and download one version per working day into a separate folder. Each one is a dated snapshot of every column in the file.
+- **`Dowel Model.3dm` version history.** Open **Version history** on `Dowel Model.3dm` and on `Dowel Model.3dmbak`. It holds the baked columns from Oct 6 on, so its versions date the geometry itself. Download one version per working day into a separate folder.
+- **What changed on Oct 8 between versions 54 and 55.** Open both copies to see what made the file 450 KB larger.
 - **Days with commits but no screenshots:** Sep 8, 14, 19, Sep 30 – Oct 1, Oct 27. The snapshot files above cover Sep 8, 14, and 19.
 - **`RhinoAutosave.3dm` (Oct 6):** Open a copy and check which file it was.
 - **Columns in `Dowel Model.3dm`:** Match each one against the feature table to give it a "not before" date, then narrow it with the OneDrive versions.

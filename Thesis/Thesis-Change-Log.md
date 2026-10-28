@@ -48,6 +48,38 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-28 — docs: Examples.gh versions 27 and 28 filled in
+
+- **Motivation:** The `Examples.gh` version table in the timeline had two rows marked "not listed".
+- **Files:** `Thesis/Timeline/Work-Timeline.md`
+- **Before → after:** Versions 27 and 28 were unknown. Version 27 is Sep 14, 10:53 PM, 24.2 KB; version 28 is Sep 19, 11:59 AM, 46.6 KB. The per-day table now reads Sep 14: versions 22–27, 11:30 AM – 10:53 PM; Sep 19: versions 28–34, 11:59 AM – 4:57 PM. The "Sep 14–19 not listed" row and the gap item asking for these two versions are removed.
+- **Result / observation:** All 71 `Examples.gh` versions are now listed. No saves fall between Sep 14 and Sep 19.
+- **Follow-ups:** `Dowel Model.3dm` and `.3dmbak` version history. Component-Reference does not need an update.
+
+### 2026-10-28 — docs: Version-list screenshots removed from the timeline
+
+- **Motivation:** The user sent the OneDrive version-list screenshots as a data source, not as images for the timeline.
+- **Files:** `Thesis/Timeline/Work-Timeline.md`, `Thesis/Timeline/images/` (eight `*-versions.png` files deleted)
+- **Before → after:** The timeline showed six screenshots of the `Examples.gh` version list and two for `Examples.3dm` and `Packed Tenon joints.gh`. Those images and their links are gone. The version tables, dates, sizes, and observations taken from them stay.
+- **Result / observation:** 57 images remain, all linked, none unused.
+- **Follow-ups:** None. Component-Reference does not need an update.
+
+### 2026-10-28 — docs: File creation dates and two more OneDrive version lists in the timeline
+
+- **Motivation:** The user sent version histories for `Packed Tenon joints.gh` and what was taken to be the dowel model, which showed only one version.
+- **Files:** `Thesis/Timeline/Work-Timeline.md`, `Thesis/Timeline/images/2026-10-28_152755-examples-3dm-versions.png`, `Thesis/Timeline/images/2026-10-28_152809-packed-tenon-joints-gh-versions.png`
+- **Before → after:** The snapshot table had only last-saved dates. It now has the Windows creation date for each file and the new version counts. A new "Other OneDrive version histories" table lists `Examples.3dm` (one version) and `Packed Tenon joints.gh` (two versions). The Oct 6 day entry notes when `Dowel Model.3dm` was created. The Examples.gh section no longer says the Aug 28 canvases were unsaved.
+- **Result / observation:** The one-version history (308 KB, Sep 14 at 4:25 PM) is `Examples.3dm`, not `Dowel Model.3dm`, which is 68.8 MB and was last saved Oct 28 at 3:23:47 PM. `Dowel Model.3dm` and its `.3dmbak` were created Oct 6 at 11:00:39 AM, the same minute as `Examples.gh` version 53 and 14 minutes after the Oct 6 Rhino autosave, so that file holds work from Oct 6 on. `Initial_Tests.gh` and `.3dm` were created Aug 28 at 4:04–4:05 PM, right after that day's last screenshot, so the Aug 28 tests were saved there; the earlier timeline said the Aug 28 window was unnamed. `Examples.3dm` was created Sep 9 at 10:40 AM, the same minute as `Examples.gh` version 4. `Packed Tenon joints.gh` was created Sep 20, after its last save on Sep 19, so it was copied or downloaded onto this computer. Its two versions are Sep 19 at 2:48 PM (35.6 KB) and 3:11 PM (14.2 KB). Untested explanation for the short Rhino histories: a Rhino save with backup renames the old file to `.3dmbak` and writes a new `.3dm`, which OneDrive may treat as a new file. All 65 image links in the timeline resolve.
+- **Follow-ups:** Check the version history on both `Dowel Model.3dm` and `Dowel Model.3dmbak`. Component-Reference does not need an update.
+
+### 2026-10-28 — docs: Examples.gh OneDrive version history added to the timeline
+
+- **Motivation:** OneDrive version history is the dated record of the Grasshopper definition. It shows which version to download to see the work as it was on a given day.
+- **Files:** `Thesis/Timeline/Work-Timeline.md`, `Thesis/Timeline/images/` (six screenshots of the OneDrive version list, `2026-10-28_1526xx-examples-gh-versions.png` and `152703`)
+- **Before → after:** The timeline listed OneDrive history as not pulled. It now has an `Examples.gh` section: a per-day table (versions, save times, sizes, the work logged that day), every version in a collapsible table, and the user's screenshots of the list. Gaps now ask for the `Dowel Model.3dm` history, the two missing `Examples.gh` rows, and a comparison of versions 54 and 55.
+- **Result / observation:** 71 versions, from Sep 9 at 9:22 AM to Oct 28 at 3:23 PM. Versions 27 and 28 (between Sep 14 at 10:35 PM and Sep 19 at 12:16 PM) were not in the screenshots. Version 71 matches the local file (saved 3:23:40 PM, 511,168 bytes). Version 1 is from Sep 9, so the Aug 28 and Sep 2 canvases were not this file. Between version 54 (Oct 8, 3:08 PM, 40.3 KB) and version 55 (3:38 PM, 492 KB) the file grew by about 450 KB and stayed near 500 KB afterward; the cause is not known yet. Versions 21, 24, 69, and 70 share their minute with the saves of `Examples.3dmbak`, `Examples.3dm`, `Dowel Model.3dmbak`, and `Dowel Model.3dm`. All 63 image links in the timeline resolve.
+- **Follow-ups:** Get the `Dowel Model.3dm` version history. Fill in versions 27 and 28. Open versions 54 and 55 to see what was added on Oct 8. Component-Reference does not need an update.
+
 ### 2026-10-28 — setup: Thesis-Planning renamed Thesis; change log and timeline moved into it
 
 - **Motivation:** Thesis records (the lab notebook, the work timeline, the calendar, the proposal) were split between `Documentation/` and `Thesis-Planning/`. The user asked for them in one folder named `Thesis`.
