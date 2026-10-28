@@ -69,7 +69,7 @@ Thesis and maintainer docs for this copy:
 - [Component-Reference.md](Documentation/Component-Reference.md) — component catalog (packing tables still stale)
 - [Packing-Joints.md](Documentation/Packing-Joints.md) — packed-column joint spec
 - [Column-Fill-2x2x8.md](Documentation/Column-Fill-2x2x8.md) — 24″ × 24″ × 96″ column fill
-- [Thesis-Change-Log.md](Documentation/Thesis-Change-Log.md) — lab notebook
+- [Thesis/](Thesis/README.md) — lab notebook ([Thesis-Change-Log.md](Thesis/Thesis-Change-Log.md)), work timeline, and graduation calendar
 - [Setup/Grasshopper-Plugin-Dev-Guide.md](Setup/Grasshopper-Plugin-Dev-Guide.md) — build and load loop
 
 Stock CSVs/JSON for packing tests: [Documentation/TestData/](Documentation/TestData/).

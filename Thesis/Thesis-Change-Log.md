@@ -10,14 +10,16 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). **Stagger Column**, **Spine Column**, and **Bond Column** are alternate packers for that box: stagger neighboring ends, stand 1–4 long scraps on the floor first, or keep every wide face pointing one way and offset the seams in plan so the dowels join one body. Bin Packing EB-AFIT stays the comparison. Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). **Stagger Column**, **Spine Column**, and **Bond Column** are alternate packers for that box: stagger neighboring ends, stand 1–4 long scraps on the floor first, or keep every wide face pointing one way and offset the seams in plan so the dowels join one body. Bin Packing EB-AFIT stays the comparison. Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](../Documentation/Packing-Joints.md).
 
 Related guides already in the repo:
 
-- [README.md](README.md) — what each doc is for
-- [Packing-Joints.md](Packing-Joints.md)
-- [Component-Reference.md](Component-Reference.md)
-- [Column-Fill-2x2x8.md](Column-Fill-2x2x8.md)
+- [Documentation/README.md](../Documentation/README.md) — what each doc is for
+- [README.md](README.md) — what is in this Thesis folder
+- [Timeline/Work-Timeline.md](Timeline/Work-Timeline.md) — dated order of the modeling work
+- [Packing-Joints.md](../Documentation/Packing-Joints.md)
+- [Component-Reference.md](../Documentation/Component-Reference.md)
+- [Column-Fill-2x2x8.md](../Documentation/Column-Fill-2x2x8.md)
 - [Grasshopper-Plugin-Dev-Guide.md](../Setup/Grasshopper-Plugin-Dev-Guide.md)
 
 ---
@@ -45,6 +47,30 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-10-28 — setup: Thesis-Planning renamed Thesis; change log and timeline moved into it
+
+- **Motivation:** Thesis records (the lab notebook, the work timeline, the calendar, the proposal) were split between `Documentation/` and `Thesis-Planning/`. The user asked for them in one folder named `Thesis`.
+- **Files:** `Thesis-Planning/` → `Thesis/` (git rename); `Documentation/Thesis-Change-Log.md` → `Thesis/Thesis-Change-Log.md` (git rename); `Documentation/Timeline/` → `Thesis/Timeline/` (was untracked); `Thesis/README.md`; `Documentation/README.md`; `README.md`; `.cursor/rules/thesis-change-log.mdc`
+- **Before → after:** The change log lived at `Documentation/Thesis-Change-Log.md`, the timeline at `Documentation/Timeline/`, and the calendar and proposal in `Thesis-Planning/`. All three are now under `Thesis/`. The logging rule points at `Thesis/Thesis-Change-Log.md`. The links at the top of this log go to `../Documentation/` for the plugin docs. `Thesis/README.md` lists the log and the timeline with the calendar files. `Documentation/README.md` and the root `README.md` link to the `Thesis` folder instead of the old paths. Plugin docs stay in `Documentation/`: Component-Reference, Packing-Joints, Column-Fill, TestData, Examples, Reproduce. File paths in older entries below are left as they were written.
+- **Result / observation:** A link check over every Markdown file in `Thesis/`, `Documentation/README.md`, and the root `README.md` found no broken links. No other file outside this log mentions `Thesis-Planning`, `Documentation/Thesis-Change-Log`, or `Documentation/Timeline`.
+- **Follow-ups:** If `Packing-Joints.md` is treated as thesis writing rather than a plugin spec, it can move too. Component-Reference does not need an update.
+
+### 2026-10-28 — docs: Timeline screenshots carry the issue, discussion, and outcome from each chat
+
+- **Motivation:** The first timeline captions only described what was on screen. Showing the work needs the problem each screenshot was sent with and what came of it.
+- **Files:** `Documentation/Timeline/Work-Timeline.md`, `Documentation/Timeline/images/` (now 57 PNGs)
+- **Before → after:** Each day's table of one-line captions became one block per chat message. A block shows the screenshot or screenshots sent together, then what they show, the question or problem raised, what the reply found, and the outcome (taken from the change log when the chat reply ended before the fix), plus the chat ID. Fifteen screenshots that were missing were added from Cursor's workspace image folder: nine from the Sep 2 axis-mapping session, three from the Sep 25 outside-key discussion, and one each from Oct 12, Oct 13, and Oct 28. Every existing screenshot was swapped for the original from that folder, because the copies in the chat assets folder had been recompressed. Four `-pasted` names moved to the earlier time the image was pasted into the chat box (Aug 28 14:57 → 14:56, Oct 8 15:40 → 15:38, Oct 9 14:11 → 13:38, Oct 16 11:18 → 11:03). One Oct 9 image that repeated `133435` without the blue mark and was never sent was dropped.
+- **Result / observation:** The Aug 28, 3:00 PM screenshot was a Logison CSV 2 Box definition, not a Spruce Beetle pack; the first timeline had captioned it as the first Bin Packing run. The Sep 2 session shows the path to the Z-up fix: the input box taken from a side face, beginner questions about Domain and Domain Box, a reply that wrongly assumed a Brep on Domain Box `B`, and then the Y-up library mapping found at 3:24 PM and fixed in code at 10:11 PM. All 57 image links in the page resolve, and no file in `images/` is unused.
+- **Follow-ups:** Same as the earlier timeline entry: OneDrive version history, "not before" dates for the columns in `Dowel Model.3dm`, and checking `RhinoAutosave.3dm`. Component-Reference does not need an update.
+
+### 2026-10-28 — docs: Reconstructed work timeline with dated screenshots
+
+- **Motivation:** A month of iterations went into one Rhino file (`Dowel Model.3dm`) and one Grasshopper file (`Examples.gh`), saved over each other. Neither file records when an object was made. The order of the work is needed to show it in the thesis.
+- **Files:** `Documentation/Timeline/Work-Timeline.md`, `Documentation/Timeline/images/` (43 PNGs), `Documentation/README.md`
+- **Before → after:** No timeline existed. The new page lists the dated sources: change log entries, git commits, screenshots, snapshot files on OneDrive and in the Rhino and Grasshopper autosave folders, and a table giving the earliest day each visible feature could appear on a column. The day-by-day section runs from Aug 27 to Oct 28 with captions. Screenshots were copied from the Cursor chat image folder and renamed by date. Names with six digits keep the capture time from the original filename; names ending in `-pasted` use the time the image was pasted into chat. Three duplicate pastes were dropped. Five images that are not model work were left out: Fusion 360 preferences, two Rhino options dialogs, an Amazon product page, and a blank March 2027 calendar template.
+- **Result / observation:** The current `Dowel Model.3dm` and `Examples.gh` were last saved Oct 28, 12:45 PM. Older snapshots exist from Sep 8 (`Initial_Tests`), Sep 13–14 (`Examples.3dm` and its backup), Sep 19 (`Packed Tenon joints.gh`), Oct 2 (`Examples_autosave.gh`), Oct 6 (`RhinoAutosave.3dm`), and Oct 27 (`Dowel Model.3dmbak`). Screenshots cover Aug 28, Sep 2, 9, 23, Oct 2, 5, 6, 8, 9, 12, 16, and 28. The Aug 28 and Sep 2 screenshots show packed pieces lying in a row beside the column, before the Sep 2 evening fix to container size and Z-up mapping. OneDrive version history was not checked.
+- **Follow-ups:** Pull the OneDrive version history for `Dowel Model.3dm` and `Examples.gh` and keep one copy per working day. Give each column in the current file a "not before" date from the feature table. Open a copy of `RhinoAutosave.3dm` to see which file it was. Component-Reference does not need an update.
 
 ### 2026-10-28 — feature: Bond Column packs a running bond in plan so dowels join the whole column
 

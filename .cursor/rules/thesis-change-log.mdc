@@ -9,7 +9,7 @@ This repo is **thesis work** on the Spruce Beetle Grasshopper plugin (fork of Do
 
 ## Mandatory logging
 
-After **any** change that lands in the repo (component logic, Base types, docs, setup, tests, Grasshopper examples), **append an entry** to `Documentation/Thesis-Change-Log.md` in the **same turn** as the change. Do not wait for a later “write notes” request.
+After **any** change that lands in the repo (component logic, Base types, docs, setup, tests, Grasshopper examples), **append an entry** to `Thesis/Thesis-Change-Log.md` in the **same turn** as the change. Do not wait for a later “write notes” request.
 
 - Log failed experiments and reverted approaches — those are thesis evidence.
 - Skip only: edits that exist solely to add the log entry itself, and generated `bin/` / `obj/` output.
