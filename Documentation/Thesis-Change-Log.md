@@ -10,7 +10,7 @@ Original plugin: Dominik Reisach, *Spruce Beetle*. This repo (`Spruce-Beetle-2.0
 
 <!-- Update this when the research question or primary workflow changes. The agent reads this when writing Motivation. -->
 
-Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). **Stagger Column** and **Spine Column** are alternate packers for that box: stagger neighboring ends, or stand 1–4 long scraps on the floor first. Bin Packing EB-AFIT stays the comparison. Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
+Pack leftover rectangular offcuts into a **2′ × 2′ × 8′ (24″ × 24″ × 96″) column** with Bin Packing EB-AFIT (Rhino inches). **Stagger Column**, **Spine Column**, and **Bond Column** are alternate packers for that box: stagger neighboring ends, stand 1–4 long scraps on the floor first, or keep every wide face pointing one way and offset the seams in plan so the dowels join one body. Bin Packing EB-AFIT stays the comparison. Joints: **Packed Contacts → Select Contacts → Contact Tenon** (captured blind keys), **Contact Spline** (edge-open keys), or **Outside Key** (face keys on the column skin after the stack). **Dowel Column** ranks horizontal through-dowels on the packed stack (widest vertical face, diameter and clearance). The full-height vertical placer is hidden as Legacy Dowel Placer. Alignment Tenon / Spline stay on the curve tab. Packed Stacks was deleted. Spec: [Packing-Joints.md](Packing-Joints.md).
 
 Related guides already in the repo:
 
@@ -45,6 +45,40 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-10-28 — feature: Bond Column packs a running bond in plan so dowels join the whole column
+
+- **Motivation:** Plan views of packed columns showed two or more bodies with no connection. Dowel Column only joins boards through their wide faces. The locked packers turn every board the same way, and in a grid of one width the seams inside a layer run straight through every layer. Boards across such a seam only meet edge to edge, so no dowel crosses it. In elevation the ends were already staggered well. The same brick bond was needed in plan.
+- **Files:** `Packing/BondPacker.cs`, `Packing/BondColumn_GH.cs`, `Documentation/Component-Reference.md`, `Documentation/Column-Fill-2x2x8.md`
+- **Before → after:** Cause in `AxisLockPacker.FindPose`: the turned footprint is only kept when it sits strictly lower, and ties go to the lowest X, then the lowest Z. Every board kept its first orientation on the same grid, so the seams lined up. New **Bond Column** (`BondCol`, GUID `B4C71E28-5D93-4A6F-8E12-7F3A0D9C6B41`) keeps every thickness on one plan axis, so every wide face points the same way. A board's side edges stay at least `Bo` (default 1.5) from every seam in a layer it touches face to face. Candidate spots include centered on a seam and `Bo` either side of it. The edge gap the offset leaves is filled by a narrower scrap when one fits, never by a turned board. Ends stagger by `St` (default 4) as in Stagger Column, and nothing bridges a hole. It packs with thickness along X and along Y and keeps the larger volume. The remark gives the axis, the number of groups joined through wide faces (contact at least `Bo` across and in height), the number of boards still next to a seam, and the number of aligned ends. It warns when there is more than one group. Stagger, Spine, and Bin Packing are unchanged.
+- **Result / observation:** `BondPacker.Check()` passed with 0 failures, run by reflection on the built assembly outside Grasshopper. A 7 × 7.5 × 48 box of 2×4s forms one group with no board next to a seam. With `Bo = 0` the same pile packs a grid and splits into more than one group. A 24 × 24 × 96 column of 260 2×4s forms one group. In a 7 × 7.5 box, 1.5 × 1.5 scraps fill the wall gaps beside the offset boards. The table below compares the same stock with `St = 4` and contact `Bo = 1.5`; groups for Stagger were counted with the same rule.
+
+  | Stock and box | Stagger packed / volume / groups | Bond packed / volume / groups |
+  | --- | --- | --- |
+  | `stock_column_2x4_2x6.csv`, 7 × 7.5 × 96 | 12 / 4,059 / 8 | 12 / 4,059 / 1 |
+  | `stock_column_2x4_2x6.csv`, 24 × 24 × 96 | 47 / 9,485 / 6 | 47 / 9,485 / 1 (12 boards next to a seam) |
+  | `stock_3.5x1.5_lengths_250.csv`, 7 × 7.5 × 96 | 10 / 3,954 / 2 | 12 / 3,966 / 1 |
+  | `stock_3.5x1.5_lengths_250.csv`, 24 × 24 × 96 | 175 / 51,098 / 12 | 150 / 45,187 / 1 |
+  | `parts_varied_250.csv`, 24 × 24 × 96 | 73 / 42,370 / 18 | 83 / 46,874 / 1 |
+
+  The price of the bond shows in the full 2×4 column: 82% filled against 92%. Stagger turns boards to fill the 3 inch strip left at the wall (24 is not a multiple of 3.5). Bond Column will not, because a turned board would meet its neighbors edge on. In the 24 × 24 case with only 47 parts, the partly filled floor ran out of offset spots and 12 boards went beside a seam; it was still one group. Plan sections of the 7 × 7.5 pack showed the 2×6s and the 2×4 pairs alternating with offset seams. Run time on the 250-part piles was 0.8 s and 2.1 s for Bond, against 44 s and 108 s for Stagger. MSBuild Debug compiled. The copy to `bin/` was blocked because Rhino 8 (PID 36852) holds `SpruceBeetle.gha`; the built assembly is in `obj/Debug/net48/`. The Grasshopper viewport was not opened.
+- **Follow-ups:** Close Rhino, rebuild, reload Grasshopper, and wire the same CSV and box into Stagger Column and Bond Column. Feed Bond Column `Oc` into Dowel Column and confirm that the rods cross the offset seams. The group count could also go on Dowel Column so every packer reports it. Component-Reference and the column-fill tweak table are updated.
+
+### 2026-10-27 — docs: Drop full-length 2×4s from the bought-lumber cut list
+
+- **Motivation:** An uncut 96″ 2×4 is a full board, so it would not show up as a scrap in this pile.
+- **Files:** `Documentation/TestData/stock_column_2x4_2x6.csv`
+- **Before → after:** Rows 46–48 were `1.5;3.5;96`. Those three rows are gone. The file is 47 parts. Longest 2×4 is 84″ (two of them). The two bought 2×6 × 8′ boards stay as rows 46–47, `1.5;5.5;96`. Combined 2×4 length is 1505″ (about 125.4 ft).
+- **Result / observation:** Seven pieces are still at least 72″: two 72″, one 78″, two 84″, and the two 96″ 2×6s. Volume is about 9,500 cubic inches.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
+### 2026-10-27 — docs: Column cut list from bought 2×4s and two 2×6×8′ boards
+
+- **Motivation:** The next column pack should use the lumber actually purchased: dressed 2×4 (1.5″ × 3.5″) plus two 2×6 × 8′ boards, cut into parts long enough to handle and with a few sticks long enough to run up the 96″ column.
+- **Files:** `Documentation/TestData/stock_column_2x4_2x6.csv`
+- **Before → after:** That file did not exist. It is 50 rows, `index;x;y;z` in inches, no header. Rows 1–48 are `1.5;3.5` with lengths from 12″ to 96″ (shortest first). Nothing is under 12″. Eight of those are at least 72″ (3/4 of the column height): two at 72″, one at 78″, two at 84″, three at 96″. Rows 49–50 are the two bought boards left full length, dressed 2×6 as `1.5;5.5;96`. Combined 2×4 length is 1793″ (about 149.4 ft).
+- **Result / observation:** 50 parts, minimum length 12″, ten pieces at 72″ or longer including the two 2×6s. Volume is about 11,000 cubic inches against the 55,296 cubic inch column, so this pile cannot fill the box solid.
+- **Follow-ups:** Point CSV to Offcut at this file and pack the 24×24×96 box. Spine Column can take the 96″ sticks first. Component-Reference does not need an update (test data only).
 
 ### 2026-10-26 — docs: Weekday boxes wider than weekend boxes
 

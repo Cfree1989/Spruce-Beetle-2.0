@@ -472,7 +472,7 @@ A value list is auto-added for joint type: `tenon`, `cross tenon`, `custom tenon
 
 ## Packing
 
-Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**. **Stagger Column** and **Spine Column** pack the same box with the longest side vertical, so neighboring ends do not all land on one plane. **Dowel Column** then ranks horizontal dowels through that pack. List face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
+Pack rectangular leftovers into a box with **Bin Packing EB-AFIT**. **Stagger Column** and **Spine Column** pack the same box with the longest side vertical, so neighboring ends do not all land on one plane. **Bond Column** also keeps every thickness on one plan axis and offsets the side seams layer to layer, so the dowels can tie the whole cross-section together. **Dowel Column** then ranks horizontal dowels through that pack. List face contacts and cut **Contact Tenon** (captured keys), **Contact Spline** (edge-open keys after stacking), and/or **Outside Key** (face keys on the column skin). Alignment **Tenon Joints** / **Spline Joints** are for curve chains only — do not wire packed contacts into them.
 
 ### Bin Packing EB-AFIT (`PackBin`)
 
@@ -556,9 +556,40 @@ A remark lists how many spines were placed and their lengths. Outputs match Bin 
 
 ---
 
+### Bond Column (`BondCol`)
+
+**What it does:** Packs with the longest side on Z and every thickness on the same plan axis. All wide faces point the same way, so the boards form layers that touch face to face, and a Dowel Column rod runs through them. Bin Packing, Stagger Column, and Spine Column can turn a board 90° in plan. Those packers line boards of one width up in a grid. Each seam between two boards in a layer then continues straight through every layer, and boards only meet edge to edge across it. Dowel Column does not drill into a narrow edge, so the pack splits into separate bodies.
+
+Bond Column offsets the seams like brickwork in plan. A board's side edges stay at least `Bo` (default 1.5 inches) from every seam in a layer it touches face to face. A 3.5 inch board in the next layer is centered on the seam below, so it overlaps both boards by 1.75 inches. The offset leaves a gap at the wall in alternate layers. A narrower scrap fills it when one fits; otherwise it stays empty. A board is never turned to fill a gap. Ends are staggered as in Stagger Column: at the lowest height where a scrap can sit on the floor or on a complete platform, the scrap whose top misses every side neighbor's top by at least `St` is preferred. A piece that would bridge a hole is left out.
+
+Each step takes the lowest level first, then the lowest layer. At that level, an offset spot comes first, then the spot nearest the start of the layer, then a top that clears `St`, then the widest scrap, then the longest. When no offset spot is left, a board can still go in a spot that lines up with a seam. The remark counts those boards.
+
+The packer tries the thickness along X and along Y and keeps the one that packs more volume. A tie goes to fewer groups, then to X. The remark says which axis was used; dowels run along that axis. It also reports how many groups the pack forms. Two boards are in one group when they touch through a wide face and the contact is at least `Bo` across and `Bo` in height. A warning appears when there is more than one group.
+
+Outputs match Bin Packing. Feed `Oc` to Dowel Column or Packed Contacts.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Offcut Data | OcD | Offcut | List | — | Pieces to pack (`X`, `Y`, `Z`). |
+| Box | B | Box | Item | — | Container size. Position is ignored; packing is generated at the origin. |
+| Stagger | St | Number | Item | `4` | Minimum distance between this top and a side neighbor's top. Below 0 is treated as 0. |
+| Bond | Bo | Number | Item | `1.5` | Minimum distance from a board's side edge to a seam in a layer it touches face to face. Also the smallest face contact counted as joined. Below 0 is treated as 0; `0` packs a grid. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Packed Offcuts | POc | Brep | List | Solids that fit. Items that did not fit are omitted. |
+| Container | C | Brep | Item | Origin-aligned box of the same size (viewport-hidden). |
+| Offcuts | Oc | Offcut | List | Packed pieces (Index, rotated size, geometry, Z-end planes). |
+
+---
+
 ### Dowel Column (`DowelCol`)
 
-**What it does:** After a column is packed, ranks cylindrical dowels through the packed offcuts. Wire `Oc` from Bin Packing, Stagger Column, or Spine Column straight into this component. It does not read Packed Contacts, and it does not place the wood.
+**What it does:** After a column is packed, ranks cylindrical dowels through the packed offcuts. Wire `Oc` from Bin Packing, Stagger Column, Spine Column, or Bond Column straight into this component. It does not read Packed Contacts, and it does not place the wood.
 
 Every dowel is horizontal: its axis is along X or along Y, square to world Z. A vertical hole is never proposed. The hole is a plunge through the widest face. On the router that face lies on the bed and the spindle drills down through it. In the column those wide faces are vertical, so the dowel runs sideways through the thickness. A piece whose widest face is horizontal (thickness on Z) is skipped. A square section may use a horizontal tie. A hole into a narrower edge or end is not a full run through the column.
 

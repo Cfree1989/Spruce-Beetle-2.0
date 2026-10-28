@@ -187,7 +187,8 @@ Packing `Oc` **does** keep Offcut Index (the number on the scrap / CSV column 1)
 | Mixed upright and flat | Orientation `Unlimited` (default) |
 | Neighboring ends step past each other | **Stagger Column** (`StaggerCol`). `St` is the minimum end offset, default 4 |
 | A few long scraps run up the column | **Spine Column** (`SpineCol`). `N` is 1–4, default 2. A spine is at least 3/4 of the column height when the pile has one |
+| Dowels tie the whole cross-section together (brick bond in plan) | **Bond Column** (`BondCol`). `Bo` is the minimum seam offset, default 1.5. `St` as in Stagger Column |
 
-**Stagger Column** and **Spine Column** take the same offcuts and box. Both stand every scrap on its longest side. Stagger Column chooses the next length so a side neighbor does not end on the same plane. Spine Column puts the long scraps on the floor at opposite corners first, then fills longest-first. Bin Packing EB-AFIT is unchanged. Both output `Oc` for Packed Contacts and Dowel Column.
+**Stagger Column**, **Spine Column**, and **Bond Column** take the same offcuts and box. All three stand every scrap on its longest side. Stagger Column chooses the next length so a side neighbor does not end on the same plane. Spine Column puts the long scraps on the floor at opposite corners first, then fills longest-first. Bond Column keeps every thickness on one plan axis and offsets the side seams from layer to layer, so the wide-face dowels join the column into one body. It gives up some volume, because it will not turn a board to fill the strip left at a wall. Bin Packing EB-AFIT is unchanged. All three output `Oc` for Packed Contacts and Dowel Column.
 
 Edit `stock_column_in.csv` with any editor. Keep `index;x;y;z` and `;`. Every x and y should be **≤ 24**, every z **≤ 96**, or that piece cannot go in (unless rotation swaps axes — a 6×6×96 stick can stand as a full-height corner).
