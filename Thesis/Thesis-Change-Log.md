@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-30 — docs: Last two length corrections on the measured stock
+
+- **Motivation:** The hand check of the clipboard transcription was finished.
+- **Files:** `Documentation/TestData/stock_measured_mixed.csv`
+- **Before → after:** Still 88 rows. Row 2 length 28.5 → 25.5. Row 38 length 28.5 → 28.8125. Cross-sections are unchanged: rows 1–7 are 1.5×7.125, 8–72 are 1.5×3.5, 73–84 are 1.625×2.625, 85–88 are 1.3125×7.
+- **Result / observation:** Measuring, copying to paper, and checking the transcription took about 3 hours. Lengths were written on the wood and again on paper; irregular pieces also needed width and thickness. The paper-to-CSV step misread several fractions.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
 ### 2026-10-30 — docs: Hand corrections on the measured stock file
 
 - **Motivation:** The clipboard transcription had two bad 2×8 lengths and two wrong thicknesses.

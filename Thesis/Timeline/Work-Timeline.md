@@ -569,6 +569,13 @@ Seven commits, 2:53–4:12 PM.
 
 - **Shows:** Plan sections at three heights rendered from the packers outside Rhino: Stagger Column in a 7 × 7.5 box (8 separate groups), Bond Column in the same box (one group), and Bond Column in the 24 × 24 × 96 column. *(chat 01c0a913)*
 
+### Oct 30 — Measuring the cut pile
+
+- Numbered the parts, wrote each length on the wood, then copied lengths onto paper. Parts were split by width and thickness, so a nominal group only needed lengths. Irregular pieces also needed width and thickness measured.
+- Stopped writing the length on the wood partway through.
+- The paper was transcribed into `Documentation/TestData/stock_measured_mixed.csv` (88 pieces; sheet number 89 has no length). Handwriting was hard to read, so several lengths and two thicknesses were corrected by hand.
+- Measuring, logging, and verifying took about 3 hours.
+
 ---
 
 ## Gaps to fill
