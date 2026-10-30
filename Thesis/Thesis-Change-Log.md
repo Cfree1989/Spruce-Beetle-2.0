@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-30 — docs: Hand corrections on the measured stock file
+
+- **Motivation:** The clipboard transcription had two bad 2×8 lengths and two wrong thicknesses.
+- **Files:** `Documentation/TestData/stock_measured_mixed.csv`
+- **Before → after:** Still 88 rows, `index;x;y;z`, no header. Row 4 length 42.875 → 42.375. Row 5 length 18.5 → 19.5. Rows 73–84 thickness 0.625 → 1.625 (section is now 1⅝ × 2⅝). Rows 85–88 thickness 1.9375 → 1.3125 (section is now 1 5/16 × 7). Lengths on 73–88 are unchanged.
+- **Result / observation:** The other 86 lengths and the 2×4 block (rows 8–72) were left as transcribed.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
 ### 2026-10-30 — docs: Measured mixed-section stock from the clipboard notes
 
 - **Motivation:** Column packing needs a real measured pile of mixed sections, not only generated test lengths.
