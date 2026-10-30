@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-30 — docs: Measured mixed-section stock from the clipboard notes
+
+- **Motivation:** Column packing needs a real measured pile of mixed sections, not only generated test lengths.
+- **Files:** `Documentation/TestData/stock_measured_mixed.csv`
+- **Before → after:** File did not exist. 88 rows, `index;x;y;z` in inches, no header. Rows 1–7 are 1.5×7.125, 8–72 are 1.5×3.5, 73–84 are 0.625×2.625 (2⅝ × ⅝), 85–88 are 1.9375×7 (1 15/16 × 7). Sheet number 89 has no length and is omitted.
+- **Result / observation:** Lengths are the close-up readings. Rows 4 and 5 are still 42.875 and 18.5; those two are the ones left for a hand edit.
+- **Follow-ups:** Correct rows 4 and 5. Component-Reference does not need an update (test data only).
+
 ### 2026-10-29 — docs: One 44″ and one 60″ 2×4 added back to the column cut list
 
 - **Motivation:** The user wanted a couple of longer parts in the otherwise ≤36″ pile.
