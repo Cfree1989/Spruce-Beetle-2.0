@@ -48,6 +48,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-29 — docs: One 44″ and one 60″ 2×4 added back to the column cut list
+
+- **Motivation:** The user wanted a couple of longer parts in the otherwise ≤36″ pile.
+- **Files:** `Documentation/TestData/stock_column_2x4_2x6.csv`
+- **Before → after:** 69 parts, longest 36″ → 71 parts. New rows 64 (`1.5;3.5;44`) and 65 (`1.5;3.5;60`) sit after the 2×4s. The 2×6 rows moved from 64–69 to 66–71 with the same sizes. These two are added parts, not re-joined from the earlier cuts.
+- **Result / observation:** Total 2×4 length is now 1609″ (was 1505″). The 2×6 total stays 192″. Volume is about 10,031 cubic inches. The 60″ part is the only piece longer than half the 96″ column height.
+- **Follow-ups:** Same re-pack as the entry below. Component-Reference does not need an update (test data only).
+
+### 2026-10-29 — docs: Column cut list capped at 36″ per part
+
+- **Motivation:** The test pile for the 24 × 24 × 96 column should be made of shorter parts, with nothing longer than 36″.
+- **Files:** `Documentation/TestData/stock_column_2x4_2x6.csv`
+- **Before → after:** The file had 47 parts with 16 over 36″: 2×4s at 40, 42, 44, four at 48, 60, 64, two at 72, 78, and two at 84, plus two 2×6s at 96. Each one is now cut into two or three pieces of 12–36″ (for example 48 → 24 + 24, 78 → 36 + 30 + 12, 96 → 32 + 32 + 32 and 36 + 36 + 24). Parts at 36″ or shorter are unchanged. The file is now 69 parts: rows 1–63 are 2×4 (`1.5;3.5`), sorted shortest first, and rows 64–69 are 2×6 (`1.5;5.5`). Saw kerf is ignored.
+- **Result / observation:** The longest part is 36″ and the shortest is still 12″. Total 2×4 length stays 1505″, total 2×6 length stays 192″, and volume stays 9,485 cubic inches, so this is the same lumber in shorter pieces. Nothing can run more than 36″ up the 96″ column now, so Spine Column has no long sticks to stand first. The pack results for this file in the 2026-10-28 Bond Column entry are for the old 47-part list.
+- **Follow-ups:** Re-pack the 24 × 24 × 96 box with Bin Packing EB-AFIT, Stagger Column, and Bond Column and compare to the 47-part results. Component-Reference does not need an update (test data only).
+
 ### 2026-10-28 — docs: Examples.gh versions 27 and 28 filled in
 
 - **Motivation:** The `Examples.gh` version table in the timeline had two rows marked "not listed".
