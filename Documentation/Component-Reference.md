@@ -5,7 +5,7 @@ Spruce Beetle is a Grasshopper toolkit for designing with timber (or other) **of
 1. **Create** offcut records from numbers, CSV, Excel, or JSON.
 2. **Align** them along a curve (straight or free-form).
 3. Optionally **unify** the stack, then cut **joints**.
-4. **Pack** leftovers into a container, cut **contact tenons** or **outside keys**, or **orient** pieces for fabrication and export data.
+4. **Pack** leftovers into a container, cut **contact tenons** or **outside keys**, **orient** pieces for fabrication, or **lay parts out** in a row before a Fusion import.
 
 Packed-column joint design notes (why contacts, not Alignment Tenon): [Packing-Joints.md](Packing-Joints.md).
 
@@ -795,7 +795,7 @@ Skip when the seam misses the skin, the key does not fit (`JX × TC ≤ seam −
 
 ## Fabricate
 
-Move pieces to a machine plane, read/write files, and round-trip Offcut data.
+Move pieces to a machine plane, lay them out for a Fusion import, read/write files, and round-trip Offcut data.
 
 ### Orient on Plane (`OrientOc`)
 
@@ -815,6 +815,33 @@ Move pieces to a machine plane, read/write files, and round-trip Offcut data.
 | --- | --- | --- | --- | --- |
 | Oriented Offcuts | OOc | Offcut | List | Fabricated solids and planes in the new pose. |
 | Offcut Stock | OcS | Brep | List | Rectangular blanks (viewport-hidden). |
+
+---
+
+### Lay Out Parts (`LayOut`)
+
+**What it does:** Squares every part to a base plane and parks it either in a row or stacked on one origin. Bake `G` and import that Rhino model into Fusion so each body sits on the axes instead of keeping the tilt it had in the column or along a curve.
+
+Each solid is turned so its **longest edge runs along the base X axis**, its **middle edge along Y**, and its **thinnest edge along Z**. The corner of that frame lands on the base origin (Point) or steps along base X (Line). Input order is kept.
+
+Accepts Offcuts (packed or aligned) or plain breps. A part with no planar faces is moved by its world box only; the component warns because that one may still be tilted.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Default | Description |
+| --- | --- | --- | --- | --- | --- |
+| Parts | G | Offcut or Brep | List | — | Pieces to lay out. |
+| Layout | L | Text | Item | `Line` | `Line` spaces parts along base X. `Point` stacks every part on the base origin. A value list is added when the input is empty. |
+| Spacing | S | Number | Item | empty | Clear gap between parts in `Line`. Leave empty and the gap is the thickest part's smallest side. `0` puts them touching. Ignored for `Point`. |
+| Base | BP | Plane | Item | World XY | Plane the parts sit on. X is the row, Z is up. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Parts | G | Brep | List | Laid-out solids. Bake this output (or the component) and import the 3dm into Fusion. |
+| Offcuts | Oc | Offcut | List | Same pose. Original scrap index and X/Y/Z are kept when the input was an Offcut. |
+| Frames | F | Plane | List | Corner frame of each part (viewport-hidden). |
 
 ---
 
@@ -906,6 +933,8 @@ Tenon Joints  or  Spline Joints
 Find Intersections (centroid curves) → Intersection Joints
         ↓
 Orient on Plane → CAM / bake
+        ↓
+Lay Out Parts (Line or Point) → bake Parts → import the 3dm into Fusion
         ↓
 Offcut to JSON  (optional archive)
 ```

@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — feature: Lay Out Parts for a Fusion import
+
+- **Motivation:** Packed and curve-aligned parts keep the rotation of the column or the curve. Imported into Fusion, those bodies sit at odd angles to the origin.
+- **Files:** `Fabricate/LayOutParts_GH.cs`, `Fabricate/PartLayout.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** No layout component. **Lay Out Parts** (`LayOut`, Fabricate) takes Offcuts or breps, squares each solid so the longest edge is on base X and the thinnest on base Z, then either spaces them along that X (`Line`, gap defaults to the thickest part's smallest side) or stacks them on the base origin (`Point`). Bake output `G` for the Fusion 3dm. Parts without square faces fall back to the world box and raise a warning.
+- **Result / observation:** Debug build succeeded (`bin\Debug\net48\SpruceBeetle.gha`). Placement was not executed in Rhino: a Rhino session was open, but the MCP listener on port 1999 was not, so a tilted-box check did not run.
+- **Follow-ups:** Open Grasshopper in the current Rhino (or restart Rhino if it was already open before this build) and confirm Line and Point on a packed column before the Fusion import. Component-Reference is updated.
+
 ### 2026-10-30 — docs: Last two length corrections on the measured stock
 
 - **Motivation:** The hand check of the clipboard transcription was finished.
