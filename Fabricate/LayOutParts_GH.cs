@@ -373,7 +373,10 @@ namespace SpruceBeetle.Fabricate
                         continue;
 
                     string number = i < bakedNames.Count ? bakedNames[i] : (i + 1).ToString(CultureInfo.InvariantCulture);
-                    string name = NextBlockName(doc, number, used);
+                    string name = number;
+                    if (!used.Add(name))
+                        name = NextFreeName(number, used);
+
                     Plane frame = i < bakedFrames.Count && bakedFrames[i].IsValid ? bakedFrames[i] : Plane.WorldXY;
 
                     Brep local = solid.DuplicateBrep();
@@ -386,25 +389,48 @@ namespace SpruceBeetle.Fabricate
                         continue;
                     }
 
+                    DeleteSuffixedCopies(doc, number);
+
                     ObjectAttributes inner = att?.Duplicate() ?? doc.CreateDefaultAttributes();
-                    inner.Name = name;
+                    inner.Name = string.Empty;
                     inner.SetUserString("scrap", number);
 
-                    int definition = doc.InstanceDefinitions.Add(
-                        name,
-                        "Scrap " + number,
-                        Point3d.Origin,
-                        new GeometryBase[] { local },
-                        new ObjectAttributes[] { inner });
-                    if (definition < 0)
+                    InstanceDefinition existing = doc.InstanceDefinitions.Find(name);
+                    int definition;
+                    if (existing != null)
                     {
-                        local.Dispose();
-                        BakeNamedBrep(doc, solid, name, att, obj_ids);
-                        continue;
+                        definition = existing.Index;
+                        if (!doc.InstanceDefinitions.ModifyGeometry(definition, new GeometryBase[] { local }, new ObjectAttributes[] { inner }))
+                        {
+                            local.Dispose();
+                            BakeNamedBrep(doc, solid, name, att, obj_ids);
+                            continue;
+                        }
+
+                        foreach (InstanceObject reference in existing.GetReferences(0))
+                        {
+                            if (reference != null)
+                                doc.Objects.Delete(reference, true, true);
+                        }
+                    }
+                    else
+                    {
+                        definition = doc.InstanceDefinitions.Add(
+                            name,
+                            string.Empty,
+                            Point3d.Origin,
+                            new GeometryBase[] { local },
+                            new ObjectAttributes[] { inner });
+                        if (definition < 0)
+                        {
+                            local.Dispose();
+                            BakeNamedBrep(doc, solid, name, att, obj_ids);
+                            continue;
+                        }
                     }
 
                     ObjectAttributes instanceAttributes = att?.Duplicate() ?? doc.CreateDefaultAttributes();
-                    instanceAttributes.Name = name;
+                    instanceAttributes.Name = string.Empty;
                     instanceAttributes.SetUserString("scrap", number);
                     Guid id = doc.Objects.AddInstanceObject(definition, Transform.PlaneToPlane(Plane.WorldXY, frame), instanceAttributes);
                     if (id != Guid.Empty)
@@ -440,18 +466,48 @@ namespace SpruceBeetle.Fabricate
         }
 
 
-        static string NextBlockName(RhinoDoc doc, string number, HashSet<string> used)
+        static string NextFreeName(string number, HashSet<string> used)
         {
-            string candidate = number;
             int suffix = 2;
-            while (used.Contains(candidate) || doc.InstanceDefinitions.Find(candidate) != null)
+            string candidate = number + "-" + suffix;
+            while (!used.Add(candidate))
             {
-                candidate = number + "-" + suffix;
                 suffix++;
+                candidate = number + "-" + suffix;
             }
 
-            used.Add(candidate);
             return candidate;
+        }
+
+
+        static void DeleteSuffixedCopies(RhinoDoc doc, string number)
+        {
+            string prefix = number + "-";
+            var indexes = new List<int>();
+            for (int i = 0; i < doc.InstanceDefinitions.Count; i++)
+            {
+                InstanceDefinition def = doc.InstanceDefinitions[i];
+                if (def == null || def.IsDeleted)
+                    continue;
+
+                string defName = def.Name ?? string.Empty;
+                if (!defName.StartsWith(prefix, StringComparison.Ordinal))
+                    continue;
+
+                string tail = defName.Substring(prefix.Length);
+                bool digits = tail.Length > 0;
+                for (int c = 0; c < tail.Length && digits; c++)
+                    digits = char.IsDigit(tail[c]);
+                if (!digits)
+                    continue;
+
+                indexes.Add(def.Index);
+            }
+
+            indexes.Sort();
+            indexes.Reverse();
+            foreach (int index in indexes)
+                doc.InstanceDefinitions.Delete(index, true, true);
         }
 
 

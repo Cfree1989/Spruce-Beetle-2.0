@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — fix: Baked block shows the scrap number once
+
+- **Motivation:** The Rhino selection menu showed `39 - 39` and, after a second bake, `21-2 - 21-2`. The user wants the stock number once.
+- **Files:** `Fabricate/LayOutParts_GH.cs`
+- **Before → after:** The block definition and the instance were both named with the scrap number, and a name already in the file was saved as `21-2`. The definition is now the only name. The instance name is blank. Baking again updates that block instead of adding a `-2` copy, and deletes earlier `21-2` definitions.
+- **Result / observation:** Seen in the selection menu after the previous bake. Not re-baked after this change.
+- **Follow-ups:** Close Rhino, rebuild, delete the current blocks, bake once. Component-Reference does not need an update.
+
 ### 2026-10-31 — fix: Breps keep the scrap number for Lay Out Parts
 
 - **Motivation:** Lay Out Parts warned that all 39 parts had no scrap number. The solids were breps, and the number only lived on the Offcut.
