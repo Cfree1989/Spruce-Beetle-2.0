@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — feature: Line layout sorts parts by scrap number
+
+- **Motivation:** The spaced row should match the order the pieces are cut, which is the number written on each scrap.
+- **Files:** `Fabricate/PartLayout.cs`, `Fabricate/LayOutParts_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Line mode placed parts in input order. It now sorts by Offcut `Index`, lowest first. Equal numbers keep their incoming order. Breps with no Offcut go after the numbered pieces, still in input order. Point mode is unsorted.
+- **Result / observation:** Debug build succeeded (`bin\Debug\net48\SpruceBeetle.gha`). Not checked on the Grasshopper canvas.
+- **Follow-ups:** Open Rhino and confirm a packed list comes out 1, 2, 3… along X. Component-Reference is updated.
+
 ### 2026-10-31 — feature: Lay Out Parts length runs along Y
 
 - **Motivation:** Fusion import should see each part's length on Y, a quarter-turn from the first layout.

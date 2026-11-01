@@ -19,6 +19,7 @@ namespace SpruceBeetle.Fabricate
             public double Width;
             public double Thickness;
             public bool UsedWorldBox;
+            public int InputOrder;
         }
 
 
@@ -104,6 +105,36 @@ namespace SpruceBeetle.Fabricate
             if (thickest > 1e-6)
                 return thickest;
             return longest * 0.1;
+        }
+
+
+        public static void SortByNumber(List<Piece> pieces)
+        {
+            if (pieces == null || pieces.Count < 2)
+                return;
+
+            pieces.Sort(CompareByNumber);
+        }
+
+
+        static int CompareByNumber(Piece a, Piece b)
+        {
+            bool aNumbered = a?.Source != null;
+            bool bNumbered = b?.Source != null;
+            if (aNumbered && bNumbered)
+            {
+                int byIndex = a.Source.Index.CompareTo(b.Source.Index);
+                if (byIndex != 0)
+                    return byIndex;
+            }
+            else if (aNumbered != bNumbered)
+            {
+                return aNumbered ? -1 : 1;
+            }
+
+            int orderA = a?.InputOrder ?? 0;
+            int orderB = b?.InputOrder ?? 0;
+            return orderA.CompareTo(orderB);
         }
 
 

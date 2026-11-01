@@ -27,7 +27,7 @@ namespace SpruceBeetle.Fabricate
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddGenericParameter("Parts", "G", "Offcuts or breps to lay out. Packed or aligned pieces both work", GH_ParamAccess.list);
-            pManager.AddTextParameter("Layout", "L", "Line spaces parts along the base X axis. Point stacks every part on the base origin", GH_ParamAccess.item, "Line");
+            pManager.AddTextParameter("Layout", "L", "Line spaces parts along the base X axis, lowest scrap number first. Point stacks every part on the base origin", GH_ParamAccess.item, "Line");
             pManager.AddNumberParameter("Spacing", "S", "Clear gap between parts along the row. Leave empty to use the thickest part's smallest side", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Base", "BP", "Plane the parts sit on. Length runs along Y, the row along X, thinnest edge along Z", GH_ParamAccess.item, Plane.WorldXY);
             pManager[2].Optional = true;
@@ -134,6 +134,7 @@ namespace SpruceBeetle.Fabricate
                 }
 
                 piece.Source = source;
+                piece.InputOrder = pieces.Count;
                 if (piece.UsedWorldBox)
                     worldBoxed++;
                 pieces.Add(piece);
@@ -147,7 +148,10 @@ namespace SpruceBeetle.Fabricate
 
             double gap = 0;
             if (line)
+            {
+                PartLayout.SortByNumber(pieces);
                 gap = hasSpacing ? spacing : PartLayout.AutomaticGap(pieces);
+            }
 
             var breps = new List<Brep>();
             var offcuts = new List<Offcut_GH>();
@@ -173,7 +177,7 @@ namespace SpruceBeetle.Fabricate
             if (line)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
-                    $"{breps.Count} parts in a line, gap {gapText}. Longest edge along base Y, thinnest edge along base Z.");
+                    $"{breps.Count} parts in a line, lowest scrap number first, gap {gapText}. Longest edge along base Y, thinnest edge along base Z.");
             }
             else
             {
