@@ -146,8 +146,17 @@ namespace SpruceBeetle.Fabricate
 
                 piece.Source = source;
                 piece.InputOrder = i;
-                piece.HasNumber = source != null;
-                piece.ScrapNumber = source != null ? source.Index : 0;
+                if (source != null)
+                {
+                    piece.HasNumber = true;
+                    piece.ScrapNumber = source.Index;
+                    Offcut.StampNumber(brep, source.Index);
+                }
+                else if (Offcut.TryReadNumber(brep, out double stamped))
+                {
+                    piece.HasNumber = true;
+                    piece.ScrapNumber = stamped;
+                }
                 if (piece.UsedWorldBox)
                     worldBoxed++;
                 pieces.Add(piece);

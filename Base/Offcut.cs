@@ -327,5 +327,39 @@ namespace SpruceBeetle
 
             return baseOrientation;
         }
+
+
+        public const string ScrapNumberKey = "spruce-scrap";
+
+
+        public static void StampNumber(Brep brep, double index)
+        {
+            if (brep == null)
+                return;
+            brep.UserDictionary.Set(ScrapNumberKey, index);
+        }
+
+
+        public static bool TryReadNumber(Brep brep, out double index)
+        {
+            index = 0;
+            if (brep?.UserDictionary == null || !brep.UserDictionary.ContainsKey(ScrapNumberKey))
+                return false;
+
+            object value = brep.UserDictionary[ScrapNumberKey];
+            if (value is double number)
+            {
+                index = number;
+                return true;
+            }
+
+            if (value is int whole)
+            {
+                index = whole;
+                return true;
+            }
+
+            return false;
+        }
     }
 }

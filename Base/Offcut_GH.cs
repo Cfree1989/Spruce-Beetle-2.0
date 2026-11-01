@@ -144,6 +144,8 @@ namespace SpruceBeetle
 
             if (typeof(Q).IsAssignableFrom(typeof(GH_Brep)))
             {
+                if (Value.OffcutGeometry != null)
+                    Offcut.StampNumber(Value.OffcutGeometry, Value.Index);
                 object brep = new GH_Brep(Value.OffcutGeometry);
 
                 target = (Q)brep;

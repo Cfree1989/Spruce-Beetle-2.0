@@ -94,6 +94,8 @@ namespace SpruceBeetle.Packing
                     ? offcutData[sourceId]
                     : new Offcut(sourceId, ocX, ocY, ocZ);
 
+                Offcut.StampNumber(closedOffcut, source.Index);
+
                 Point3d bottom = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ);
                 Point3d top = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ + ocZ);
                 Point3d mid = new Point3d(cX + ocX * 0.5, cY + ocY * 0.5, cZ + ocZ * 0.5);

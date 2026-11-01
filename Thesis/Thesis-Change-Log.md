@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — fix: Breps keep the scrap number for Lay Out Parts
+
+- **Motivation:** Lay Out Parts warned that all 39 parts had no scrap number. The solids were breps, and the number only lived on the Offcut.
+- **Files:** `Base/Offcut.cs`, `Base/Offcut_GH.cs`, `Create/GetBrep_GH.cs`, `Packing/PackedOffcuts.cs`, `Fabricate/LayOutParts_GH.cs`
+- **Before → after:** A brep wire into Lay Out Parts was named `part-1`, `part-2`, and the component turned orange. Offcut-to-brep casts, Get Brep, and packed solids now store the scrap number on the brep. Lay Out Parts reads that number, so the warning clears when the geometry came from an Offcut.
+- **Result / observation:** Seen on the canvas: Point layout of 39 parts, warning that none had a scrap number. The project compiled, but copying `SpruceBeetle.gha` failed because Rhino 8 had the file locked.
+- **Follow-ups:** Close Rhino, rebuild, let the definition recompute. The orange warning should clear and block names should match Used Offcuts. Component-Reference does not need an update.
+
 ### 2026-10-31 — fix: Block names use the scrap number, not the list position
 
 - **Motivation:** Baked blocks showed up as 0, 1, 2. The scrap numbers on the wood, and in Used Offcuts, start at 4, 8, 9.

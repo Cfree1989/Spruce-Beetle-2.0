@@ -81,7 +81,10 @@ namespace SpruceBeetle.Create
                     if (inputOffcut[i].OffcutGeometry == null)
                         AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "No Brep found in the Offcut data!");
                     else
+                    {
+                        Offcut.StampNumber(inputOffcut[i].OffcutGeometry, inputOffcut[i].Index);
                         offcutList.Add(inputOffcut[i].OffcutGeometry);
+                    }
                 }
 
                 // access output parameter
