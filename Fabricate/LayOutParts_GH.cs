@@ -29,7 +29,7 @@ namespace SpruceBeetle.Fabricate
             pManager.AddGenericParameter("Parts", "G", "Offcuts or breps to lay out. Packed or aligned pieces both work", GH_ParamAccess.list);
             pManager.AddTextParameter("Layout", "L", "Line spaces parts along the base X axis. Point stacks every part on the base origin", GH_ParamAccess.item, "Line");
             pManager.AddNumberParameter("Spacing", "S", "Clear gap between parts along the row. Leave empty to use the thickest part's smallest side", GH_ParamAccess.item);
-            pManager.AddPlaneParameter("Base", "BP", "Plane the parts sit on. Row runs along X, thinnest edge along Z", GH_ParamAccess.item, Plane.WorldXY);
+            pManager.AddPlaneParameter("Base", "BP", "Plane the parts sit on. Length runs along Y, the row along X, thinnest edge along Z", GH_ParamAccess.item, Plane.WorldXY);
             pManager[2].Optional = true;
             layoutParameter = pManager[1];
 
@@ -42,7 +42,7 @@ namespace SpruceBeetle.Fabricate
         {
             pManager.AddBrepParameter("Parts", "G", "Solids squared to the base plane. Bake these and import that Rhino model into Fusion", GH_ParamAccess.list);
             pManager.AddGenericParameter("Offcuts", "Oc", "Same parts as Offcuts, in the new pose", GH_ParamAccess.list);
-            pManager.AddPlaneParameter("Frames", "F", "Corner frame of each part. Longest edge on X, thinnest on Z", GH_ParamAccess.list);
+            pManager.AddPlaneParameter("Frames", "F", "Corner frame of each part. Longest edge on Y, thinnest on Z", GH_ParamAccess.list);
             pManager.HideParameter(2);
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -173,12 +173,12 @@ namespace SpruceBeetle.Fabricate
             if (line)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
-                    $"{breps.Count} parts in a line, gap {gapText}. Longest edge along base X, thinnest edge along base Z.");
+                    $"{breps.Count} parts in a line, gap {gapText}. Longest edge along base Y, thinnest edge along base Z.");
             }
             else
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
-                    $"{breps.Count} parts stacked on the base origin. Longest edge along base X, thinnest edge along base Z.");
+                    $"{breps.Count} parts stacked on the base origin. Longest edge along base Y, thinnest edge along base Z.");
             }
 
             DA.SetDataList(0, breps);

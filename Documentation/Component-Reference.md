@@ -822,7 +822,7 @@ Move pieces to a machine plane, lay them out for a Fusion import, read/write fil
 
 **What it does:** Squares every part to a base plane and parks it either in a row or stacked on one origin. Bake `G` and import that Rhino model into Fusion so each body sits on the axes instead of keeping the tilt it had in the column or along a curve.
 
-Each solid is turned so its **longest edge runs along the base X axis**, its **middle edge along Y**, and its **thinnest edge along Z**. The corner of that frame lands on the base origin (Point) or steps along base X (Line). Input order is kept.
+Each solid is turned so its **longest edge runs along the base Y axis**, its **middle edge along X**, and its **thinnest edge along Z**. The corner of that frame lands on the base origin (Point) or steps along base X (Line). Input order is kept.
 
 Accepts Offcuts (packed or aligned) or plain breps. A part with no planar faces is moved by its world box only; the component warns because that one may still be tilted.
 
@@ -833,7 +833,7 @@ Accepts Offcuts (packed or aligned) or plain breps. A part with no planar faces 
 | Parts | G | Offcut or Brep | List | — | Pieces to lay out. |
 | Layout | L | Text | Item | `Line` | `Line` spaces parts along base X. `Point` stacks every part on the base origin. A value list is added when the input is empty. |
 | Spacing | S | Number | Item | empty | Clear gap between parts in `Line`. Leave empty and the gap is the thickest part's smallest side. `0` puts them touching. Ignored for `Point`. |
-| Base | BP | Plane | Item | World XY | Plane the parts sit on. X is the row, Z is up. |
+| Base | BP | Plane | Item | World XY | Plane the parts sit on. Length runs along Y, the row along X, Z up. |
 
 **Outputs**
 

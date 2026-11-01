@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — feature: Lay Out Parts length runs along Y
+
+- **Motivation:** Fusion import should see each part's length on Y, a quarter-turn from the first layout.
+- **Files:** `Fabricate/PartLayout.cs`, `Fabricate/LayOutParts_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Longest edge on base X, middle on Y, row stepped by that length. Longest edge is now on base Y, middle on X, thinnest still on Z. Line mode still steps along X, by the middle dimension plus the gap, so the parts sit side by side.
+- **Result / observation:** The project compiled. Copying `SpruceBeetle.gha` into `bin\Debug\net48` failed because Rhino 8 had the file locked, so Grasshopper is still running the previous orientation.
+- **Follow-ups:** Close Rhino, rebuild, then confirm a long board's length is parallel to Y. Component-Reference is updated.
+
 ### 2026-10-31 — feature: Lay Out Parts for a Fusion import
 
 - **Motivation:** Packed and curve-aligned parts keep the rotation of the column or the curve. Imported into Fusion, those bodies sit at odd angles to the origin.

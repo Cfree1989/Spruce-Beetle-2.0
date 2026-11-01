@@ -6,7 +6,7 @@ using Rhino.Geometry;
 namespace SpruceBeetle.Fabricate
 {
     /// <summary>
-    /// Squares a solid to a corner frame (longest edge on X, thinnest on Z) and places those frames on a base plane.
+    /// Squares a solid to a corner frame (longest edge on Y, thinnest on Z) and places those frames on a base plane.
     /// </summary>
     static class PartLayout
     {
@@ -136,7 +136,7 @@ namespace SpruceBeetle.Fabricate
                     : OffcutFromPlacement(copy, target, piece, i));
 
                 if (line)
-                    cursor += piece.Length + gap;
+                    cursor += piece.Width + gap;
             }
         }
 
@@ -256,8 +256,8 @@ namespace SpruceBeetle.Fabricate
                 return b.Size.CompareTo(a.Size);
             });
 
-            Vector3d xDir = axes[0].Direction;
-            Vector3d yDir = axes[1].Direction;
+            Vector3d xDir = axes[1].Direction;
+            Vector3d yDir = axes[0].Direction;
             Vector3d zDir = axes[2].Direction;
             if (Vector3d.CrossProduct(xDir, yDir) * zDir < 0)
                 zDir = -zDir;
@@ -355,7 +355,7 @@ namespace SpruceBeetle.Fabricate
             Plane mid = corner;
             mid.Origin = corner.Origin + corner.ZAxis * (piece.Thickness * 0.5);
             double volume = piece.Length * piece.Width * Math.Max(piece.Thickness, 0);
-            return Offcut.CreateOffcut(geometry, index, piece.Length, piece.Width, piece.Thickness, volume, volume,
+            return Offcut.CreateOffcut(geometry, index, piece.Width, piece.Length, piece.Thickness, volume, volume,
                 corner, top, mid, mid, corner, 0);
         }
 
