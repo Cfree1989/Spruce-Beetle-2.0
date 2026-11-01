@@ -20,6 +20,8 @@ namespace SpruceBeetle.Fabricate
             public double Thickness;
             public bool UsedWorldBox;
             public int InputOrder;
+            public double ScrapNumber;
+            public bool HasNumber;
         }
 
 
@@ -119,11 +121,11 @@ namespace SpruceBeetle.Fabricate
 
         static int CompareByNumber(Piece a, Piece b)
         {
-            bool aNumbered = a?.Source != null;
-            bool bNumbered = b?.Source != null;
+            bool aNumbered = a != null && a.HasNumber;
+            bool bNumbered = b != null && b.HasNumber;
             if (aNumbered && bNumbered)
             {
-                int byIndex = a.Source.Index.CompareTo(b.Source.Index);
+                int byIndex = a.ScrapNumber.CompareTo(b.ScrapNumber);
                 if (byIndex != 0)
                     return byIndex;
             }
@@ -139,7 +141,7 @@ namespace SpruceBeetle.Fabricate
 
 
         public static void Place(IReadOnlyList<Piece> pieces, Plane basis, bool line, double gap,
-            List<Brep> breps, List<Offcut> offcuts, List<Plane> frames)
+            List<Brep> breps, List<Offcut> offcuts, List<Plane> frames, List<Piece> placed)
         {
             basis = Orthonormal(basis);
             if (gap < 0 || double.IsNaN(gap) || double.IsInfinity(gap))
@@ -164,7 +166,8 @@ namespace SpruceBeetle.Fabricate
                 frames.Add(target);
                 offcuts.Add(piece.Source != null
                     ? MoveOffcut(piece.Source, copy, xform)
-                    : OffcutFromPlacement(copy, target, piece, i));
+                    : OffcutFromPlacement(copy, target, piece, piece.HasNumber ? piece.ScrapNumber : i));
+                placed?.Add(piece);
 
                 if (line)
                     cursor += piece.Width + gap;
@@ -379,7 +382,7 @@ namespace SpruceBeetle.Fabricate
         }
 
 
-        static Offcut OffcutFromPlacement(Brep geometry, Plane corner, Piece piece, int index)
+        static Offcut OffcutFromPlacement(Brep geometry, Plane corner, Piece piece, double index)
         {
             Plane top = corner;
             top.Origin = corner.Origin + corner.ZAxis * piece.Thickness;

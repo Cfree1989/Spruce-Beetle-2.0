@@ -15,6 +15,9 @@ namespace SpruceBeetle.Fabricate
     public class LayOutParts_GH : GH_Component
     {
         IGH_Param layoutParameter = null;
+        readonly List<Brep> bakedSolids = new List<Brep>();
+        readonly List<Plane> bakedFrames = new List<Plane>();
+        readonly List<string> bakedNames = new List<string>();
 
         public LayOutParts_GH()
           : base("Lay Out Parts", "LayOut",
@@ -30,7 +33,9 @@ namespace SpruceBeetle.Fabricate
             pManager.AddTextParameter("Layout", "L", "Line spaces parts along the base X axis, lowest scrap number first. Point stacks every part on the base origin", GH_ParamAccess.item, "Line");
             pManager.AddNumberParameter("Spacing", "S", "Clear gap between parts along the row. Leave empty to use the thickest part's smallest side", GH_ParamAccess.item);
             pManager.AddPlaneParameter("Base", "BP", "Plane the parts sit on. Length runs along Y, the row along X, thinnest edge along Z", GH_ParamAccess.item, Plane.WorldXY);
+            pManager.AddNumberParameter("Scrap Numbers", "N", "Optional. Scrap numbers in the same order as Parts. Leave empty when Parts are Offcuts; their own numbers are used. Do not wire the sorted Used Offcuts list", GH_ParamAccess.list);
             pManager[2].Optional = true;
+            pManager[4].Optional = true;
             layoutParameter = pManager[1];
 
             for (int i = 0; i < pManager.ParamCount; i++)
@@ -40,7 +45,7 @@ namespace SpruceBeetle.Fabricate
 
         protected override void RegisterOutputParams(GH_OutputParamManager pManager)
         {
-            pManager.AddBrepParameter("Parts", "G", "Solids squared to the base plane. Bake these and import that Rhino model into Fusion", GH_ParamAccess.list);
+            pManager.AddBrepParameter("Parts", "G", "Solids squared to the base plane. Bake the component: each scrap becomes a block named with its number, which Fusion opens as a component", GH_ParamAccess.list);
             pManager.AddGenericParameter("Offcuts", "Oc", "Same parts as Offcuts, in the new pose", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Frames", "F", "Corner frame of each part. Longest edge on Y, thinnest on Z", GH_ParamAccess.list);
             pManager.HideParameter(2);
@@ -52,6 +57,10 @@ namespace SpruceBeetle.Fabricate
 
         protected override void BeforeSolveInstance()
         {
+            bakedSolids.Clear();
+            bakedFrames.Clear();
+            bakedNames.Clear();
+
             if (layoutParameter == null)
                 return;
 
@@ -90,12 +99,14 @@ namespace SpruceBeetle.Fabricate
             string layout = "Line";
             double spacing = 0;
             Plane basis = Plane.WorldXY;
+            var numbers = new List<double>();
 
             if (!DA.GetDataList(0, raw))
                 return;
             DA.GetData(1, ref layout);
             bool hasSpacing = DA.GetData(2, ref spacing);
             DA.GetData(3, ref basis);
+            bool hasNumbers = DA.GetDataList(4, numbers);
 
             if (raw.Count == 0)
             {
@@ -134,7 +145,9 @@ namespace SpruceBeetle.Fabricate
                 }
 
                 piece.Source = source;
-                piece.InputOrder = pieces.Count;
+                piece.InputOrder = i;
+                piece.HasNumber = source != null;
+                piece.ScrapNumber = source != null ? source.Index : 0;
                 if (piece.UsedWorldBox)
                     worldBoxed++;
                 pieces.Add(piece);
@@ -144,6 +157,24 @@ namespace SpruceBeetle.Fabricate
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "None of the parts had geometry that could be laid out.");
                 return;
+            }
+
+            if (hasNumbers)
+            {
+                if (numbers.Count != raw.Count)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                        $"Scrap Numbers has {numbers.Count} values and Parts has {raw.Count}. Names follow the shorter list.");
+                }
+
+                for (int p = 0; p < pieces.Count; p++)
+                {
+                    int slot = pieces[p].InputOrder;
+                    if (slot < 0 || slot >= numbers.Count)
+                        continue;
+                    pieces[p].ScrapNumber = numbers[slot];
+                    pieces[p].HasNumber = true;
+                }
             }
 
             double gap = 0;
@@ -157,9 +188,31 @@ namespace SpruceBeetle.Fabricate
             var offcuts = new List<Offcut_GH>();
             var frames = new List<Plane>();
             var placedOffcuts = new List<Offcut>();
-            PartLayout.Place(pieces, basis, line, gap, breps, placedOffcuts, frames);
+            var placedPieces = new List<PartLayout.Piece>();
+            PartLayout.Place(pieces, basis, line, gap, breps, placedOffcuts, frames, placedPieces);
             for (int i = 0; i < placedOffcuts.Count; i++)
                 offcuts.Add(new Offcut_GH(placedOffcuts[i]));
+
+            int missingNumbers = 0;
+            for (int i = 0; i < breps.Count; i++)
+            {
+                bakedSolids.Add(breps[i]);
+                bakedFrames.Add(i < frames.Count ? frames[i] : Plane.WorldXY);
+                PartLayout.Piece placed = i < placedPieces.Count ? placedPieces[i] : null;
+                if (placed != null && placed.HasNumber)
+                    bakedNames.Add(FormatScrapNumber(placed.ScrapNumber));
+                else
+                {
+                    missingNumbers++;
+                    bakedNames.Add("part-" + (i + 1).ToString(CultureInfo.InvariantCulture));
+                }
+            }
+
+            if (missingNumbers > 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
+                    $"{missingNumbers} part(s) had no scrap number, so their blocks are named part-1, part-2, and so on. Wire the Offcuts into Parts, not only the breps.");
+            }
 
             if (skipped > 0)
             {
@@ -184,6 +237,9 @@ namespace SpruceBeetle.Fabricate
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
                     $"{breps.Count} parts stacked on the base origin. Longest edge along base Y, thinnest edge along base Z.");
             }
+
+            AddRuntimeMessage(GH_RuntimeMessageLevel.Remark,
+                "Bake this component for one Rhino block per scrap, named with its number. Fusion opens those blocks as components.");
 
             DA.SetDataList(0, breps);
             DA.SetDataList(1, offcuts);
@@ -289,10 +345,104 @@ namespace SpruceBeetle.Fabricate
 
         public override void BakeGeometry(RhinoDoc doc, ObjectAttributes att, List<Guid> obj_ids)
         {
-            if (doc == null || Params.Output.Count == 0)
+            if (doc == null)
                 return;
-            if (Params.Output[0] is IGH_BakeAwareObject baker)
-                baker.BakeGeometry(doc, att, obj_ids);
+            if (bakedSolids.Count == 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "Nothing to bake.");
+                return;
+            }
+
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            uint undo = doc.BeginUndoRecord("Lay Out Parts");
+            try
+            {
+                for (int i = 0; i < bakedSolids.Count; i++)
+                {
+                    Brep solid = bakedSolids[i];
+                    if (solid == null)
+                        continue;
+
+                    string number = i < bakedNames.Count ? bakedNames[i] : (i + 1).ToString(CultureInfo.InvariantCulture);
+                    string name = NextBlockName(doc, number, used);
+                    Plane frame = i < bakedFrames.Count && bakedFrames[i].IsValid ? bakedFrames[i] : Plane.WorldXY;
+
+                    Brep local = solid.DuplicateBrep();
+                    if (local == null)
+                        continue;
+                    if (!local.Transform(Transform.PlaneToPlane(frame, Plane.WorldXY)))
+                    {
+                        local.Dispose();
+                        BakeNamedBrep(doc, solid, name, att, obj_ids);
+                        continue;
+                    }
+
+                    ObjectAttributes inner = att?.Duplicate() ?? doc.CreateDefaultAttributes();
+                    inner.Name = name;
+                    inner.SetUserString("scrap", number);
+
+                    int definition = doc.InstanceDefinitions.Add(
+                        name,
+                        "Scrap " + number,
+                        Point3d.Origin,
+                        new GeometryBase[] { local },
+                        new ObjectAttributes[] { inner });
+                    if (definition < 0)
+                    {
+                        local.Dispose();
+                        BakeNamedBrep(doc, solid, name, att, obj_ids);
+                        continue;
+                    }
+
+                    ObjectAttributes instanceAttributes = att?.Duplicate() ?? doc.CreateDefaultAttributes();
+                    instanceAttributes.Name = name;
+                    instanceAttributes.SetUserString("scrap", number);
+                    Guid id = doc.Objects.AddInstanceObject(definition, Transform.PlaneToPlane(Plane.WorldXY, frame), instanceAttributes);
+                    if (id != Guid.Empty)
+                        obj_ids?.Add(id);
+                }
+            }
+            finally
+            {
+                doc.EndUndoRecord(undo);
+            }
+        }
+
+
+        static void BakeNamedBrep(RhinoDoc doc, Brep solid, string name, ObjectAttributes att, List<Guid> obj_ids)
+        {
+            ObjectAttributes named = att?.Duplicate() ?? doc.CreateDefaultAttributes();
+            named.Name = name;
+            named.SetUserString("scrap", name);
+            Guid id = doc.Objects.AddBrep(solid, named);
+            if (id != Guid.Empty)
+                obj_ids?.Add(id);
+        }
+
+
+        static string FormatScrapNumber(double index)
+        {
+            if (double.IsNaN(index) || double.IsInfinity(index))
+                return "0";
+            double rounded = Math.Round(index);
+            if (Math.Abs(index - rounded) < 1e-6)
+                return rounded.ToString("0", CultureInfo.InvariantCulture);
+            return index.ToString("0.###", CultureInfo.InvariantCulture);
+        }
+
+
+        static string NextBlockName(RhinoDoc doc, string number, HashSet<string> used)
+        {
+            string candidate = number;
+            int suffix = 2;
+            while (used.Contains(candidate) || doc.InstanceDefinitions.Find(candidate) != null)
+            {
+                candidate = number + "-" + suffix;
+                suffix++;
+            }
+
+            used.Add(candidate);
+            return candidate;
         }
 
 

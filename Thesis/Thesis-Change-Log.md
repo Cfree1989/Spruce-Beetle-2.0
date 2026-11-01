@@ -48,6 +48,22 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-10-31 — fix: Block names use the scrap number, not the list position
+
+- **Motivation:** Baked blocks showed up as 0, 1, 2. The scrap numbers on the wood, and in Used Offcuts, start at 4, 8, 9.
+- **Files:** `Fabricate/LayOutParts_GH.cs`, `Fabricate/PartLayout.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** A part with no Offcut was named from its place in the list, so the first block was `0`. Names now come from the Offcut index. Bare breps with no number are named `part-1`, `part-2`, and the component warns. Optional input `N` accepts a number list in the same order as Parts.
+- **Result / observation:** The green Used Offcuts panel's left column is Grasshopper's row count. The scrap number is the right-hand value. The project compiled, but copying `SpruceBeetle.gha` failed because Rhino 8 had the file locked.
+- **Follow-ups:** Close Rhino, rebuild, delete the old 0, 1, 2 blocks, wire Offcuts into Lay Out Parts, bake again. Component-Reference is updated.
+
+### 2026-10-31 — feature: Bake lays out scraps as named Rhino blocks
+
+- **Motivation:** Fusion toolpaths need each scrap as its own component, named with the number on the wood. Named breps import as Body 1, Body 2.
+- **Files:** `Fabricate/LayOutParts_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Baking Lay Out Parts wrote unnamed breps. It now writes one block per scrap. The block and the instance are named with the scrap number (`12`, or `12-2` if that block name already exists). The block origin is the part corner, with length on the block Y axis. Fusion's 3dm import turns those blocks into components.
+- **Result / observation:** Debug build succeeded. Not imported into Fusion this turn.
+- **Follow-ups:** Bake a short row, save the 3dm, and open it in Fusion to confirm component names. Component-Reference is updated.
+
 ### 2026-10-31 — feature: Line layout sorts parts by scrap number
 
 - **Motivation:** The spaced row should match the order the pieces are cut, which is the number written on each scrap.

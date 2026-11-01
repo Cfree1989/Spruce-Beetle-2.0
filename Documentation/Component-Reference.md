@@ -820,7 +820,7 @@ Move pieces to a machine plane, lay them out for a Fusion import, read/write fil
 
 ### Lay Out Parts (`LayOut`)
 
-**What it does:** Squares every part to a base plane and parks it either in a row or stacked on one origin. Bake `G` and import that Rhino model into Fusion so each body sits on the axes instead of keeping the tilt it had in the column or along a curve.
+**What it does:** Squares every part to a base plane and parks it either in a row or stacked on one origin. Baking the component writes one Rhino block per scrap. The block name is the scrap number (`Index`). Fusion opens a 3dm of those blocks as components with those names, each origin on the part corner (length on the component Y axis). A loose brep, even with a name, comes into Fusion as Body 1, Body 2, and so on inside one component, so bake **Lay Out Parts** itself and save that 3dm.
 
 Each solid is turned so its **longest edge runs along the base Y axis**, its **middle edge along X**, and its **thinnest edge along Z**. The corner of that frame lands on the base origin (Point) or steps along base X (Line).
 
@@ -832,16 +832,17 @@ Accepts Offcuts (packed or aligned) or plain breps. A part with no planar faces 
 
 | Name | Nick | Type | Access | Default | Description |
 | --- | --- | --- | --- | --- | --- |
-| Parts | G | Offcut or Brep | List | — | Pieces to lay out. |
+| Parts | G | Offcut or Brep | List | — | Pieces to lay out. Wire the Offcuts, not only the breps, so each block is named with the scrap number. |
 | Layout | L | Text | Item | `Line` | `Line` spaces parts along base X, lowest scrap number first. `Point` stacks every part on the base origin, in input order. A value list is added when the input is empty. |
 | Spacing | S | Number | Item | empty | Clear gap between parts in `Line`. Leave empty and the gap is the thickest part's smallest side. `0` puts them touching. Ignored for `Point`. |
 | Base | BP | Plane | Item | World XY | Plane the parts sit on. Length runs along Y, the row along X, Z up. |
+| Scrap Numbers | N | Number | List | empty | Optional numbers in the **same order** as Parts. Used when Parts are bare breps. Do not wire the sorted Used Offcuts list; that order does not match the parts. |
 
 **Outputs**
 
 | Name | Nick | Type | Access | Description |
 | --- | --- | --- | --- | --- |
-| Parts | G | Brep | List | Laid-out solids. Bake this output (or the component) and import the 3dm into Fusion. |
+| Parts | G | Brep | List | Laid-out solids for the Grasshopper preview. Baking this wire writes unnamed breps. Bake the component instead. |
 | Offcuts | Oc | Offcut | List | Same pose. Original scrap index and X/Y/Z are kept when the input was an Offcut. |
 | Frames | F | Plane | List | Corner frame of each part (viewport-hidden). |
 
