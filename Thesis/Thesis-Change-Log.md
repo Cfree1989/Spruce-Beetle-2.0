@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-03 — fix: dowel clearance is added once to the hole diameter
+
+- **Motivation:** A 0.395 dowel with `Cl` 0.004 drilled a 0.403 hole. Clearance was added on each side (`Dia + 2 * Cl`). For a round hole the shop number is the extra on the diameter, once.
+- **Files:** `Packing/ColumnDowels.cs`, `Packing/ColumnDowels_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Fit, spacing, the open-end test, and the `Holes` cylinder used `Dia + 2 * Cl`. They now use `Dia + Cl`. A 0.395 dowel with `Cl` 0.004 drills 0.399. The dowel solid stays at `Dia`.
+- **Result / observation:** The clearance self-check expected `Dia + 2 * Cl` to miss a 1 inch face at `Cl` 0.01 (hole 1.01). That case now fits (hole 1.00). The miss case is `Cl` 0.02 (hole 1.01). `ColumnDowels.Check()` passed. Debug build succeeded (only the pre-existing `CS0472` warnings) and wrote `bin/Debug/net48/SpruceBeetle.gha`. Grasshopper was not reopened.
+- **Follow-ups:** Recompute Dowel Column and measure `H`. It should read `Dia + Cl`. Component-Reference is updated.
+
 ### 2026-10-31 — fix: Baked block shows the scrap number once
 
 - **Motivation:** The Rhino selection menu showed `39 - 39` and, after a second bake, `21-2 - 21-2`. The user wants the stock number once.

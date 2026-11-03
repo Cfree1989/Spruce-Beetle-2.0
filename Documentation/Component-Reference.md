@@ -595,7 +595,7 @@ Every dowel is horizontal: its axis is along X or along Y, square to world Z. A 
 
 `N` is spent on both directions. The best line is kept first, then the best line on the other axis, and so on. After those `N` lines, any board still off a dowel gets one. That extra rod is the line through the most boards that are still loose, and it is skipped when it would hit a dowel already kept. A dowel does not have to cross the whole column. A line steps to the nearest height that enters one more board, and only when every board it already crosses still contains the hole. It does not jump to a lower height just because that height threads more boards. `S` repeats each kept rod along Z from that rod's center, at `S`, `2S`, and so on. A repeat is kept only when the hole still fits and it is at least one hole-diameter from a rod already kept. `0` adds none. These repeats do not consume `N`. `E` is the wood left between the dowel and a board edge, in dowel diameters. At `1` the center sits `Dia / 2 + E × Dia` inside every board it crosses. After those lines, a piece that still has no dowel can get a shorter one. It runs through that piece's wide face and stops at the far face of the first already-doweled piece whose thickness lies on the same axis. It does not cross a board's width, and it does not continue past that piece.
 
-A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + 2 * Cl`. The cylinder is the dowel at `Dia`. An end in open air sticks out by half a diameter past the outer board. An end whose stick-out would enter another board, including through that board's narrow edge, stays flush with the face. The axis curve matches the cylinder and is preview only; it is not baked.
+A full run is the set of pieces one hole can pass through. The pieces do not have to touch. The cylinder includes any empty span between them. It stays only when every piece on that line can hold the drilled hole. The hole diameter is `Dia + Cl`. The cylinder is the dowel at `Dia`. An end in open air sticks out by half a diameter past the outer board. An end whose stick-out would enter another board, including through that board's narrow edge, stays flush with the face. The axis curve matches the cylinder and is preview only; it is not baked.
 
 A pair that sits inside a longer line is not listed again. A pair whose footprint extends past the other pieces is a separate, lower-ranked line. A second line is skipped when its hole would come closer than one hole-diameter to a hole already kept. A remark reports how many lines were ranked, how many are shown, how many were skipped for that clash, and how many stop on the far face of a piece that already has a dowel.
 
@@ -608,7 +608,7 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Packed Offcuts | Oc | Offcut | List | — | Packed pieces from Bin Packing. |
 | Count | N | Integer | Item | `4` | How many of the best lines to keep first. More lines are added after that so every board that can share a dowel is on one. |
 | Diameter | Dia | Number | Item | `0.5` | Dowel diameter. |
-| Clearance | Cl | Number | Item | `0.005` | Gap on each side. `Holes` is `Dia + 2 * Cl`. Solid-difference `Holes`, not `Dowels`. |
+| Clearance | Cl | Number | Item | `0.005` | Extra on the hole diameter, added once. `Holes` is `Dia + Cl`. Solid-difference `Holes`, not `Dowels`. |
 | Edge | E | Number | Item | `1` | Minimum wood between the dowel and a board edge, in dowel diameters. `1` leaves a full diameter of wood outside the dowel. |
 | Contacts | C | PackedContact | List | — | Optional. From Packed Contacts, or from another Dowel Column's `SkC`. When wired, only those pairs are joined. |
 | Spacing | S | Number | Item | `0` | Center-to-center distance along Z. Extra rods keep the sideways center of a rod already kept. `0` adds none. A station that does not fit is skipped. |
@@ -621,7 +621,7 @@ GUID `E8C4B1A6-3D72-4F58-9A14-7B6E0C5D2F93`. Icon is Find Intersections.
 | Lines | Ln | Curve | List | Dowel axes, in the same order. Preview only; Bake on this component skips these curves. |
 | Score | S | Integer | List | How many pieces each dowel pierces. |
 | Pieces | Pi | Integer | Tree | Branch `i` lists the packed indices dowel `i` passes through, in order along the dowel. |
-| Holes | H | Brep | List | Cylinders at `Dia + 2 * Cl`, same ends as the dowels. Solid-difference these from the packed breps. |
+| Holes | H | Brep | List | Cylinders at `Dia + Cl`, same ends as the dowels. Solid-difference these from the packed breps. |
 | Skipped | Sk | Plane | List | Planes of contacts this diameter did not join. Preview only; Bake skips planes. |
 | Skipped Contacts | SkC | PackedContact | List | Same skips as contact objects. Wire to a second Dowel Column `C` with a smaller `Dia`, and the same Offcuts into `Oc`. |
 

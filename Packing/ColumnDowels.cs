@@ -86,7 +86,7 @@ namespace SpruceBeetle.Packing
             if (spacing < 0)
                 spacing = 0;
 
-            double hole = diameter + 2.0 * clearance;
+            double hole = diameter + clearance;
             double inset = hole * 0.5 + edge * diameter;
             var xLines = new List<Dowel>();
             var yLines = new List<Dowel>();
@@ -1316,9 +1316,11 @@ namespace SpruceBeetle.Packing
                 Slab(0.5, 1, 0, 1, 0, 4)
             };
             Rank loose = Select(boxes, 4, 0.99, 0);
-            Rank tight = Select(boxes, 4, 0.99, 0.01);
+            Rank flush = Select(boxes, 4, 0.99, 0.01);
+            Rank tight = Select(boxes, 4, 0.99, 0.02);
             Expect(fails, "clearance", loose.Chosen.Count == 1, "fits when clearance is 0");
-            Expect(fails, "clearance", tight.Ranked == 0, "hole Dia+2*Cl larger than the face is dropped");
+            Expect(fails, "clearance", flush.Chosen.Count == 1, "Dia+Cl equal to the face still fits");
+            Expect(fails, "clearance", tight.Ranked == 0, "hole Dia+Cl larger than the face is dropped");
         }
 
 

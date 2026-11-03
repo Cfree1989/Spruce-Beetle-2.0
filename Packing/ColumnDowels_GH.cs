@@ -50,8 +50,8 @@ namespace SpruceBeetle.Packing
         {
             pManager.AddGenericParameter("Packed Offcuts", "Oc", "Offcuts from Bin Packing EB-AFIT", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Count", "N", "How many of the best lines to keep first. More lines are added after that so every board that can share a dowel is on one.", GH_ParamAccess.item, 4);
-            pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus two clearances.", GH_ParamAccess.item, 0.5);
-            pManager.AddNumberParameter("Clearance", "Cl", "Gap on each side between the dowel and the hole. The Holes output is Dia plus two of these. Solid-difference Holes, not Dowels.", GH_ParamAccess.item, ClearanceSlider.Default);
+            pManager.AddNumberParameter("Diameter", "Dia", "Dowel diameter. The drilled hole is this plus Clearance.", GH_ParamAccess.item, 0.5);
+            pManager.AddNumberParameter("Clearance", "Cl", "Extra on the hole diameter, added once. The Holes output is Dia + Cl. Solid-difference Holes, not Dowels.", GH_ParamAccess.item, ClearanceSlider.Default);
             pManager.AddNumberParameter("Edge", "E", "Minimum wood between the dowel and a board edge, in dowel diameters. 1 leaves a full diameter of wood outside the dowel.", GH_ParamAccess.item, 1.0);
             pManager.AddGenericParameter("Contacts", "C", "Face contacts from Packed Contacts, or Skipped Contacts from another Dowel Column. Optional. When wired, only those pairs are joined.", GH_ParamAccess.list);
             pManager[5].Optional = true;
@@ -68,7 +68,7 @@ namespace SpruceBeetle.Packing
             pManager.AddCurveParameter("Lines", "Ln", "Dowel axes. Horizontal, along X or along Y. Preview only; baking this component skips these curves", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Score", "S", "How many pieces each dowel pierces.", GH_ParamAccess.list);
             pManager.AddIntegerParameter("Pieces", "Pi", "Branch i lists the packed indices dowel i passes through, in order along the dowel.", GH_ParamAccess.tree);
-            pManager.AddBrepParameter("Holes", "H", "Cylinders at Dia + 2 * Cl, same length as the dowels. Solid-difference these from the packed breps.", GH_ParamAccess.list);
+            pManager.AddBrepParameter("Holes", "H", "Cylinders at Dia + Cl, same length as the dowels. Solid-difference these from the packed breps.", GH_ParamAccess.list);
             pManager.AddPlaneParameter("Skipped", "Sk", "Planes of contacts this diameter did not join. Preview only; baking this component skips planes", GH_ParamAccess.list);
             pManager.AddGenericParameter("Skipped Contacts", "SkC", "Those same contacts. Wire to a second Dowel Column with a smaller Dia, and the same Offcuts.", GH_ParamAccess.list);
 
@@ -173,7 +173,7 @@ namespace SpruceBeetle.Packing
                 var end = new Point3d(x1, y1, z1);
                 Vector3d stick = end - start;
                 double past = diameter * 0.5;
-                double holeRadius = diameter * 0.5 + clearance;
+                double holeRadius = (diameter + clearance) * 0.5;
                 if (stick.Unitize())
                 {
                     if (ColumnDowels.EndIsOpen(boxes, line, true, past, holeRadius))
@@ -183,7 +183,7 @@ namespace SpruceBeetle.Packing
                 }
 
                 if (!TryCylinder(start, end, diameter, out Brep solid)
-                    || !TryCylinder(start, end, diameter + 2.0 * clearance, out Brep hole))
+                    || !TryCylinder(start, end, diameter + clearance, out Brep hole))
                 {
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, $"Dowel {i} could not be built.");
                     continue;
@@ -211,7 +211,7 @@ namespace SpruceBeetle.Packing
             if (boxes.Count > 0 && rank.Ranked == 0)
             {
                 AddRuntimeMessage(GH_RuntimeMessageLevel.Warning,
-                    "No dowel fit. A piece is used only when its widest face is vertical, and the shared footprint must hold the hole (diameter plus two clearances).");
+                    "No dowel fit. A piece is used only when its widest face is vertical, and the shared footprint must hold the hole (diameter plus clearance).");
             }
 
             DA.SetDataList(0, dowels);
