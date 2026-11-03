@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-03 — feature: Fusion script posts one NC program per scrap
+
+- **Motivation:** Shop setup for the column is one fixture and one bore. Swapping the setup model updates the toolpath, and doing that by hand for every scrap took about 3–4 hours of computer time (user estimate, Nov 2). The script repeats that swap.
+- **Files:** `Fabrication/Fusion/PostParts/PostParts.py`, `Fabrication/Fusion/PostParts/PostParts.manifest`
+- **Before → after:** Each scrap needed its own setup, model pick, and NC program in Fusion. The script copies one selected master setup onto every component whose name is a scrap number (Lay Out Parts block names), generates the toolpath, and posts a file with that number.
+- **Result / observation:** Fusion has no native “one setup per body” command. `OperationBase.duplicate` returns success or failure, so the script finds the new setup by name. Hole Recognition still cannot be created from scratch through the API; the script copies a setup that already has the bore. Not run inside Fusion yet.
+- **Follow-ups:** Run it on two scraps in the fixture file and confirm the bore sits on the new part. If the copy keeps the master’s holes, switch this script to `RecognizedHoleGroup`. `Documentation/Component-Reference.md` (Lay Out Parts) could link this script.
+
 ### 2026-11-03 — fix: dowel clearance is added once to the hole diameter
 
 - **Motivation:** A 0.395 dowel with `Cl` 0.004 drilled a 0.403 hole. Clearance was added on each side (`Dia + 2 * Cl`). For a round hole the shop number is the extra on the diameter, once.

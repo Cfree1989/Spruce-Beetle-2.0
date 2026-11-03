@@ -1,0 +1,10 @@
+{
+	"autodeskProduct": "Fusion",
+	"type": "script",
+	"author": "Spruce Beetle",
+	"description": {
+		"": "Duplicate a master setup for each scrap-numbered component and post an NC program per part."
+	},
+	"supportedOS": "windows|mac",
+	"editEnabled": true
+}
