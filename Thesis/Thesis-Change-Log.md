@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-10 — docs: Ten added 2×4s, 36–50″, as a second stock file
+
+- **Motivation:** A packed column should stay on its original CSV. Extra scraps for a second column need their own file and scrap numbers that do not match the first pile.
+- **Files:** `Documentation/TestData/stock_2x4_36_50.csv`
+- **Before → after:** No file for the added boards. Ten rows, `index;x;y;z`, no header. Indices 89–98 (after `stock_measured_mixed.csv`, which ends at 88). Every row is a dressed 2×4, `1.5;3.5`, with lengths 36, 38, 40, 42, 44, 45, 46, 48, 49, and 50 inches.
+- **Result / observation:** These numbers also sit past `stock_column_2x4_2x6.csv` (ends at 71), so either existing column file can be merged with this one without a repeated Index.
+- **Follow-ups:** Point a second CSV to Offcut at this path, Merge with the original stock, then List Update against the internalized column-1 Offcuts. Component-Reference does not need an update (test data only).
+
 ### 2026-11-03 — feature: Fusion script posts one NC program per scrap
 
 - **Motivation:** Shop setup for the column is one fixture and one bore. Swapping the setup model updates the toolpath, and doing that by hand for every scrap took about 3–4 hours of computer time (user estimate, Nov 2). The script repeats that swap.
