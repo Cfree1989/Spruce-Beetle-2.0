@@ -48,6 +48,62 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-12 — docs: Test data reduced to column 1 and column 2
+
+- **Motivation:** The test-data folder had generated piles and a placeholder. The two real measured piles need plain names.
+- **Files:** `Documentation/TestData/` — every file removed except the two renames. `stock_measured_mixed.csv` is now `column_1.csv` (scraps 1–88). `stock_notes_2026-11-12.csv` is now `column_2.csv` (scraps 89–101).
+- **Before → after:** 23 stock files, including JSON copies and the column-2 pick list. The folder now contains only `column_1.csv` and `column_2.csv`. Row contents of those two files are unchanged.
+- **Result / observation:** Docs that still name `stock_measured_mixed.csv`, `stock_column_in.csv`, or the other deleted test files are stale.
+- **Follow-ups:** Point Grasshopper at `column_1.csv` and `column_2.csv`. Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Placeholder 2×4 file removed; note batch starts at 89
+
+- **Motivation:** `stock_2x4_36_50.csv` was a stand-in, not measured stock. The real note batch should continue from the measured file.
+- **Files:** `Documentation/TestData/stock_2x4_36_50.csv` (deleted), `Documentation/TestData/stock_notes_2026-11-12.csv`, `Documentation/TestData/stock_column2_packed.csv`
+- **Before → after:** The placeholder held scraps 89–98. It is deleted. The note batch moves from 99–111 to 89–101. The odd board is 95 (paper 7). Column 2’s pick list drops 95–98, which were the four placeholder boards that had been packed. Thirteen measured rows remain in that pick list.
+- **Result / observation:** The next free scrap number after `stock_measured_mixed.csv` is 89.
+- **Follow-ups:** Write 89–101 on these boards. Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Note batch continues at scrap 99
+
+- **Motivation:** The note file has to merge with the measured pile and the added 2×4s without a repeated scrap number.
+- **Files:** `Documentation/TestData/stock_notes_2026-11-12.csv`
+- **Before → after:** Rows were numbered 1–13. They are now 99–111. `stock_measured_mixed.csv` ends at 88. `stock_2x4_36_50.csv` already uses 89–98, so 99 is the next free number. Sizes are unchanged. The odd board is 105 (was paper 7).
+- **Result / observation:** Starting at 89 would have repeated the 36–50″ 2×4s.
+- **Follow-ups:** Write 99–111 on these boards. Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Paper scrap 2 is 15.875″ long
+
+- **Motivation:** The note batch was missing the length for paper number 2.
+- **Files:** `Documentation/TestData/stock_notes_2026-11-12.csv`
+- **Before → after:** No row 2. Added `2;1.5;2.5;15.875`, same 1.5 × 2.5 section as scraps 1 and 3–6. The file now has 13 rows, numbers 1–13.
+- **Result / observation:** 15.875 is 15 7/8″. Number 2 still matches the paper label.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Note-batch scrap numbers start at 1
+
+- **Motivation:** `stock_notes_2026-11-12.csv` is its own pile. The first column of that file is the number for that pile, not a continuation of scraps 1–98.
+- **Files:** `Documentation/TestData/stock_notes_2026-11-12.csv`
+- **Before → after:** Rows were numbered 99–110. They now use the paper numbers: 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13. Paper 2 is still absent. Sizes are unchanged. Scrap 7 is still 1.875 × 3 × 15.4375.
+- **Result / observation:** 99–110 was the wrong numbering for a separate file.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Hand-measured 2.5×1.5 and 2×4 batch, plus one odd piece
+
+- **Motivation:** A new measured pile has to be added without reusing scrap numbers 1–98.
+- **Files:** `Documentation/TestData/stock_notes_2026-11-12.csv`
+- **Before → after:** Notes on paper only. Twelve rows, `index;x;y;z`, scraps 99–110. Paper 1 and 3–6 are 1.5 × 2.5 × 19.9375 (19 15/16). Paper 7 is 1.875 × 3 × 15.4375 (3 × 1.875 × 15 7/16). Paper 8–13 are dressed 2×4s, 1.5 × 3.5, lengths 21.625, 25.9375, 25, 22.8125, 21.9375, and 51.875. Paper 2 has no length and is omitted.
+- **Result / observation:** The two groups share a section inside the group. Only paper 7 changes thickness, width, and length.
+- **Follow-ups:** Confirm paper 7’s order is thickness 1.875, width 3. Component-Reference does not need an update (test data only).
+
+### 2026-11-12 — docs: Second-column pick list from the packed scrap numbers
+
+- **Motivation:** Column 1 used 39 scraps from `stock_measured_mixed.csv`. Column 2 was packed from the leftovers plus `stock_2x4_36_50.csv`, and the packed scrap numbers needed a reloadable cut list.
+- **Files:** `Documentation/TestData/stock_column2_packed.csv`
+- **Before → after:** No file for the second column. Seventeen rows, original scrap numbers kept, `index;x;y;z`, no header. Rows 1, 2, 3, 7, 11, 15, 46, 59, 60, 61, 85, 86, and 88 come from `stock_measured_mixed.csv`. Rows 95–98 come from `stock_2x4_36_50.csv` (46″, 48″, 49″, 50″). None of these numbers are in the column-1 used list.
+- **Result / observation:** The Grasshopper count was pile 98, used 39, kept 59. Column 2 packed 17 of those 59. The other six new 2×4s (89–94, 36″ through 45″) were not in the packed list.
+- **Follow-ups:** Component-Reference does not need an update (test data only).
+
 ### 2026-11-10 — docs: Ten added 2×4s, 36–50″, as a second stock file
 
 - **Motivation:** A packed column should stay on its original CSV. Extra scraps for a second column need their own file and scrap numbers that do not match the first pile.
