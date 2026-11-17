@@ -248,6 +248,29 @@ Re-wire old canvases: the former `D` (dots) pin is gone; use `Oc` / `C`.
 
 ---
 
+### Remaining Offcuts (`Remain`)
+
+**What it does:** Removes scraps that were already placed in earlier columns. Match is by scrap number (CSV column 1). The pieces that remain are the stock for the next column.
+
+Merge every stock CSV into **Pile**. Merge each packed column `Oc` into **Used**. One pin can take only one wire, so use Grasshopper **Merge** when a column has more than one source.
+
+**Inputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Pile | P | Offcut | List | Every scrap still on hand. |
+| Used | U | Offcut | List | Packed `Oc` from the columns already built. |
+
+**Outputs**
+
+| Name | Nick | Type | Access | Description |
+| --- | --- | --- | --- | --- |
+| Remaining | R | Offcut | List | Pile minus the used scrap numbers. |
+
+A used number that is not in the pile is reported and ignored. The hidden **List Update** component does the same subtraction and throws if a number is missing.
+
+---
+
 ### List Update (`Update`)
 
 **What it does:** Removes used Offcuts from a stock list by matching **Index**. Feed the original stock list and the pieces you already placed; you get leftovers.

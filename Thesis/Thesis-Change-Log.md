@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-17 — feature: Remaining Offcuts drops scraps already placed
+
+- **Motivation:** A third column needs the scraps left after column 1 and column 2. The Python script did that subtraction. List Update does too, but it is hidden and throws when a used number is missing from the pile.
+- **Files:** `Create/RemainingOffcuts_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** No visible component for leftovers. **Remaining Offcuts** (`Remain`) is on the Create tab. **Pile** is every scrap. **Used** is packed `Oc` from earlier columns, merged into one list. **Remaining** is the pile with those scrap numbers removed. A missing number warns instead of failing the solve.
+- **Result / observation:** The first copy failed because Rhino 8 had `SpruceBeetle.gha` locked. A later rebuild copied `bin\Debug\net48\SpruceBeetle.gha` successfully. Grasshopper was not reopened.
+- **Follow-ups:** Restart Rhino and wire column 1 `Oc` and column 2 `Oc` through Merge into Used.
+
 ### 2026-11-12 — docs: Test data reduced to column 1 and column 2
 
 - **Motivation:** The test-data folder had generated piles and a placeholder. The two real measured piles need plain names.
