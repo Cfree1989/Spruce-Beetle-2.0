@@ -254,6 +254,8 @@ Re-wire old canvases: the former `D` (dots) pin is gone; use `Oc` / `C`.
 
 Merge every stock CSV into **Pile**. Merge each packed column `Oc` into **Used**. One pin can take only one wire, so use Grasshopper **Merge** when a column has more than one source.
 
+**Pile** and **Used** flatten themselves. Column lists often sit on different branches, and an unflattened pair drops most of the scraps.
+
 **Inputs**
 
 | Name | Nick | Type | Access | Description |

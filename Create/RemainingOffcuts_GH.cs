@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using GH_IO.Serialization;
 using Grasshopper.Kernel;
 
 
@@ -42,11 +43,39 @@ namespace SpruceBeetle.Create
 
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
-            pManager.AddGenericParameter("Pile", "P", "Every scrap still on hand. Merge the column CSV lists into this pin.", GH_ParamAccess.list);
-            pManager.AddGenericParameter("Used", "U", "Scraps already placed. Merge each packed column Oc into this pin.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Pile", "P", "Every scrap still on hand. Merge the column CSV lists into this pin. The pin is flattened.", GH_ParamAccess.list);
+            pManager.AddGenericParameter("Used", "U", "Scraps already placed. Merge each packed column Oc into this pin. The pin is flattened.", GH_ParamAccess.list);
 
             for (int i = 0; i < pManager.ParamCount; i++)
+            {
                 pManager[i].WireDisplay = GH_ParamWireDisplay.faint;
+                pManager[i].DataMapping = GH_DataMapping.Flatten;
+            }
+        }
+
+
+        public override bool Read(GH_IReader reader)
+        {
+            bool ok = base.Read(reader);
+            FlattenInputs();
+            return ok;
+        }
+
+
+        public override void AddedToDocument(GH_Document document)
+        {
+            FlattenInputs();
+            base.AddedToDocument(document);
+        }
+
+
+        void FlattenInputs()
+        {
+            if (Params == null)
+                return;
+
+            for (int i = 0; i < Params.Input.Count; i++)
+                Params.Input[i].DataMapping = GH_DataMapping.Flatten;
         }
 
 

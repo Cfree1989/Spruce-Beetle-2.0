@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-17 — fix: Remaining Offcuts flattens Pile and Used
+
+- **Motivation:** Column offcut lists arrive on different branches. An unflattened Pile and Used pair does not subtract the packed scraps.
+- **Files:** `Create/RemainingOffcuts_GH.cs`, `Documentation/Component-Reference.md`
+- **Before → after:** Both inputs kept the incoming tree. The user had to right-click **P** and **U** and choose Flatten. Both pins now set `GH_DataMapping.Flatten` when the component is created and when an existing one is read.
+- **Result / observation:** Seen on the canvas: the component only worked after those two pins were flattened. A later rebuild copied `bin\Debug\net48\SpruceBeetle.gha`. Grasshopper was not reopened.
+- **Follow-ups:** Restart Rhino and reopen the file. The existing component should flatten P and U on load.
+
 ### 2026-11-17 — feature: Remaining Offcuts drops scraps already placed
 
 - **Motivation:** A third column needs the scraps left after column 1 and column 2. The Python script did that subtraction. List Update does too, but it is hidden and throws when a used number is missing from the pile.
