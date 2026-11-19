@@ -48,6 +48,14 @@ Related guides already in the repo:
 
 ## Log
 
+### 2026-11-19 — docs: Twenty-piece third-column stock file
+
+- **Motivation:** Column 3 needs its own measured-style pile, using the cross-sections already in the first two columns and new scrap numbers.
+- **Files:** `Documentation/TestData/column_3.csv`
+- **Before → after:** Test data had `column_1.csv` (scraps 1–88) and `column_2.csv` (89–101). Added 20 rows, scraps 102–121, `index;x;y;z`, no header. Sections are the existing ones: eight 1.5×3.5, four 1.5×2.5, three 1.5×7.125, three 1.625×2.625, two 1.3125×7. Lengths are new and run from 12″ to 44″.
+- **Result / observation:** The single 1.875×3 board in column 2 was not repeated. Thickness and width match the other files; only the length changes from row to row.
+- **Follow-ups:** Point a third CSV to Offcut at this file and merge it into Remaining Offcuts Pile. Component-Reference does not need an update (test data only).
+
 ### 2026-11-17 — fix: Remaining Offcuts flattens Pile and Used
 
 - **Motivation:** Column offcut lists arrive on different branches. An unflattened Pile and Used pair does not subtract the packed scraps.
