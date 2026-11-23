@@ -16,10 +16,12 @@ Related guides already in the repo:
 
 - [Documentation/README.md](../Documentation/README.md) — what each doc is for
 - [README.md](README.md) — what is in this Thesis folder
+- [Literature/README.md](Literature/README.md) — papers on irregular timber, offcuts, scanning, and digital fabrication
 - [Timeline/Work-Timeline.md](Timeline/Work-Timeline.md) — dated order of the modeling work
 - [Packing-Joints.md](../Documentation/Packing-Joints.md)
 - [Component-Reference.md](../Documentation/Component-Reference.md)
 - [Column-Fill-2x2x8.md](../Documentation/Column-Fill-2x2x8.md)
+- [Stock-Bank.md](../Documentation/Stock-Bank.md) — design for the photo stand and one live stock bank
 - [Grasshopper-Plugin-Dev-Guide.md](../Setup/Grasshopper-Plugin-Dev-Guide.md)
 
 ---
@@ -47,6 +49,38 @@ Related guides already in the repo:
 ---
 
 ## Log
+
+### 2026-11-23 — docs: Photo stand and stock bank written up
+
+- **Motivation:** Measuring each board and merging new scraps into old unused lists is the slow step. Cutting and stacking a second column already dropped to about two hours. The next build is a photo stand and one stock bank that both the camera and the columns update.
+- **Files:** `Documentation/Stock-Bank.md`; `Documentation/README.md`; this log.
+- **Before → after:** The workflow lived in conversation only. The note records the stand (camera fixed, measuring square as the scale), the per-board loop (read the next scrap number, write it on the board, accept), and one **Stock Bank** whose **Free** output feeds the packer and whose **Claim** input takes packed `Oc`. **Measure** and **Stock Bank** are not components yet. **CSV to Offcut** and **Remaining Offcuts** are unchanged.
+- **Result / observation:** Thickness is a pile setting because a top-down photo cannot see it. The counter advances on Accept, so the number written on the board is the index stored. Component-Reference does not need an update until those components exist.
+- **Follow-ups:** Build the webcam window and the bank against a taped board before pointing a phone folder at the same measurer.
+
+### 2026-11-23 — docs: Open PDFs added for 37 bibliography citations
+
+- **Motivation:** The bibliography in `Thesis/Literature/` had citations only. The open copies, and the files already in the OneDrive summer folder, needed to sit with those citations.
+- **Files:** `Thesis/Literature/` (37 PDFs linked from `Bibliography.md`); `Thesis/Literature/Bibliography.md`; `Thesis/Literature/README.md`
+- **Before → after:** `Bibliography.md` listed 74 citations and no files. 37 citations now have a PDF in `Thesis/Literature/`, with a file link under the citation. Eight were copied from the OneDrive summer folder. The Reisach 2023 file is the 15-page paper, taken from the local 675-page CAAD Futures volume. The Wood Handbook (Ross 2010) and its mechanical-properties chapter (Senalik and Farber 2021) came from the Forest Service. The other files are open copies from the publisher, a university repository, CUMINCAD, or eCAADe.
+- **Result / observation:** 37 citations still have no file. Brown (2023) on ResearchWorks returned 403. Moradei et al. (2018) on EPFL Infoscience returned 429. The Branco and Descamps (2015) manuscript on the University of Minho repository did not download. The rest had no open PDF that could be downloaded. Nothing was taken from a paywall bypass.
+- **Follow-ups:** Download the three blocked open copies from the links in `Bibliography.md` if a browser session can get them. Component-Reference does not need an update.
+
+### 2026-11-23 — docs: Bibliography added under Thesis/Literature
+
+- **Motivation:** The next set of sources for the offcut and joint work arrived as a reference list, without PDFs.
+- **Files:** `Thesis/Literature/Bibliography.md`; `Thesis/Literature/README.md`
+- **Before → after:** `Thesis/Literature/` held 17 PDFs and an index of those files. It now also holds 74 citations. Two exports of the same paper were kept once: Dissanayake, Gunawardena, and Mendis (2025), and Ilgın, Karjalainen, and Koponen (2022). `B. (2007). Snap-Fit Design Manual.` is entered as BASF Corporation (2007); the manual’s copyright line is © 2007 BASF Corporation. The all-caps step-joint title is Braun and Kromoser, WCTE 2023, https://doi.org/10.52202/069179-0192, pages 1409-1415. Repeated page numbers such as 5570-5570 were left as exported.
+- **Result / observation:** No PDFs were added for this set. Nine of the citations already have a file in the OneDrive summer folder, listed at the bottom of `Bibliography.md`. The Reisach 2023 file there is the 675-page CAAD Futures 2023 volume. `petras-vestartas-thesis.pdf` is EPFL thesis no. 8928.
+- **Follow-ups:** Copy those nine files into `Thesis/Literature/` if they should live in the repo. Component-Reference does not need an update.
+
+### 2026-11-23 — docs: Research papers added under Thesis/Literature
+
+- **Motivation:** The summer reading set on irregular timber, offcuts, scanning, and digital fabrication needed to live with the thesis notes in this repo.
+- **Files:** `Thesis/Literature/` (17 PDFs and `README.md`); `Thesis/README.md`; this log.
+- **Before → after:** The papers were only in the OneDrive folder `Personal\Masters\26 Summer`. Copies with the same short filenames are now in `Thesis/Literature/`. The index lists the title printed on each first page. `sylvan-scrapple.pdf` is the Macdonald and Schumann paper “From Roundwood to Round Walls”; the file name does not match that title. `tree-to-timber.pdf` is a University of Virginia studio brief, not a journal article.
+- **Result / observation:** The 17 PDFs are about 43.5 MB together. They are in the working tree and are not committed.
+- **Follow-ups:** Commit when the copies should be in git history. Component-Reference does not need an update.
 
 ### 2026-11-19 — docs: Twenty-piece third-column stock file
 

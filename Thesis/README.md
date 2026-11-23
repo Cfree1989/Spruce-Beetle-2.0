@@ -12,6 +12,7 @@ Calendar dates were checked against LSU’s published calendars on October 26, 2
 | [Spring-2027-Thesis.ics](Spring-2027-Thesis.ics) | Employee holidays and thesis deadlines only, for Outlook. File → Open & Export → Import/Export → Import an iCalendar (.ics). |
 | [Printable-Calendar.pdf](Printable-Calendar.pdf) | The same dates on a landscape monthly grid, one month per page, for printing and handwriting. |
 | [Proposal/](Proposal/) | Project proposal and any other planning drafts. |
+| [Literature/](Literature/) | Papers on irregular timber, offcuts, scanning, and digital fabrication. Index: [Literature/README.md](Literature/README.md). |
 | [Submissions/](Submissions/) | Confirmation emails and copies of forms after you submit them. |
 
 Plugin docs (component reference, packing-joints spec, column-fill guide, test data) stay in [../Documentation/](../Documentation/README.md).
